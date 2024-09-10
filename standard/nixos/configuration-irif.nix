@@ -76,6 +76,17 @@
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
+  boot.kernelPackages = pkgs.linuxPackages_latest;
+  boot.kernelParams = [
+    "quiet"
+    "splash"
+    "mce=dont_log_ce"
+    "nowatchdog"
+    "tsc=nowatchdog"
+    "nmi_watchdog=0"
+    "nosoftlockup"
+    "preempt=full"
+  ];
 
   # TODO: Set your hostname
   networking.hostName = "irif";
