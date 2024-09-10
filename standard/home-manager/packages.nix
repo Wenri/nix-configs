@@ -4,6 +4,9 @@
     firefox
     gnumake
     element-desktop
+    discord
+    zoom-us
+    pcloud
   ];
 
 }
