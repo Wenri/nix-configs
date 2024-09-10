@@ -2,7 +2,7 @@
   imports = [
     ./coq.nix
     ./haskell.nix
-    # ./latex.nix
+    ./latex.nix
     ./python.nix
     ./typst.nix
   ];
