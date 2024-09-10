@@ -7,6 +7,7 @@
     ./emacs.nix
     ./git.nix
     ./ssh.nix
+    ./gnome.nix
   ];
 
   programs = {

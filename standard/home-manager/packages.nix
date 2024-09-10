@@ -7,6 +7,7 @@
     discord
     zoom-us
     pcloud
+    teamviewer
   ];
 
 }

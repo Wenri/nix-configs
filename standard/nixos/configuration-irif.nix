@@ -103,7 +103,11 @@
 
     inputMethod = {
       enabled = "fcitx5";
-      # fcitx5.addons = with pkgs; [fcitx5-rime-lua];
+      fcitx5.addons = with pkgs; [
+        rime-data
+        fcitx5-rime
+        fcitx5-gtk
+      ];
     };
   };
 
