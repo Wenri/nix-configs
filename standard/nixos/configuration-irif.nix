@@ -113,6 +113,13 @@
     variant = "";
   };
 
+  # Swao Ctrl and Caps
+  services.udev.extraHwdb = ''
+    evdev:input:b0003v046Ap0023*
+      KEYBOARD_KEY_70039=leftctrl # caps -> ctrl_l
+      KEYBOARD_KEY_700e0=capslock # ctrl_l -> caps
+  '';
+
   # Enable CUPS to print documents.
   services.printing.enable = true;
 
