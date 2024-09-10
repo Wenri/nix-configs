@@ -3,6 +3,7 @@
     tmux
     firefox
     gnumake
+    element-desktop
   ];
 
 }
