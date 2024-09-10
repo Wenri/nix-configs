@@ -21,7 +21,7 @@
     # ./users.nix
 
     # Import your generated (nixos-generate-config) hardware configuration
-    ./hardware-configuration-plasma6.nix
+    ./hardware-configuration-nixos-plasma6.nix
   ];
 
   nixpkgs = {
