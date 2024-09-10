@@ -74,7 +74,7 @@
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
-
+  boot.supportedFilesystems = [ "zfs" ];
   boot.initrd.luks.devices = {
     "luks-e8af78ec-280b-4662-9bbc-6bc27e1cc24a" = {
       device = "/dev/disk/by-uuid/e8af78ec-280b-4662-9bbc-6bc27e1cc24a";
@@ -92,7 +92,7 @@
       fallbackToPassword = true;
     };
   };
-  boot.kernelPackages = pkgs.linuxPackages_latest;
+  boot.kernelPackages = config.boot.zfs.package.latestCompatibleLinuxPackages;
   boot.kernelParams = [
     "quiet"
     "splash"
@@ -167,6 +167,7 @@
   };
   
   services.tailscale.enable = true;
+  services.zfs.autoScrub.enable = true;
 
   # https://nixos.wiki/wiki/FAQ/When_do_I_update_stateVersion
   system.stateVersion = "24.05";
