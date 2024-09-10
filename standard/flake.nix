@@ -60,6 +60,14 @@
           ./nixos/configuration-nixos-gnome.nix
         ];
       };
+      
+      nixos-plasma6 = nixpkgs.lib.nixosSystem {
+        specialArgs = {inherit inputs outputs;};
+        modules = [
+          # > Our main nixos configuration file <
+          ./nixos/configuration-nixos-plasma6.nix
+        ];
+      };
     };
 
     # Standalone home-manager configuration entrypoint
@@ -67,6 +75,15 @@
     homeConfigurations = {
       # FIXME replace with your username@hostname
       "xsnow@nixos-gnome" = home-manager.lib.homeManagerConfiguration {
+        pkgs = nixpkgs.legacyPackages.x86_64-linux; # Home-manager requires 'pkgs' instance
+        extraSpecialArgs = {inherit inputs outputs;};
+        modules = [
+          # > Our main home-manager configuration file <
+          ./home-manager/home.nix
+        ];
+      };
+      
+      "xsnow@nixos-plasma6" = home-manager.lib.homeManagerConfiguration {
         pkgs = nixpkgs.legacyPackages.x86_64-linux; # Home-manager requires 'pkgs' instance
         extraSpecialArgs = {inherit inputs outputs;};
         modules = [
