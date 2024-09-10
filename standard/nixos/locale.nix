@@ -21,7 +21,7 @@
     inputMethod = {
       enabled = "fcitx5";
       fcitx5.addons = with pkgs; [
-        rime-data
+      #  rime-data
         fcitx5-rime
         fcitx5-gtk
       ];
