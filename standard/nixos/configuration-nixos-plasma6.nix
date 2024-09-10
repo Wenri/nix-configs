@@ -92,6 +92,7 @@
       fallbackToPassword = true;
     };
   };
+  boot.zfs.package = pkgs.zfs_unstable;
   boot.kernelPackages = config.boot.zfs.package.latestCompatibleLinuxPackages;
   boot.kernelParams = [
     "quiet"
