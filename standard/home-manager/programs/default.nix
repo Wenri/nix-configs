@@ -1,7 +1,7 @@
 {
   imports = [
     ./rime
-    # ./vscode
+    ./vscode
     # ./wechat
     ./zsh.nix
     ./emacs.nix
