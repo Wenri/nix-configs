@@ -88,6 +88,8 @@
     "nmi_watchdog=0"
     "nosoftlockup"
     "preempt=full"
+    "intel_iommu=pt"
+    "retbleed=stuff"
   ];
 
   # for local disks that are not shared over the network, we don't need this to be random
