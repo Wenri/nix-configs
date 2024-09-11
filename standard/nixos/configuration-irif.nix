@@ -76,7 +76,9 @@
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
-  boot.kernelPackages = pkgs.linuxPackages_latest;
+  boot.supportedFilesystems = [ "zfs" ];
+  boot.zfs.package = pkgs.zfs_unstable;
+  boot.kernelPackages = config.boot.zfs.package.latestCompatibleLinuxPackages;
   boot.kernelParams = [
     "quiet"
     "splash"
@@ -88,6 +90,8 @@
     "preempt=full"
   ];
 
+  # for local disks that are not shared over the network, we don't need this to be random
+  networking.hostId = "8425e349";
   # TODO: Set your hostname
   networking.hostName = "irif";
 
@@ -157,6 +161,8 @@
   };
   
   services.tailscale.enable = true;
+  services.zfs.autoScrub.enable = true;
+
 
   # https://nixos.wiki/wiki/FAQ/When_do_I_update_stateVersion
   system.stateVersion = "24.05";
