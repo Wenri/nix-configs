@@ -6,8 +6,6 @@
     element-desktop
     discord
     zoom-us
-    pcloud
     teamviewer
   ];
-
 }

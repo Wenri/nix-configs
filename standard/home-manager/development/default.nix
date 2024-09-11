@@ -5,5 +5,6 @@
     ./latex.nix
     ./python.nix
     ./typst.nix
+    ./pcloud.nix
   ];
 }
