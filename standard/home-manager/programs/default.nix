@@ -3,6 +3,8 @@
     ./zsh.nix
     ./emacs.nix
     ./git.nix
+    ./firefox
+    ./gnome
   ];
 
   programs = {
