@@ -30,6 +30,7 @@
       outputs.overlays.additions
       outputs.overlays.modifications
       outputs.overlays.unstable-packages
+      inputs.nix-vscode-extensions.overlays.default
       inputs.nur.overlay
 
       # You can also add overlays exported from other flakes:
@@ -46,6 +47,13 @@
     config = {
       # Disable if you don't want unfree packages
       allowUnfree = true;
+      # Workaround for https://github.com/nix-community/home-manager/issues/2942
+      allowUnfreePredicate = _: true;
+
+      permittedInsecurePackages = [
+        # "openssl-1.1.1w"
+        # "electron-27.3.11"
+      ];
     };
   };
 

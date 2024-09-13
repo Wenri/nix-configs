@@ -23,7 +23,7 @@
     ./secrets.nix
     
     # Import your generated (nixos-generate-config) hardware configuration
-    ./hardware-configuration-nixos-gnome.nix
+    ./hardware-configuration-irif.nix
   ];
 
   nixpkgs = {
@@ -35,7 +35,7 @@
       outputs.overlays.unstable-packages
       
       inputs.nur.overlay
-
+      
       # You can also add overlays exported from other flakes:
       # neovim-nightly-overlay.overlays.default
 
@@ -77,45 +77,37 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
   boot.supportedFilesystems = [ "zfs" ];
-  boot.initrd.luks.devices = {
-    "luks-be8c7b36-0982-4e45-b7c1-0864ca83b166" = {
-      device = "/dev/disk/by-uuid/be8c7b36-0982-4e45-b7c1-0864ca83b166";
-      allowDiscards = true;
-      keyFileSize = 4096;
-      keyFile = "/dev/sr0";
-      # optionally enable fallback to password in case USB is lost
-      fallbackToPassword = true;
-    };
-    "luks-7f5e9ac8-ba4b-49f2-beb4-08931911ab29" = {
-      allowDiscards = true;
-      keyFileSize = 4096;
-      keyFile = "/dev/sr0";
-      # optionally enable fallback to password in case USB is lost
-      fallbackToPassword = true;
-    };
-  };
   boot.zfs.package = pkgs.zfs_unstable;
   boot.kernelPackages = config.boot.zfs.package.latestCompatibleLinuxPackages;
   boot.kernelParams = [
     "quiet"
     "splash"
-    "mce=off"
+    "mce=dont_log_ce"
+    "nowatchdog"
+    "tsc=nowatchdog"
+    "nmi_watchdog=0"
+    "nosoftlockup"
+    "preempt=full"
+    "intel_iommu=pt"
+    "retbleed=stuff"
   ];
-  
+
   # for local disks that are not shared over the network, we don't need this to be random
   networking.hostId = "8425e349";
   # TODO: Set your hostname
-  networking.hostName = "nixos-gnome";
-  
+  networking.hostName = "irif";
+
   # Enable networking
   networking.networkmanager.enable = true;
 
   # Enable the X11 windowing system.
-  # You can disable this if you're only using the Wayland session.
   services.xserver.enable = true;
 
   # Enable the GNOME Desktop Environment.
-  services.xserver.displayManager.gdm.enable = true;
+  services.xserver.displayManager.gdm = {
+    enable = true;
+    autoSuspend = false;
+  };
   services.xserver.desktopManager.gnome.enable = true;
 
   # Configure keymap in X11
@@ -124,9 +116,15 @@
     variant = "";
   };
 
+  # Swao Ctrl and Caps
+  services.udev.extraHwdb = ''
+    evdev:input:b0003v046Ap0023*
+      KEYBOARD_KEY_70039=leftctrl # caps -> ctrl_l
+      KEYBOARD_KEY_700e0=capslock # ctrl_l -> caps
+  '';
+
   # Enable CUPS to print documents.
   services.printing.enable = true;
-
 
   # Enable sound with pipewire.
   hardware.pulseaudio.enable = false;
@@ -163,15 +161,14 @@
       PermitRootLogin = "no";
       # Opinionated: use keys only.
       # Remove if you want to SSH using passwords
-      PasswordAuthentication = false;
+      # PasswordAuthentication = false;
     };
   };
   
   services.tailscale.enable = true;
   services.zfs.autoScrub.enable = true;
 
+
   # https://nixos.wiki/wiki/FAQ/When_do_I_update_stateVersion
   system.stateVersion = "24.05";
-  
-  virtualisation.vmware.guest.enable = true;
 }

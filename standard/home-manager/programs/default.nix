@@ -1,10 +1,14 @@
 {
   imports = [
+    ./rime
+    ./vscode
+    # ./wechat
     ./zsh.nix
     ./emacs.nix
     ./git.nix
     ./firefox
-    ./gnome
+    ./ssh.nix
+    ./gnome.nix
   ];
 
   programs = {
