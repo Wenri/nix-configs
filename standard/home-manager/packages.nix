@@ -7,5 +7,6 @@
     discord
     zoom-us
     teamviewer
+    signal-desktop
   ];
 }
