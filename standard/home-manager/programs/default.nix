@@ -6,6 +6,7 @@
     ./zsh.nix
     ./emacs.nix
     ./git.nix
+    ./firefox
     ./ssh.nix
     ./gnome.nix
   ];
