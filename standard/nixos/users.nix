@@ -21,4 +21,5 @@
 
   programs.zsh.enable = true;
   programs.firefox.enable = true;
+  services.printing.browsed.enable = false;
 }
