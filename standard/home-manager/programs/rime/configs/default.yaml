@@ -8,6 +8,10 @@
 # 要比共享目录的同名文件的 config_version 大才可以生效
 config_version: '2023-09-25'
 
+# https://github.com/iDvel/rime-ice/issues/431#issuecomment-1667398028
+# 强制显示拼音
+patch:
+  translator/spelling_hints: 0
 
 # 方案列表
 schema_list:
