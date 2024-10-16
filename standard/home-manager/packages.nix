@@ -7,5 +7,6 @@
     zoom-us
     teamviewer
     signal-desktop
+    elixir_1_15
   ];
 }
