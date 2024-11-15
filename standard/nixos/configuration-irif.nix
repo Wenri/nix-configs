@@ -101,7 +101,7 @@
   networking.networkmanager.enable = true;
 
   # Only allowed NTP
-  networking.timeServers = ntp.univ-paris-diderot.fr;
+  networking.timeServers = [ "ntp.univ-paris-diderot.fr" ];
 
   # Enable the X11 windowing system.
   services.xserver.enable = true;
