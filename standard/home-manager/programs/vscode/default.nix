@@ -15,7 +15,7 @@
         jnoortheen.nix-ide
         justusadam.language-haskell
         mgt19937.typst-preview
-        nvarner.typst-lsp
+        myriad-dreamin.tinymist #nvarner.typst-lsp
         richie5um2.vscode-sort-json
         skellock.just
         vscode-icons-team.vscode-icons

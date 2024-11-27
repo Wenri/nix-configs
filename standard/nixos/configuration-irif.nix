@@ -153,6 +153,7 @@
   environment.systemPackages = with pkgs; [
     vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
     wget
+    htop
   ];
   
   # This setups a SSH server. Very important if you're setting up a headless system.
@@ -170,7 +171,8 @@
   
   services.tailscale.enable = true;
   services.zfs.autoScrub.enable = true;
-
+  services.fwupd.enable = true;
+  services.earlyoom.enable = true;
 
   # https://nixos.wiki/wiki/FAQ/When_do_I_update_stateVersion
   system.stateVersion = "24.11";
