@@ -170,9 +170,24 @@
   };
   
   services.tailscale.enable = true;
+  services.tailscale.useRoutingFeatures = "server";
   services.zfs.autoScrub.enable = true;
   services.fwupd.enable = true;
   services.earlyoom.enable = true;
+
+  networking.networkmanager.dispatcherScripts = [ {
+    source = pkgs.writeText "50-tailscale" ''
+        #!${pkgs.runtimeShell}
+        interface="$1"
+        event="$2"
+        set -e
+        [ "$event" == "up" ] || exit 0
+        [ "$interface" == "enp0s31f6" ] ||  exit 0
+        ${pkgs.ethtool}/bin/ethtool -K "$interface" rx-udp-gro-forwarding on rx-gro-list off
+      '';
+    type = "basic";
+    }
+  ];
 
   zramSwap = {
     enable = true;
