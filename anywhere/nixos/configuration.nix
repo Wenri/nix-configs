@@ -41,8 +41,19 @@
   };
   services.openssh.enable = true;
   services.tailscale.enable = true;
+  services.tailscale.useRoutingFeatures = "server";
   services.qemuGuest.enable = true;
   services.fail2ban.enable = true;
+  services.networkd-dispatcher = {
+    enable = true;
+    rules."50-tailscale" = {
+      onState = ["routable"];
+      script = ''
+        #!${pkgs.runtimeShell}
+        ${pkgs.ethtool}/bin/ethtool -K ens3 rx-udp-gro-forwarding on rx-gro-list off
+      '';
+    };
+  };
 
   environment.systemPackages = map lib.lowPrio [
     pkgs.curl
