@@ -9,5 +9,6 @@
     signal-desktop
     elixir_1_15
     parted
+    slack
   ];
 }

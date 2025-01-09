@@ -26,6 +26,7 @@
 
   swapDevices =
     [ { device = "/dev/disk/by-uuid/3e9b924f-0be8-49f4-a9e1-902b61455e0d"; }
+      { device = "/swapfile"; size = 2 * 1024; }
     ];
 
   # Enables DHCP on each ethernet and wireless interface. In case of scripted networking
