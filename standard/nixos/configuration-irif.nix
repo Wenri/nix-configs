@@ -88,7 +88,6 @@
     "nmi_watchdog=0"
     "nosoftlockup"
     "preempt=full"
-    "intel_iommu=pt"
     "retbleed=stuff"
   ];
 
