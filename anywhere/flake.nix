@@ -29,6 +29,23 @@
       # pass to it, with each system as an argument
       forAllSystems = nixpkgs.lib.genAttrs systems;
     in {
+      nixosConfigurations.freevm-nixos-facter = nixpkgs.lib.nixosSystem {
+        system = "aarch64-linux";
+        specialArgs = {inherit inputs outputs;};
+        modules = [
+          disko.nixosModules.disko
+          ./nixos/configuration.nix
+          nixos-facter-modules.nixosModules.facter
+          {
+            config.facter.reportPath =
+              if builtins.pathExists ./nixos/facter-free.json then
+                ./nixos/facter-free.json
+              else
+                throw "Have you forgotten to run nixos-anywhere with `--generate-hardware-config nixos-facter ./facter.json`?";
+          }
+        ];
+      };
+
       # Slightly experimental: Like generic, but with nixos-facter (https://github.com/numtide/nixos-facter)
       # nixos-anywhere --flake .#generic-nixos-facter --generate-hardware-config nixos-facter facter.json <hostname>
       nixosConfigurations.generic-nixos-facter = nixpkgs.lib.nixosSystem {
