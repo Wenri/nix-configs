@@ -34,7 +34,7 @@
         specialArgs = {inherit inputs outputs;};
         modules = [
           disko.nixosModules.disko
-          ./nixos/configuration.nix
+          ./nixos/configuration-freevm.nix
           nixos-facter-modules.nixosModules.facter
           {
             config.facter.reportPath =
@@ -69,6 +69,14 @@
         # FIXME replace with your username@hostname
         "wenri@nixos" = home-manager.lib.homeManagerConfiguration {
           pkgs = nixpkgs.legacyPackages.x86_64-linux; # Home-manager requires 'pkgs' instance
+          extraSpecialArgs = {inherit inputs outputs;};
+          modules = [
+            # > Our main home-manager configuration file <
+            ./home-manager/home.nix
+          ];
+        };
+        "wenri@freenix" = home-manager.lib.homeManagerConfiguration {
+          pkgs = nixpkgs.legacyPackages.aarch64-linux; # Home-manager requires 'pkgs' instance
           extraSpecialArgs = {inherit inputs outputs;};
           modules = [
             # > Our main home-manager configuration file <
