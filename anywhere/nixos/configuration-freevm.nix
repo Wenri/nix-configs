@@ -32,7 +32,6 @@
     (modulesPath + "/profiles/qemu-guest.nix")
     ./disk-config.nix
     ./users.nix
-    ./synapse.nix
   ];
   boot.loader.grub = {
     # no need to set devices, disko will add all devices that have a EF02 partition to the list already
@@ -40,6 +39,7 @@
     efiSupport = true;
     efiInstallAsRemovable = true;
   };
+  networking.hostName = "freenix";
   services.openssh.enable = true;
   services.tailscale.enable = true;
   services.tailscale.useRoutingFeatures = "server";
