@@ -14,6 +14,11 @@ in {
   networking.domain = "wenri.me";
   networking.firewall.allowedTCPPorts = [ 80 443 ];
 
+  security.acme = {
+    acceptTerms = true;
+    defaults.email = "wenri@wenri.me";
+  };
+
   services.postgresql = {
     enable = true;
     ensureDatabases = [ "matrix-synapse" ];
