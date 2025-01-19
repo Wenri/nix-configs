@@ -19,9 +19,7 @@ in {
     ensureDatabases = [ "matrix-synapse" ];
     ensureUsers = [{
       name = "matrix-synapse";
-      ensurePermissions = {
-        "DATABASE matrix-synapse" = "ALL PRIVILEGES";
-      };
+      ensureDBOwnership = true;
     }];
   };
 
