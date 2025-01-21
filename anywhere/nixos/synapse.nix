@@ -9,6 +9,8 @@ let
     add_header Access-Control-Allow-Origin *;
     return 200 '${builtins.toJSON data}';
   '';
+  # Define the database password as a parameter
+  dbPassword = "WVlRuZGovPdSSMxZhiznuahgtJxcnVVkGdmZegyBsoVrTBHKvb";
 in {
   networking.hostName = "matrix";
   networking.domain = "wenri.me";
@@ -25,6 +27,8 @@ in {
     ensureUsers = [{
       name = "matrix-synapse";
       ensureDBOwnership = true;
+      # Use the password parameter
+      password = dbPassword;
     }];
   };
 
@@ -70,7 +74,8 @@ in {
       args = {
         database = "matrix-synapse";
         user = "matrix-synapse";
-        password = "synapse";  # You should change this!
+        # Use the same password parameter
+        password = dbPassword;
         host = "localhost";
         cp_min = 5;
         cp_max = 10;
