@@ -27,8 +27,6 @@ in {
     ensureUsers = [{
       name = "matrix-synapse";
       ensureDBOwnership = true;
-      # Use the password parameter
-      password = dbPassword;
     }];
   };
 
