@@ -27,8 +27,8 @@ in {
     ensureUsers = [{
       name = "matrix-synapse";
       ensureDBOwnership = true;
-      # Use the password parameter via passwordFile
-      passwordFile = pkgs.writeText "matrix-synapse-password" dbPassword;
+      # Use the password parameter
+      password = dbPassword;
     }];
   };
 
