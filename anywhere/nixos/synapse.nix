@@ -35,12 +35,6 @@ in {
     recommendedGzipSettings = true;
     recommendedProxySettings = true;
     virtualHosts = {
-      "${config.networking.domain}" = {
-        enableACME = true;
-        forceSSL = true;
-        locations."= /.well-known/matrix/server".extraConfig = mkWellKnown serverConfig;
-        locations."= /.well-known/matrix/client".extraConfig = mkWellKnown clientConfig;
-      };
       "${fqdn}" = {
         enableACME = true;
         forceSSL = true;
@@ -49,6 +43,8 @@ in {
         '';
         locations."/_matrix".proxyPass = "http://[::1]:8008";
         locations."/_synapse/client".proxyPass = "http://[::1]:8008";
+        locations."= /.well-known/matrix/server".extraConfig = mkWellKnown serverConfig;
+        locations."= /.well-known/matrix/client".extraConfig = mkWellKnown clientConfig;
       };
     };
   };
