@@ -153,6 +153,7 @@
     vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
     wget
     htop
+    libreoffice-qt # FOR GNOME
   ];
   
   # This setups a SSH server. Very important if you're setting up a headless system.
