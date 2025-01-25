@@ -79,5 +79,6 @@ in {
         cp_max = 10;
       };
     };
+    settings.registration_shared_secret = dbPassword;
   };
 }
