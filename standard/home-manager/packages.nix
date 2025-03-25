@@ -10,5 +10,6 @@
     elixir_1_15
     parted
     slack
+    siyuan
   ];
 }
