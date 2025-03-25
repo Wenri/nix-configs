@@ -11,5 +11,6 @@
     parted
     slack
     siyuan
+    bitwarden-desktop
   ];
 }
