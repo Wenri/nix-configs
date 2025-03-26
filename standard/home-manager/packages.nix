@@ -12,5 +12,6 @@
     slack
     siyuan
     bitwarden-desktop
+    google-chrome
   ];
 }
