@@ -7,7 +7,7 @@
     zoom-us
     teamviewer
     signal-desktop
-    elixir_1_15
+    elixir
     parted
     slack
     siyuan
