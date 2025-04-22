@@ -175,6 +175,13 @@
   services.fwupd.enable = true;
   services.earlyoom.enable = true;
 
+  virtualisation.docker.enable = true;
+
+  virtualisation.docker.rootless = {
+    enable = true;
+    setSocketVariable = true;
+  };
+
   networking.networkmanager.dispatcherScripts = [ {
     source = pkgs.writeText "50-tailscale" ''
         #!${pkgs.runtimeShell}

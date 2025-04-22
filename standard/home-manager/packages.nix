@@ -13,5 +13,7 @@
     siyuan
     bitwarden-desktop
     google-chrome
+    agda
+    wechat-uos
   ];
 }
