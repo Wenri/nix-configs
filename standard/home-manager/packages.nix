@@ -15,5 +15,6 @@
     google-chrome
     agda
     wechat-uos
+    parsec-bin
   ];
 }
