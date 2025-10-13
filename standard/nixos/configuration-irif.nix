@@ -78,7 +78,7 @@
   boot.loader.efi.canTouchEfiVariables = true;
   boot.supportedFilesystems = [ "zfs" ];
   boot.zfs.package = pkgs.zfs_unstable;
-  boot.kernelPackages = config.boot.zfs.package.latestCompatibleLinuxPackages;
+  boot.kernelPackages = pkgs.linuxPackages_xanmod_stable;
   boot.kernelParams = [
     "quiet"
     "splash"
@@ -88,7 +88,6 @@
     "nmi_watchdog=0"
     "nosoftlockup"
     "preempt=full"
-    "intel_iommu=pt"
     "retbleed=stuff"
   ];
 
@@ -101,7 +100,7 @@
   networking.networkmanager.enable = true;
 
   # Only allowed NTP
-  networking.timeServers = ntp.univ-paris-diderot.fr
+  networking.timeServers = [ "ntp.univ-paris-diderot.fr" ];
 
   # Enable the X11 windowing system.
   services.xserver.enable = true;
@@ -153,6 +152,8 @@
   environment.systemPackages = with pkgs; [
     vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
     wget
+    htop
+    libreoffice-qt # FOR GNOME
   ];
   
   # This setups a SSH server. Very important if you're setting up a headless system.
@@ -169,9 +170,38 @@
   };
   
   services.tailscale.enable = true;
+  services.tailscale.useRoutingFeatures = "server";
   services.zfs.autoScrub.enable = true;
+  services.fwupd.enable = true;
+  services.earlyoom.enable = true;
 
+  virtualisation.docker.enable = true;
+
+  virtualisation.docker.rootless = {
+    enable = true;
+    setSocketVariable = true;
+  };
+
+  networking.networkmanager.dispatcherScripts = [ {
+    source = pkgs.writeText "50-tailscale" ''
+        #!${pkgs.runtimeShell}
+        interface="$1"
+        event="$2"
+        set -e
+        [ "$event" == "up" ] || exit 0
+        [ "$interface" == "enp0s31f6" ] ||  exit 0
+        ${pkgs.ethtool}/bin/ethtool -K "$interface" rx-udp-gro-forwarding on rx-gro-list off
+      '';
+    type = "basic";
+    }
+  ];
+
+  zramSwap = {
+    enable = true;
+    algorithm = "zstd";
+    memoryPercent = 30;
+  };
 
   # https://nixos.wiki/wiki/FAQ/When_do_I_update_stateVersion
-  system.stateVersion = "24.05";
+  system.stateVersion = "24.11";
 }

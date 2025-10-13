@@ -7,7 +7,14 @@
     zoom-us
     teamviewer
     signal-desktop
-    elixir_1_15
+    elixir
     parted
+    slack
+    siyuan
+    bitwarden-desktop
+    google-chrome
+    agda
+    wechat-uos
+    parsec-bin
   ];
 }
