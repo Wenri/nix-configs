@@ -16,7 +16,9 @@ The primary configuration in active use:
   - NixOS configs: `freevm-nixos-facter` (aarch64-linux), `generic-nixos-facter` (x86_64-linux)
   - Home configs: `wenri@nixos`, `wenri@freenix`
 - `nixos/` - System-level NixOS configurations
-  - `configuration.nix` / `configuration-freevm.nix` - Main system configs
+  - `common.nix` - Shared base configuration for all systems
+  - `configuration.nix` - Generic system config (imports common.nix + synapse.nix)
+  - `configuration-freevm.nix` - Freenix-specific config (imports common.nix)
   - `disk-config.nix` - Disko declarative disk partitioning (LVM on GPT)
   - `users.nix` - User account definitions
   - `synapse.nix` - Matrix Synapse server configuration
@@ -102,9 +104,13 @@ nix fmt
 - Uses **nixos-facter** for hardware detection instead of traditional `hardware-configuration.nix`
 - Employs **disko** for declarative disk partitioning (see `disk-config.nix`)
 - Configured for remote deployment via **nixos-anywhere**
+- **Refactored architecture**: Common configuration in `common.nix` reduces duplication
 - System features: Tailscale VPN, Docker, fail2ban, openssh, Matrix Synapse
 - Multi-architecture support: x86_64-linux and aarch64-linux
 - Swap: Both file-based swap (2GB) and zram (30% of RAM with zstd compression)
+- System tools: ethtool, usbutils (lsusb), curl, git, vim, wget
+- Passwordless sudo enabled for wheel group
+- systemd-oomd enabled for OOM protection
 
 ### Flake Input Pattern
 All configurations follow the pattern:
