@@ -3,5 +3,8 @@
     tmux
     parted
     htop
+    nodejs
+    claude-code
+    gh
   ];
 }
