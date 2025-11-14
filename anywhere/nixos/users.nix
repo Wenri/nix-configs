@@ -19,6 +19,9 @@
     };
   };
 
+  # Enable passwordless sudo for wheel group
+  security.sudo.wheelNeedsPassword = false;
+
   programs.zsh.enable = true;
   programs.firefox.enable = true;
   services.printing.browsed.enable = false;

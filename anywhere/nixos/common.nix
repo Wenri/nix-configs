@@ -76,8 +76,5 @@
   # Enable systemd-oomd for OOM handling
   systemd.oomd.enable = true;
 
-  # Enable passwordless sudo for wheel group
-  security.sudo.wheelNeedsPassword = false;
-
   system.stateVersion = "24.11";
 }
