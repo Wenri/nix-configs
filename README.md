@@ -21,6 +21,12 @@ NixOS + home-manager.
       (`modules/home-manager`) modules
     - NixOS and home-manager configurations from minimal, and they should
       also use your overlays and custom packages right out of the box.
+- [Modular version](./anywhere):
+    - Production-ready modular architecture with separate modules (users, tailscale, synapse)
+    - Common base configuration with host-specific overrides
+    - nixos-anywhere and nixos-facter support for modern deployment
+    - Disko for declarative disk partitioning
+    - Best practices for maintainable, scalable configurations
 
 # Getting started
 

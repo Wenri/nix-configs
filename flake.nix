@@ -2,7 +2,7 @@
   description = "NixOS + standalone home-manager config flakes to get you started!";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-23.05";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
   };
 
   outputs = {nixpkgs, ...}: let
@@ -28,6 +28,14 @@
           Perfect migration path for when you want to dive a little deeper.
         '';
         path = ./standard;
+      };
+      modular = {
+        description = ''
+          Modular configuration with nixos-anywhere and nixos-facter support.
+          Features refactored architecture with separate modules for users, tailscale, synapse, etc.
+          Best practices for production deployments with common base config and host-specific configs.
+        '';
+        path = ./anywhere;
       };
     };
     formatter = forAllSystems (system: nixpkgs.legacyPackages.${system}.alejandra);
