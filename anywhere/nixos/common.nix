@@ -33,6 +33,7 @@
     (modulesPath + "/profiles/qemu-guest.nix")
     ./disk-config.nix
     ./users.nix
+    ./tailscale.nix
   ];
 
   boot.loader.grub = {
@@ -43,8 +44,6 @@
   };
 
   services.openssh.enable = true;
-  services.tailscale.enable = true;
-  services.tailscale.useRoutingFeatures = "server";
   services.qemuGuest.enable = true;
   services.fail2ban.enable = true;
 

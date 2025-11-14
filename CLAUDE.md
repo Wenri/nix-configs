@@ -20,8 +20,9 @@ The primary configuration in active use:
   - `host-generic.nix` - Generic system config (imports common.nix + synapse.nix)
   - `host-freenix.nix` - Freenix-specific config (imports common.nix)
   - `disk-config.nix` - Disko declarative disk partitioning (LVM on GPT)
-  - `users.nix` - User account definitions
-  - `synapse.nix` - Matrix Synapse server configuration
+  - `users.nix` - User accounts, permissions, and user-specific programs
+  - `synapse.nix` - Matrix Synapse server configuration module
+  - `tailscale.nix` - Tailscale VPN configuration module with network optimization
   - `facter.json` / `facter-free.json` - Hardware detection from nixos-facter
 - `home-manager/` - User environment configurations
   - `home.nix` - Main home-manager entrypoint
