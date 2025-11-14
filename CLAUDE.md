@@ -17,8 +17,8 @@ The primary configuration in active use:
   - Home configs: `wenri@nixos`, `wenri@freenix`
 - `nixos/` - System-level NixOS configurations
   - `common.nix` - Shared base configuration for all systems
-  - `configuration.nix` - Generic system config (imports common.nix + synapse.nix)
-  - `configuration-freevm.nix` - Freenix-specific config (imports common.nix)
+  - `host-generic.nix` - Generic system config (imports common.nix + synapse.nix)
+  - `host-freenix.nix` - Freenix-specific config (imports common.nix)
   - `disk-config.nix` - Disko declarative disk partitioning (LVM on GPT)
   - `users.nix` - User account definitions
   - `synapse.nix` - Matrix Synapse server configuration

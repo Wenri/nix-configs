@@ -34,7 +34,7 @@
         specialArgs = {inherit inputs outputs;};
         modules = [
           disko.nixosModules.disko
-          ./nixos/configuration-freevm.nix
+          ./nixos/host-freenix.nix
           nixos-facter-modules.nixosModules.facter
           {
             config.facter.reportPath =
@@ -53,7 +53,7 @@
         specialArgs = {inherit inputs outputs;};
         modules = [
           disko.nixosModules.disko
-          ./nixos/configuration.nix
+          ./nixos/host-generic.nix
           nixos-facter-modules.nixosModules.facter
           {
             config.facter.reportPath =
