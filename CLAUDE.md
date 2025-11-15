@@ -13,11 +13,11 @@ This is a NixOS configuration repository based on the [nix-starter-config](https
 ### anywhere/ - Active Configuration
 The primary configuration in active use:
 - `flake.nix` - Defines system configurations and home-manager setups
-  - NixOS configs: `freevm-nixos-facter` (aarch64-linux), `generic-nixos-facter` (x86_64-linux)
-  - Home configs: `wenri@nixos`, `wenri@freenix`
+  - NixOS configs: `freenix` (aarch64-linux), `matrix` (x86_64-linux)
+  - Home configs: `wenri@matrix`, `wenri@freenix`
 - `nixos/` - System-level NixOS configurations
   - `common.nix` - Shared base configuration for all systems
-  - `host-generic.nix` - Generic system config (imports common.nix + synapse.nix)
+  - `host-matrix.nix` - Matrix server config (imports common.nix + synapse.nix)
   - `host-freenix.nix` - Freenix-specific config (imports common.nix)
   - `disk-config.nix` - Disko declarative disk partitioning (LVM on GPT)
   - `users.nix` - User accounts, permissions, and user-specific programs
@@ -60,8 +60,8 @@ nix flake check
 ### NixOS System Configuration
 ```bash
 # Apply system configuration (from anywhere/)
-sudo nixos-rebuild switch --flake /home/wenri/nix-configs/anywhere#generic-nixos-facter
-sudo nixos-rebuild switch --flake /home/wenri/nix-configs/anywhere#freevm-nixos-facter
+sudo nixos-rebuild switch --flake /home/wenri/nix-configs/anywhere#matrix
+sudo nixos-rebuild switch --flake /home/wenri/nix-configs/anywhere#freenix
 
 # Apply from standard/ (replace hostname with actual)
 sudo nixos-rebuild switch --flake /home/wenri/nix-configs/standard#nixos-gnome
@@ -77,7 +77,7 @@ sudo nixos-rebuild build --flake .#hostname
 ### Home Manager
 ```bash
 # Apply home-manager configuration
-home-manager switch --flake /home/wenri/nix-configs/anywhere#wenri@nixos
+home-manager switch --flake /home/wenri/nix-configs/anywhere#wenri@matrix
 home-manager switch --flake /home/wenri/nix-configs/anywhere#wenri@freenix
 
 # Build without switching
@@ -168,14 +168,20 @@ Files in `.gitignore` are invisible to Nix evaluations.
 For fresh installations using the anywhere/ configuration:
 ```bash
 # With nixos-facter hardware detection
-nixos-anywhere --flake .#generic-nixos-facter \
-  --generate-hardware-config nixos-facter ./nixos/facter.json \
+# For matrix (x86_64-linux)
+nixos-anywhere --flake .#matrix \
+  --generate-hardware-config nixos-facter ./nixos/facter-matrix.json \
+  <hostname>
+
+# For freenix (aarch64-linux)
+nixos-anywhere --flake .#freenix \
+  --generate-hardware-config nixos-facter ./nixos/facter-free.json \
   <hostname>
 ```
 
 ## Important Notes
 - The repository README mentions it's "a little out of date" and pending refactor
 - `anywhere/` appears to be the actively maintained configuration
-- System state version for `anywhere/`: 24.11
+- System state version for `anywhere/`: 25.05
 - Custom packages in `standard/` are accessible via `nix build .#package-name`
 - The formatter is set to `alejandra` across all configurations
