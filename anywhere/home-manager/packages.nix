@@ -9,5 +9,6 @@
     file
     jq
     iperf3
+    gemini-cli
   ];
 }
