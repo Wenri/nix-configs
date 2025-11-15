@@ -6,6 +6,8 @@
   lib,
   config,
   pkgs,
+  username,
+  hostname,
   ...
 }: {
   # You can import other home-manager modules here
@@ -30,8 +32,8 @@
 
   # TODO: Set your username
   home = {
-    username = "wenri";
-    homeDirectory = "/home/wenri";
+    inherit username;
+    homeDirectory = "/home/${username}";
   };
 
   # Add stuff for your user as you see fit:

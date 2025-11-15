@@ -25,6 +25,9 @@
     inherit (self) outputs;
     lib = nixpkgs.lib;
 
+    # Default username for all configurations
+    defaultUsername = "wenri";
+
     # Create properly configured pkgs instances for each system
     mkPkgs = system:
       import nixpkgs {
@@ -36,10 +39,13 @@
       hostname,
       system,
       facterFile,
+      username ? defaultUsername,
     }:
       lib.nixosSystem {
         inherit system;
-        specialArgs = {inherit inputs outputs;};
+        specialArgs = {
+          inherit inputs outputs hostname username;
+        };
         modules = [
           inputs.disko.nixosModules.disko
           inputs.nixos-facter-modules.nixosModules.facter
@@ -54,13 +60,15 @@
       };
 
     mkHomeConfiguration = {
-      username,
+      username ? defaultUsername,
       hostname,
       system,
     }:
       inputs.home-manager.lib.homeManagerConfiguration {
         pkgs = mkPkgs system;
-        extraSpecialArgs = {inherit inputs outputs;};
+        extraSpecialArgs = {
+          inherit inputs outputs hostname username;
+        };
         modules = [./home-manager/home.nix];
       };
   in {
@@ -81,14 +89,12 @@
 
     # Home-manager configurations
     homeConfigurations = {
-      "wenri@matrix" = mkHomeConfiguration {
-        username = "wenri";
+      "${defaultUsername}@matrix" = mkHomeConfiguration {
         hostname = "matrix";
         system = "x86_64-linux";
       };
 
-      "wenri@freenix" = mkHomeConfiguration {
-        username = "wenri";
+      "${defaultUsername}@freenix" = mkHomeConfiguration {
         hostname = "freenix";
         system = "aarch64-linux";
       };

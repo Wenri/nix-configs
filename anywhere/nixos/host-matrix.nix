@@ -1,4 +1,10 @@
-{pkgs, config, lib, ...}: {
+{
+  pkgs,
+  config,
+  lib,
+  hostname,
+  ...
+}: {
   imports = [
     ./common.nix
     ./synapse.nix

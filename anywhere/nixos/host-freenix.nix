@@ -1,9 +1,13 @@
-{lib, ...}: {
+{
+  lib,
+  hostname,
+  ...
+}: {
   imports = [
     ./common.nix
   ];
 
-  networking.hostName = "freenix";
+  networking.hostName = hostname;
 
   # Configure systemd-networkd for both network interfaces
   # Tailscale optimization will be auto-detected based on MAC addresses below

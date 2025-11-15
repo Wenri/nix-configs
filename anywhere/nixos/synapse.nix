@@ -1,6 +1,8 @@
-{ pkgs, lib, config, ... }:
+{ pkgs, lib, config, hostname, ... }:
 let
-  fqdn = "${config.networking.hostName}.${config.networking.domain}";
+  # Domain should be configurable per host
+  domain = "wenri.me";
+  fqdn = "${hostname}.${domain}";
   baseUrl = "https://${fqdn}";
   clientConfig."m.homeserver".base_url = baseUrl;
   serverConfig."m.server" = "${fqdn}:443";
@@ -12,8 +14,8 @@ let
   # Define the database password as a parameter
   dbPassword = "WVlRuZGovPdSSMxZhiznuahgtJxcnVVkGdmZegyBsoVrTBHKvb";
 in {
-  networking.hostName = "matrix";
-  networking.domain = "wenri.me";
+  networking.hostName = hostname;
+  networking.domain = domain;
   networking.firewall.allowedTCPPorts = [ 80 443 ];
 
   security.acme = {
