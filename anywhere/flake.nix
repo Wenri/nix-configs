@@ -28,6 +28,23 @@
     # Default username for all configurations
     defaultUsername = "wenri";
 
+    # Supported systems for flake outputs
+    systems = [
+      "aarch64-linux"
+      "x86_64-linux"
+    ];
+    forAllSystems = nixpkgs.lib.genAttrs systems;
+
+    # Single source of truth for all hosts
+    hosts = {
+      freenix = {
+        system = "aarch64-linux";
+      };
+      matrix = {
+        system = "x86_64-linux";
+      };
+    };
+
     # Create properly configured pkgs instances for each system
     mkPkgs = system:
       import nixpkgs {
@@ -73,39 +90,31 @@
         modules = [./home-manager/home.nix];
       };
   in {
-    # NixOS system configurations
-    nixosConfigurations = {
-      freenix = mkNixosSystem {
-        hostname = "freenix";
-        system = "aarch64-linux";
-      };
+    # NixOS system configurations - generated from hosts
+    nixosConfigurations = lib.mapAttrs (hostname: cfg:
+      mkNixosSystem {
+        inherit hostname;
+        system = cfg.system;
+      })
+    hosts;
 
-      matrix = mkNixosSystem {
-        hostname = "matrix";
-        system = "x86_64-linux";
-      };
-    };
+    # Home-manager configurations - generated from hosts
+    homeConfigurations = lib.mapAttrs' (hostname: cfg:
+      lib.nameValuePair "${defaultUsername}@${hostname}" (mkHomeConfiguration {
+        inherit hostname;
+        system = cfg.system;
+      }))
+    hosts;
 
-    # Home-manager configurations
-    homeConfigurations = {
-      "${defaultUsername}@matrix" = mkHomeConfiguration {
-        hostname = "matrix";
-        system = "x86_64-linux";
-      };
-
-      "${defaultUsername}@freenix" = mkHomeConfiguration {
-        hostname = "freenix";
-        system = "aarch64-linux";
-      };
-    };
-
-    # Expose system configurations as packages
-    packages = {
-      x86_64-linux.matrix = self.nixosConfigurations.matrix.config.system.build.toplevel;
-      aarch64-linux.freenix = self.nixosConfigurations.freenix.config.system.build.toplevel;
-    };
+    # Expose system configurations as packages - only for matching system
+    packages = forAllSystems (system: let
+      hostsForSystem = lib.filterAttrs (hostname: cfg: cfg.system == system) hosts;
+    in
+      lib.mapAttrs (hostname: cfg:
+        self.nixosConfigurations.${hostname}.config.system.build.toplevel)
+      hostsForSystem);
 
     # Formatter for 'nix fmt'
-    formatter = lib.genAttrs ["x86_64-linux" "aarch64-linux"] (system: (mkPkgs system).alejandra);
+    formatter = forAllSystems (system: (mkPkgs system).alejandra);
   };
 }
