@@ -4,10 +4,8 @@
     ./synapse.nix
   ];
 
-  # Optimize Tailscale for this host's primary network interface
-  services.tailscale.optimizedInterfaces = [ "ens3" ];
-
   # Configure systemd-networkd for ens3 interface
+  # Tailscale optimization will be auto-detected if MAC address matching is configured
   # IPv4: DHCP
   # IPv6: Static address + automatic router discovery via Router Advertisements
   systemd.network.networks."40-ens3" = {
