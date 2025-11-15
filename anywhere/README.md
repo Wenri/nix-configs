@@ -26,6 +26,11 @@ home-manager/
 ├── home.nix             # Home-manager configuration
 ├── packages.nix         # User packages
 └── programs/            # Program-specific configs
+    ├── default.nix      # Program imports
+    ├── git.nix          # Git configuration (synced with GitHub)
+    ├── gh.nix           # GitHub CLI configuration
+    ├── ssh.nix          # SSH configuration
+    └── zsh.nix          # Zsh shell configuration
 ```
 
 ## Quick Start

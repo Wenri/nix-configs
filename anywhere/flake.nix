@@ -67,7 +67,7 @@
 
       homeConfigurations = {
         # FIXME replace with your username@hostname
-        "wenri@nixos" = home-manager.lib.homeManagerConfiguration {
+        "wenri@matrix" = home-manager.lib.homeManagerConfiguration {
           pkgs = nixpkgs.legacyPackages.x86_64-linux; # Home-manager requires 'pkgs' instance
           extraSpecialArgs = {inherit inputs outputs;};
           modules = [

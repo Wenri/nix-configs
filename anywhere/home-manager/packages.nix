@@ -5,6 +5,7 @@
     htop
     nodejs
     claude-code
-    gh
+    cursor-cli
+    file
   ];
 }
