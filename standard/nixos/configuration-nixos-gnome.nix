@@ -34,7 +34,8 @@
       outputs.overlays.modifications
       outputs.overlays.unstable-packages
       
-      inputs.nur.overlay
+      inputs.nur.overlays.default
+      inputs.nix-vscode-extensions.overlays.default
 
       # You can also add overlays exported from other flakes:
       # neovim-nightly-overlay.overlays.default
@@ -171,7 +172,7 @@
   services.zfs.autoScrub.enable = true;
 
   # https://nixos.wiki/wiki/FAQ/When_do_I_update_stateVersion
-  system.stateVersion = "24.11";
+  system.stateVersion = "25.05";
   
   virtualisation.vmware.guest.enable = true;
 }
