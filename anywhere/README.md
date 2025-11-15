@@ -60,6 +60,11 @@ nix flake init -t github:Wenri/nix-configs#modular
    - Set your username and home directory
    - Add your packages in packages.nix
 
+5. **Configure GitHub CLI** (optional):
+   - Run `gh auth login` to authenticate
+   - Git config will be automatically synced with GitHub profile
+   - See `programs/git.nix` for configuration
+
 ### Building
 
 ```bash
