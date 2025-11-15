@@ -6,10 +6,13 @@
 
   # Configure systemd-networkd for ens3 interface
   # Tailscale optimization will be auto-detected if MAC address matching is configured
+  # Match by MAC address for stability (interface names can change)
   # IPv4: DHCP
   # IPv6: Static address + automatic router discovery via Router Advertisements
   systemd.network.networks."40-ens3" = {
-    name = "ens3";
+    matchConfig = {
+      MACAddress = "00:16:3e:4f:ac:bb"; # ens3
+    };
     enable = true;
     
     # Network configuration
