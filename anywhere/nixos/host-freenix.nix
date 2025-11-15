@@ -5,10 +5,8 @@
 
   networking.hostName = "freenix";
 
-  # Optimize Tailscale for both network interfaces
-  services.tailscale.optimizedInterfaces = [ "enp0s5" "enp0s8u1" ];
-
   # Configure systemd-networkd for both network interfaces
+  # Tailscale optimization will be auto-detected based on MAC addresses below
   # Match by MAC address for stability (interface names can change)
   # IPv4: DHCP
   # IPv6: Automatic configuration via Router Advertisements
