@@ -5,7 +5,7 @@
   ];
 
   # Optimize Tailscale for this host's primary network interface
-  services.tailscale.optimizedInterface = "ens3";
+  services.tailscale.optimizedInterfaces = [ "ens3" ];
 
   # Configure systemd-networkd for ens3 interface
   # IPv4: DHCP
