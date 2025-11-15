@@ -78,9 +78,10 @@ home-manager switch --flake .#username@hostname
 ### Remote deployment with nixos-anywhere
 
 ```bash
-nixos-anywhere --flake .#generic-nixos-facter \
-  --generate-hardware-config nixos-facter ./nixos/facter.json \
-  <target-host>
+# Pattern: nixos-anywhere --flake .#<hostname> --generate-hardware-config nixos-facter ./nixos/facter-<hostname>.json <target>
+nixos-anywhere --flake .#matrix \
+  --generate-hardware-config nixos-facter ./nixos/facter-matrix.json \
+  root@target-host
 ```
 
 ## Features

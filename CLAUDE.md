@@ -23,7 +23,7 @@ The primary configuration in active use:
   - `users.nix` - User accounts, permissions, and user-specific programs
   - `synapse.nix` - Matrix Synapse server configuration module
   - `tailscale.nix` - Tailscale VPN configuration module with network optimization
-  - `facter.json` / `facter-free.json` - Hardware detection from nixos-facter
+  - `facter-freenix.json` / `facter-matrix.json` - Hardware detection from nixos-facter (follows pattern: `facter-${hostname}.json`)
 - `home-manager/` - User environment configurations
   - `home.nix` - Main home-manager entrypoint
   - `packages.nix` - User package declarations
@@ -168,15 +168,17 @@ Files in `.gitignore` are invisible to Nix evaluations.
 For fresh installations using the anywhere/ configuration:
 ```bash
 # With nixos-facter hardware detection
+# Pattern: nixos-anywhere --flake .#<hostname> --generate-hardware-config nixos-facter ./nixos/facter-<hostname>.json <target>
+
 # For matrix (x86_64-linux)
 nixos-anywhere --flake .#matrix \
   --generate-hardware-config nixos-facter ./nixos/facter-matrix.json \
-  <hostname>
+  root@target-host
 
 # For freenix (aarch64-linux)
 nixos-anywhere --flake .#freenix \
-  --generate-hardware-config nixos-facter ./nixos/facter-free.json \
-  <hostname>
+  --generate-hardware-config nixos-facter ./nixos/facter-freenix.json \
+  root@target-host
 ```
 
 ## Important Notes

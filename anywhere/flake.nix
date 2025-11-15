@@ -38,9 +38,10 @@
     mkNixosSystem = {
       hostname,
       system,
-      facterFile,
       username ? defaultUsername,
-    }:
+    }: let
+      facterFile = ./nixos/facter-${hostname}.json;
+    in
       lib.nixosSystem {
         inherit system;
         specialArgs = {
@@ -77,13 +78,11 @@
       freenix = mkNixosSystem {
         hostname = "freenix";
         system = "aarch64-linux";
-        facterFile = ./nixos/facter-free.json;
       };
 
       matrix = mkNixosSystem {
         hostname = "matrix";
         system = "x86_64-linux";
-        facterFile = ./nixos/facter-matrix.json;
       };
     };
 
