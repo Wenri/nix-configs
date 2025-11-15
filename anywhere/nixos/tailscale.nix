@@ -29,5 +29,12 @@
         '';
       };
     };
+
+    # Enable IPv6 RA acceptance on Tailscale optimized interface even with forwarding enabled
+    # Tailscale's useRoutingFeatures enables IPv6 forwarding, which disables RA acceptance by default
+    # This allows systemd-networkd to accept Router Advertisements on the optimized interface
+    boot.kernel.sysctl = lib.mkIf (config.services.tailscale.optimizedInterface != null) {
+      "net.ipv6.conf.${config.services.tailscale.optimizedInterface}.accept_ra" = 2;
+    };
   };
 }
