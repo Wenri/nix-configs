@@ -46,6 +46,8 @@
   };
 
   services.openssh.enable = true;
+  # Enable QEMU guest tools for all machines (applies to both matrix and freenix)
+  # This provides qemu-guest-agent and optimizations for running in QEMU/KVM
   services.qemuGuest.enable = true;
   services.fail2ban.enable = true;
   services.resolved.enable = true;
