@@ -5,36 +5,65 @@
   ...
 }: {
   options = {
+    services.tailscale.optimizedInterfaces = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [];
+      description = "List of network interfaces to optimize for Tailscale (enables UDP GRO forwarding)";
+      example = [ "enp0s5" "enp0s8u1" ];
+    };
+    # Backward compatibility: support single interface
     services.tailscale.optimizedInterface = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
       default = null;
-      description = "Network interface to optimize for Tailscale (enables UDP GRO forwarding)";
+      description = "Network interface to optimize for Tailscale (deprecated: use optimizedInterfaces)";
     };
   };
 
-  config = {
+  config = let
+    # Combine old single interface option with new list option for backward compatibility
+    optimizedInterfaces = 
+      if config.services.tailscale.optimizedInterface != null then
+        [ config.services.tailscale.optimizedInterface ] ++ config.services.tailscale.optimizedInterfaces
+      else
+        config.services.tailscale.optimizedInterfaces;
+  in {
     services.tailscale = {
       enable = true;
       useRoutingFeatures = "server";
     };
 
-    # Enable network optimization if interface is specified
-    services.networkd-dispatcher = lib.mkIf (config.services.tailscale.optimizedInterface != null) {
+    # Enable network optimization if interfaces are specified
+    services.networkd-dispatcher = lib.mkIf (optimizedInterfaces != []) {
       enable = true;
       rules."50-tailscale" = {
         onState = ["routable"];
         script = ''
           #!${pkgs.runtimeShell}
-          ${pkgs.ethtool}/bin/ethtool -K ${config.services.tailscale.optimizedInterface} rx-udp-gro-forwarding on rx-gro-list off
+          set -e
+          
+          interface="$1"
+          
+          # Check if the current interface is in the optimized list
+          ${lib.concatStringsSep "\n" (map (iface: ''
+          if [ "$interface" = "${iface}" ]; then
+            ${pkgs.ethtool}/bin/ethtool -K "$interface" rx-udp-gro-forwarding on rx-gro-list off
+            exit 0
+          fi
+          '') optimizedInterfaces)}
+          
+          # Interface not in optimized list, skip
+          exit 0
         '';
       };
     };
 
-    # Enable IPv6 RA acceptance on Tailscale optimized interface even with forwarding enabled
+    # Enable IPv6 RA acceptance on Tailscale optimized interfaces even with forwarding enabled
     # Tailscale's useRoutingFeatures enables IPv6 forwarding, which disables RA acceptance by default
-    # This allows systemd-networkd to accept Router Advertisements on the optimized interface
-    boot.kernel.sysctl = lib.mkIf (config.services.tailscale.optimizedInterface != null) {
-      "net.ipv6.conf.${config.services.tailscale.optimizedInterface}.accept_ra" = 2;
-    };
+    # This allows systemd-networkd to accept Router Advertisements on the optimized interfaces
+    boot.kernel.sysctl = lib.mkMerge (
+      map (iface: {
+        "net.ipv6.conf.${iface}.accept_ra" = 2;
+      }) optimizedInterfaces
+    );
   };
 }

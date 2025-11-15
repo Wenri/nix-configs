@@ -5,8 +5,8 @@
 
   networking.hostName = "freenix";
 
-  # Optimize Tailscale for this host's primary network interface
-  services.tailscale.optimizedInterface = "enp0s8u1";
+  # Optimize Tailscale for both network interfaces
+  services.tailscale.optimizedInterfaces = [ "enp0s5" "enp0s8u1" ];
 
   # Configure systemd-networkd for both network interfaces
   # Match by MAC address for stability (interface names can change)
