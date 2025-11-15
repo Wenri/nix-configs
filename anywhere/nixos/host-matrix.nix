@@ -28,5 +28,16 @@
         Address = "2a0f:ca80:1337::4053:872d/64";
       }
     ];
+    
+    # IPv6 default route via discovered router
+    # Router doesn't send Router Advertisements, so we configure static route
+    # Router: fe80::204b:cdff:fe8f:319 (discovered via neighbor table)
+    routes = [
+      {
+        Destination = "::/0";
+        Gateway = "fe80::204b:cdff:fe8f:319";
+        GatewayOnLink = true; # Required for link-local gateway
+      }
+    ];
   };
 }
