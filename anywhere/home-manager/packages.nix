@@ -7,5 +7,6 @@
     claude-code
     cursor-cli
     file
+    jq
   ];
 }

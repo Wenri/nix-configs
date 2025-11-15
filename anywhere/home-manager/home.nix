@@ -25,10 +25,7 @@
     ./packages.nix
   ];
 
-  nixpkgs.config = {
-    allowUnfree = true;
-    allowUnfreePredicate = _: true;
-  };
+  # nixpkgs config is inherited from system when using home-manager.useGlobalPkgs
 
   # TODO: Set your username
   home = {

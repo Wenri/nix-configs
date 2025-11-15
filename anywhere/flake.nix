@@ -67,12 +67,22 @@
         modules = [
           inputs.disko.nixosModules.disko
           inputs.nixos-facter-modules.nixosModules.facter
+          inputs.home-manager.nixosModules.home-manager
           ./nixos/host-${hostname}.nix
           {
             config.facter.reportPath =
               if builtins.pathExists facterFile
               then facterFile
               else throw "Missing facter report: ${facterFile}. Run nixos-anywhere with --generate-hardware-config nixos-facter ${facterFile}";
+          }
+          # Home-manager integration
+          {
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+            home-manager.extraSpecialArgs = {
+              inherit inputs outputs hostname username;
+            };
+            home-manager.users.${username} = import ./home-manager/home.nix;
           }
         ];
       };
