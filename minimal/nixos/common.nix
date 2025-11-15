@@ -44,8 +44,17 @@
   # Set hostname
   networking.hostName = hostname;
 
-  # Disable OpenSSH (not needed for WSL)
-  services.openssh.enable = false;
+  # Enable OpenSSH and rely on NixOS' built-in socket activation support.
+  services.openssh = {
+    enable = true;
+    startWhenNeeded = true;
+  };
+
+  # Override the socket to listen on a local UNIX domain socket instead of TCP port 22.
+  systemd.sockets.sshd.socketConfig = {
+    ListenStream = lib.mkForce [ "/run/sshd.sock" ];
+    SocketMode = "0600";
+  };
 
   # System packages
   environment.systemPackages = map lib.lowPrio [
