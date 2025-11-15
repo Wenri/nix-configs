@@ -75,13 +75,17 @@ sudo nixos-rebuild build --flake .#hostname
 ```
 
 ### Home Manager
+
+**Home-manager is now integrated into NixOS configurations.**
+A single `nixos-rebuild switch` command updates both system and user environment.
+
 ```bash
-# Apply home-manager configuration
+# Single command updates both NixOS and home-manager
+sudo nixos-rebuild switch --flake /home/wenri/nix-configs/anywhere#matrix
+
+# Standalone home-manager still available for backward compatibility
 home-manager switch --flake /home/wenri/nix-configs/anywhere#wenri@matrix
 home-manager switch --flake /home/wenri/nix-configs/anywhere#wenri@freenix
-
-# Build without switching
-home-manager build --flake .#username@hostname
 ```
 
 ### Building Custom Packages (standard/)
@@ -101,6 +105,31 @@ nix fmt
 
 ## Key Architecture Details
 
+### Modern Flake Architecture (2025)
+
+Both `anywhere/` and `standard/` now follow a modernized architecture:
+
+**Single Source of Truth:**
+- `hosts` attribute set defines all system configurations
+- Auto-generates `nixosConfigurations` and `homeConfigurations` using `lib.mapAttrs`
+- Eliminates redundant declarations and reduces code duplication
+
+**Proper Package Structure:**
+- Replaced `legacyPackages` with `mkPkgs` helper function
+- Packages output uses `forAllSystems` for proper cross-platform support
+- Formatter output configured for `nix fmt` using alejandra
+
+**Home-Manager Integration:**
+- Integrated as NixOS module (not standalone)
+- Uses `home-manager.useGlobalPkgs` and `home-manager.useUserPackages`
+- Single command updates both system and user environment
+- Backward compatible standalone configurations still available
+
+**Variable System:**
+- `defaultUsername` variable for consistent user configuration
+- `hostname` and `username` passed through `specialArgs` to all modules
+- Automatic derivation of paths (e.g., facter files from hostname)
+
 ### anywhere/ Configuration
 - Uses **nixos-facter** for hardware detection instead of traditional `hardware-configuration.nix`
 - Employs **disko** for declarative disk partitioning (see `disk-config.nix`)
@@ -109,9 +138,16 @@ nix fmt
 - System features: Tailscale VPN, Docker, fail2ban, openssh, Matrix Synapse
 - Multi-architecture support: x86_64-linux and aarch64-linux
 - Swap: Both file-based swap (2GB) and zram (30% of RAM with zstd compression)
-- System tools: ethtool, usbutils (lsusb), curl, git, vim, wget
+- System tools: ethtool, usbutils (lsusb), curl, git, vim, wget, jq
 - Passwordless sudo enabled for wheel group
 - systemd-oomd enabled for OOM protection
+
+### standard/ Configuration
+- Extended template with custom modules, overlays, and packages
+- Desktop environments: GNOME, Plasma6
+- Custom package definitions in `pkgs/`
+- Reusable NixOS and home-manager modules in `modules/`
+- Overlays for package modifications and unstable packages
 
 ### Flake Input Pattern
 All configurations follow the pattern:
@@ -138,10 +174,13 @@ In `standard/`:
 - Overlays in `overlays/default.nix` provide package modifications and access to unstable packages
 
 ### Home Manager Integration
-Currently used as standalone (separate from NixOS rebuild). To integrate into NixOS:
-1. Import `inputs.home-manager.nixosModules.home-manager` in NixOS config
-2. Configure via `home-manager.users.username = import ./path/to/home.nix;`
-3. Use `nixos-rebuild` instead of `home-manager` command
+**Fully integrated into NixOS as a module:**
+- Added `inputs.home-manager.nixosModules.home-manager` in `mkNixosSystem`
+- Configured `home-manager.users.${username} = import ./home-manager/home.nix;`
+- Enabled `home-manager.useGlobalPkgs = true` for shared package set
+- Enabled `home-manager.useUserPackages = true` for per-user packages
+- Single `nixos-rebuild switch` updates both system and user environment
+- Standalone `homeConfigurations` still available for backward compatibility
 
 ### Important Configuration Details
 
@@ -153,9 +192,41 @@ Currently used as standalone (separate from NixOS rebuild). To integrate into Ni
 - Network optimization for Tailscale (rx-udp-gro-forwarding)
 
 #### anywhere/home-manager/home.nix
-- Allows unfree packages
-- Home state version: 24.11
+- nixpkgs config inherited from system (when using `useGlobalPkgs`)
+- Home state version: 25.05
 - User environment reloads systemd units on switch (`sd-switch`)
+- Accepts `username` and `hostname` parameters from NixOS
+
+### Example: Modernized Flake Structure
+
+**Adding a new host** is now as simple as adding one entry to the `hosts` attribute:
+
+```nix
+# In flake.nix
+hosts = {
+  freenix = { system = "aarch64-linux"; };
+  matrix = { system = "x86_64-linux"; };
+  newhost = { system = "x86_64-linux"; };  # ← Add this
+};
+```
+
+This automatically generates:
+- `nixosConfigurations.newhost`
+- `homeConfigurations."wenri@newhost"` (or `"xsnow@newhost"` in standard/)
+- All necessary specialArgs and module imports
+
+**Helper functions** reduce boilerplate:
+```nix
+mkNixosSystem = { hostname, system, username ? defaultUsername }: ...
+mkHomeConfiguration = { hostname, system, username ? defaultUsername }: ...
+mkPkgs = system: import nixpkgs { inherit system; config.allowUnfree = true; };
+```
+
+**Benefits:**
+- DRY principle: No duplicate hostname/system declarations
+- Type safety: Impossible to mismatch system architectures
+- Maintainability: Single source of truth for all hosts
+- Consistency: Same pattern across anywhere/ and standard/
 
 ## Git Workflow
 Files must be tracked by git for Nix flakes to see them:
