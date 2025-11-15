@@ -13,6 +13,17 @@ let
   '';
   # Define the database password as a parameter
   dbPassword = "WVlRuZGovPdSSMxZhiznuahgtJxcnVVkGdmZegyBsoVrTBHKvb";
+  # Initial SQL script that runs only on first PostgreSQL initialization
+  # Sets password for matrix-synapse user and creates database with correct collation
+  initSql = pkgs.writeText "matrix-synapse-init.sql" ''
+    -- Set password for matrix-synapse user (created by ensureUsers)
+    ALTER USER "matrix-synapse" WITH PASSWORD '${dbPassword}';
+    
+    -- Create database with C collation (required by Synapse)
+    -- Note: CREATE DATABASE cannot run in a transaction, but initialScript runs outside transactions
+    -- If database already exists, this will fail silently (which is fine for initialScript)
+    CREATE DATABASE "matrix-synapse" WITH LC_COLLATE='C' LC_CTYPE='C' TEMPLATE template0 OWNER "matrix-synapse";
+  '';
 in {
   networking.hostName = hostname;
   networking.domain = domain;
@@ -25,11 +36,14 @@ in {
 
   services.postgresql = {
     enable = true;
-    ensureDatabases = [ "matrix-synapse" ];
+    # Don't use ensureDatabases - we create it in initialScript with correct collation
+    # Don't use ensureDBOwnership - we set ownership in CREATE DATABASE command
     ensureUsers = [{
       name = "matrix-synapse";
-      ensureDBOwnership = true;
     }];
+    # Initial script runs only on first PostgreSQL initialization
+    # Sets password and creates database with correct collation and ownership
+    initialScript = initSql;
   };
 
   services.nginx = {
