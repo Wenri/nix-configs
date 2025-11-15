@@ -11,21 +11,10 @@
       description = "List of network interfaces to optimize for Tailscale (enables UDP GRO forwarding)";
       example = [ "enp0s5" "enp0s8u1" ];
     };
-    # Backward compatibility: support single interface
-    services.tailscale.optimizedInterface = lib.mkOption {
-      type = lib.types.nullOr lib.types.str;
-      default = null;
-      description = "Network interface to optimize for Tailscale (deprecated: use optimizedInterfaces)";
-    };
   };
 
   config = let
-    # Combine old single interface option with new list option for backward compatibility
-    optimizedInterfaces = 
-      if config.services.tailscale.optimizedInterface != null then
-        [ config.services.tailscale.optimizedInterface ] ++ config.services.tailscale.optimizedInterfaces
-      else
-        config.services.tailscale.optimizedInterfaces;
+    optimizedInterfaces = config.services.tailscale.optimizedInterfaces;
   in {
     services.tailscale = {
       enable = true;
