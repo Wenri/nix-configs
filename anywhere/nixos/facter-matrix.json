@@ -324,9 +324,10 @@
           "taa",
           "mmio_stale_data",
           "bhi",
-          "ibpb_no_ret"
+          "ibpb_no_ret",
+          "its"
         ],
-        "bogo": 5193.98,
+        "bogo": 4794.44,
         "cache": 35840,
         "physical_id": 0,
         "siblings": 1,
@@ -338,8 +339,8 @@
         "clflush_size": 64,
         "cache_alignment": 64,
         "address_sizes": {
-          "physical": 46,
-          "virtual": 48
+          "physical": "0x2e",
+          "virtual": "0x30"
         }
       },
       {
@@ -450,9 +451,10 @@
           "taa",
           "mmio_stale_data",
           "bhi",
-          "ibpb_no_ret"
+          "ibpb_no_ret",
+          "its"
         ],
-        "bogo": 5193.98,
+        "bogo": 4794.44,
         "cache": 35840,
         "physical_id": 1,
         "siblings": 1,
@@ -464,8 +466,8 @@
         "clflush_size": 64,
         "cache_alignment": 64,
         "address_sizes": {
-          "physical": 46,
-          "virtual": 48
+          "physical": "0x2e",
+          "virtual": "0x30"
         }
       },
       {
@@ -576,9 +578,10 @@
           "taa",
           "mmio_stale_data",
           "bhi",
-          "ibpb_no_ret"
+          "ibpb_no_ret",
+          "its"
         ],
-        "bogo": 5193.98,
+        "bogo": 4794.44,
         "cache": 35840,
         "physical_id": 2,
         "siblings": 1,
@@ -590,8 +593,8 @@
         "clflush_size": 64,
         "cache_alignment": 64,
         "address_sizes": {
-          "physical": 46,
-          "virtual": 48
+          "physical": "0x2e",
+          "virtual": "0x30"
         }
       },
       {
@@ -702,9 +705,10 @@
           "taa",
           "mmio_stale_data",
           "bhi",
-          "ibpb_no_ret"
+          "ibpb_no_ret",
+          "its"
         ],
-        "bogo": 5193.98,
+        "bogo": 4794.44,
         "cache": 35840,
         "physical_id": 3,
         "siblings": 1,
@@ -716,8 +720,8 @@
         "clflush_size": 64,
         "cache_alignment": 64,
         "address_sizes": {
-          "physical": 46,
-          "virtual": 48
+          "physical": "0x2e",
+          "virtual": "0x30"
         }
       },
       {
@@ -828,9 +832,10 @@
           "taa",
           "mmio_stale_data",
           "bhi",
-          "ibpb_no_ret"
+          "ibpb_no_ret",
+          "its"
         ],
-        "bogo": 5193.98,
+        "bogo": 4794.44,
         "cache": 35840,
         "physical_id": 4,
         "siblings": 1,
@@ -842,8 +847,8 @@
         "clflush_size": 64,
         "cache_alignment": 64,
         "address_sizes": {
-          "physical": 46,
-          "virtual": 48
+          "physical": "0x2e",
+          "virtual": "0x30"
         }
       },
       {
@@ -954,9 +959,10 @@
           "taa",
           "mmio_stale_data",
           "bhi",
-          "ibpb_no_ret"
+          "ibpb_no_ret",
+          "its"
         ],
-        "bogo": 5193.98,
+        "bogo": 4794.44,
         "cache": 35840,
         "physical_id": 5,
         "siblings": 1,
@@ -968,8 +974,8 @@
         "clflush_size": 64,
         "cache_alignment": 64,
         "address_sizes": {
-          "physical": 46,
-          "virtual": 48
+          "physical": "0x2e",
+          "virtual": "0x30"
         }
       }
     ],
@@ -1003,7 +1009,6 @@
           "range": 16
         },
         "unix_device_names": [
-          "/dev/disk/by-diskseq/9",
           "/dev/disk/by-path/pci-0000:00:06.0",
           "/dev/disk/by-path/virtio-pci-0000:00:06.0",
           "/dev/vda"
@@ -1015,7 +1020,7 @@
             "cylinders": 312076,
             "heads": 16,
             "sectors": 63,
-            "size": 0,
+            "size": "0x0",
             "geo_type": "logical"
           },
           {
@@ -1124,13 +1129,13 @@
           "irq": 0,
           "prog_if": 0
         },
-        "driver": "cirrus",
-        "driver_module": "cirrus",
+        "driver": "cirrus-qemu",
+        "driver_module": "cirrus_qemu",
         "drivers": [
-          "cirrus"
+          "cirrus-qemu"
         ],
         "driver_modules": [
-          "cirrus"
+          "cirrus_qemu"
         ],
         "driver_info": {
           "type": "x11",
@@ -1179,7 +1184,7 @@
         },
         "vendor": {
           "hex": "1d6b",
-          "name": "Linux 6.11.10 uhci_hcd",
+          "name": "Linux 6.14.10 uhci_hcd",
           "value": 7531
         },
         "device": {
@@ -1189,11 +1194,11 @@
         },
         "revision": {
           "hex": "0000",
-          "name": "6.11",
+          "name": "6.14",
           "value": 0
         },
         "serial": "0000:00:01.2",
-        "model": "Linux 6.11.10 uhci_hcd UHCI Host Controller",
+        "model": "Linux 6.14.10 uhci_hcd UHCI Host Controller",
         "sysfs_id": "/devices/pci0000:00/0000:00:01.2/usb1/1-0:1.0",
         "sysfs_bus_id": "1-0:1.0",
         "resources": [
@@ -1234,10 +1239,14 @@
         },
         "hotplug": "usb",
         "driver": "hub",
+        "driver_module": "usbcore",
         "drivers": [
           "hub"
         ],
-        "module_alias": "usb:v1D6Bp0001d0611dc09dsc00dp00ic09isc00ip00in00"
+        "driver_modules": [
+          "usbcore"
+        ],
+        "module_alias": "usb:v1D6Bp0001d0614dc09dsc00dp00ic09isc00ip00in00"
       }
     ],
     "memory": [
@@ -1262,7 +1271,7 @@
           {
             "type": "mem",
             "base": 0,
-            "range": 12484018176,
+            "range": 12481675264,
             "enabled": true,
             "access": "read_write",
             "prefetch": "unknown"
@@ -2355,38 +2364,40 @@
       "start_address": "0xe8000",
       "rom_size": 65536
     },
-    "chassis": {
-      "handle": 768,
-      "manufacturer": "Red Hat",
-      "version": "RHEL 7.6.0 PC (i440FX + PIIX, 1996)",
-      "chassis_type": {
-        "hex": "0001",
-        "name": "Other",
-        "value": 1
-      },
-      "lock_present": false,
-      "bootup_state": {
-        "hex": "0003",
-        "name": "Safe",
-        "value": 3
-      },
-      "power_state": {
-        "hex": "0003",
-        "name": "Safe",
-        "value": 3
-      },
-      "thermal_state": {
-        "hex": "0003",
-        "name": "Safe",
-        "value": 3
-      },
-      "security_state": {
-        "hex": "0002",
-        "name": "Unknown",
-        "value": 2
-      },
-      "oem": "0x0"
-    },
+    "chassis": [
+      {
+        "handle": 768,
+        "manufacturer": "Red Hat",
+        "version": "RHEL 7.6.0 PC (i440FX + PIIX, 1996)",
+        "chassis_type": {
+          "hex": "0001",
+          "name": "Other",
+          "value": 1
+        },
+        "lock_present": false,
+        "bootup_state": {
+          "hex": "0003",
+          "name": "Safe",
+          "value": 3
+        },
+        "power_state": {
+          "hex": "0003",
+          "name": "Safe",
+          "value": 3
+        },
+        "thermal_state": {
+          "hex": "0003",
+          "name": "Safe",
+          "value": 3
+        },
+        "security_state": {
+          "hex": "0002",
+          "name": "Unknown",
+          "value": 2
+        },
+        "oem": "0x0"
+      }
+    ],
     "memory_array": [
       {
         "handle": 4096,
@@ -2405,7 +2416,7 @@
           "name": "Multi-bit",
           "value": 6
         },
-        "max_size": 12521472,
+        "max_size": "0xbf1000",
         "error_handle": 65534,
         "slots": 1
       }
@@ -2414,15 +2425,15 @@
       {
         "handle": 4864,
         "array_handle": 4096,
-        "start_address": 0,
-        "end_address": 3221225472,
+        "start_address": "0x0",
+        "end_address": "0xc0000000",
         "part_width": 1
       },
       {
         "handle": 4865,
         "array_handle": 4096,
-        "start_address": 4294967296,
-        "end_address": 13895729152,
+        "start_address": "0x100000000",
+        "end_address": "0x33c400000",
         "part_width": 1
       }
     ],

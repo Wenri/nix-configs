@@ -15,10 +15,10 @@
     enable = true;
     
     # Network configuration
-    # DHCP = "yes" (useNetworkd default) - enables IPv4 DHCP
-    # Since network doesn't provide DHCPv6, this won't cause conflicts
+    # Explicitly enable DHCPv4 (IPv4 DHCP)
     # IPv6 uses static address + Router Advertisements
     networkConfig = {
+      DHCP = "yes"; # Enable IPv4 DHCP
       IPv6AcceptRA = true; # Accept RAs even with forwarding enabled (for Tailscale)
     };
     
