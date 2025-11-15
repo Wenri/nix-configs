@@ -8,5 +8,6 @@
     cursor-cli
     file
     jq
+    iperf3
   ];
 }
