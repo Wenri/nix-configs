@@ -74,7 +74,7 @@
   in {
     # NixOS system configurations
     nixosConfigurations = {
-      freevm-nixos-facter = mkNixosSystem {
+      freenix = mkNixosSystem {
         hostname = "freenix";
         system = "aarch64-linux";
         facterFile = ./nixos/facter-free.json;
@@ -103,7 +103,7 @@
     # Expose system configurations as packages
     packages = {
       x86_64-linux.matrix = self.nixosConfigurations.matrix.config.system.build.toplevel;
-      aarch64-linux.freevm-nixos-facter = self.nixosConfigurations.freevm-nixos-facter.config.system.build.toplevel;
+      aarch64-linux.freenix = self.nixosConfigurations.freenix.config.system.build.toplevel;
     };
 
     # Formatter for 'nix fmt'
