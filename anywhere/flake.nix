@@ -25,6 +25,13 @@
     inherit (self) outputs;
     lib = nixpkgs.lib;
 
+    # Create properly configured pkgs instances for each system
+    mkPkgs = system:
+      import nixpkgs {
+        inherit system;
+        config.allowUnfree = true;
+      };
+
     mkNixosSystem = {
       hostname,
       system,
@@ -52,11 +59,12 @@
       system,
     }:
       inputs.home-manager.lib.homeManagerConfiguration {
-        pkgs = nixpkgs.legacyPackages.${system};
+        pkgs = mkPkgs system;
         extraSpecialArgs = {inherit inputs outputs;};
         modules = [./home-manager/home.nix];
       };
   in {
+    # NixOS system configurations
     nixosConfigurations = {
       freevm-nixos-facter = mkNixosSystem {
         hostname = "freenix";
@@ -71,6 +79,7 @@
       };
     };
 
+    # Home-manager configurations
     homeConfigurations = {
       "wenri@matrix" = mkHomeConfiguration {
         username = "wenri";
@@ -84,5 +93,14 @@
         system = "aarch64-linux";
       };
     };
+
+    # Expose system configurations as packages
+    packages = {
+      x86_64-linux.matrix = self.nixosConfigurations.matrix.config.system.build.toplevel;
+      aarch64-linux.freevm-nixos-facter = self.nixosConfigurations.freevm-nixos-facter.config.system.build.toplevel;
+    };
+
+    # Formatter for 'nix fmt'
+    formatter = lib.genAttrs ["x86_64-linux" "aarch64-linux"] (system: (mkPkgs system).alejandra);
   };
 }
