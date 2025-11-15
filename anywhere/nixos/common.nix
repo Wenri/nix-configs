@@ -48,6 +48,7 @@
   services.openssh.enable = true;
   services.qemuGuest.enable = true;
   services.fail2ban.enable = true;
+  services.resolved.enable = true;
 
   environment.systemPackages = map lib.lowPrio [
     pkgs.curl
@@ -56,6 +57,12 @@
     pkgs.wget
     pkgs.ethtool
     pkgs.usbutils
+    pkgs.ndisc6  # IPv6 router discovery tool (rdisc6)
+    pkgs.iputils # IPv6 ping tool (ping -6)
+    # Create ping6 wrapper for compatibility
+    (pkgs.writeShellScriptBin "ping6" ''
+      exec ${pkgs.iputils}/bin/ping -6 "$@"
+    '')
   ];
 
   swapDevices = [
