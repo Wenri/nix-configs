@@ -32,7 +32,7 @@
 
     # Single source of truth for all hosts
     hosts = {
-      nixos = {
+      wslnix = {
         system = "x86_64-linux";
       };
     };
