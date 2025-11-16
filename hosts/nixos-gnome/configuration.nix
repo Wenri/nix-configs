@@ -10,20 +10,13 @@
 }: {
   # You can import other NixOS modules here
   imports = [
-    # If you want to use modules your own flake exports (from modules/nixos):
-    # outputs.nixosModules.example
+    # Shared desktop modules
+    ../../common/modules/nixos/users.nix
+    ../../common/modules/nixos/locale.nix
+    ../../common/modules/nixos/secrets.nix
 
-    # Or modules from other flakes (such as nixos-hardware):
-    # inputs.hardware.nixosModules.common-cpu-amd
-    # inputs.hardware.nixosModules.common-ssd
-
-    # You can also split up your configuration and import pieces of it here:
-    ./users.nix
-    ./locale.nix
-    ./secrets.nix
-    
     # Import your generated (nixos-generate-config) hardware configuration
-    ./hardware-configuration-irif.nix
+    ./hardware-configuration.nix
   ];
 
   nixpkgs = {
@@ -33,10 +26,10 @@
       outputs.overlays.additions
       outputs.overlays.modifications
       outputs.overlays.unstable-packages
-      
+      outputs.overlays.master-packages
       inputs.nur.overlays.default
       inputs.nix-vscode-extensions.overlays.default
-      
+
       # You can also add overlays exported from other flakes:
       # neovim-nightly-overlay.overlays.default
 
@@ -78,39 +71,45 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
   boot.supportedFilesystems = [ "zfs" ];
+  boot.initrd.luks.devices = {
+    "luks-be8c7b36-0982-4e45-b7c1-0864ca83b166" = {
+      device = "/dev/disk/by-uuid/be8c7b36-0982-4e45-b7c1-0864ca83b166";
+      allowDiscards = true;
+      keyFileSize = 4096;
+      keyFile = "/dev/sr0";
+      # optionally enable fallback to password in case USB is lost
+      fallbackToPassword = true;
+    };
+    "luks-7f5e9ac8-ba4b-49f2-beb4-08931911ab29" = {
+      allowDiscards = true;
+      keyFileSize = 4096;
+      keyFile = "/dev/sr0";
+      # optionally enable fallback to password in case USB is lost
+      fallbackToPassword = true;
+    };
+  };
   boot.zfs.package = pkgs.zfs_unstable;
-  boot.kernelPackages = pkgs.linuxPackages_xanmod_stable;
+  boot.kernelPackages = config.boot.zfs.package.latestCompatibleLinuxPackages;
   boot.kernelParams = [
     "quiet"
     "splash"
-    "mce=dont_log_ce"
-    "nowatchdog"
-    "tsc=nowatchdog"
-    "nmi_watchdog=0"
-    "nosoftlockup"
-    "preempt=full"
-    "retbleed=stuff"
+    "mce=off"
   ];
-
+  
   # for local disks that are not shared over the network, we don't need this to be random
   networking.hostId = "8425e349";
   # TODO: Set your hostname
-  networking.hostName = "irif";
-
+  networking.hostName = "nixos-gnome";
+  
   # Enable networking
   networking.networkmanager.enable = true;
 
-  # Only allowed NTP
-  networking.timeServers = [ "ntp.univ-paris-diderot.fr" ];
-
   # Enable the X11 windowing system.
+  # You can disable this if you're only using the Wayland session.
   services.xserver.enable = true;
 
   # Enable the GNOME Desktop Environment.
-  services.xserver.displayManager.gdm = {
-    enable = true;
-    autoSuspend = false;
-  };
+  services.xserver.displayManager.gdm.enable = true;
   services.xserver.desktopManager.gnome.enable = true;
 
   # Configure keymap in X11
@@ -119,15 +118,9 @@
     variant = "";
   };
 
-  # Swao Ctrl and Caps
-  services.udev.extraHwdb = ''
-    evdev:input:b0003v046Ap0023*
-      KEYBOARD_KEY_70039=leftctrl # caps -> ctrl_l
-      KEYBOARD_KEY_700e0=capslock # ctrl_l -> caps
-  '';
-
   # Enable CUPS to print documents.
   services.printing.enable = true;
+
 
   # Enable sound with pipewire.
   hardware.pulseaudio.enable = false;
@@ -153,8 +146,6 @@
   environment.systemPackages = with pkgs; [
     vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
     wget
-    htop
-    libreoffice-qt # FOR GNOME
   ];
   
   # This setups a SSH server. Very important if you're setting up a headless system.
@@ -166,43 +157,15 @@
       PermitRootLogin = "no";
       # Opinionated: use keys only.
       # Remove if you want to SSH using passwords
-      # PasswordAuthentication = false;
+      PasswordAuthentication = false;
     };
   };
   
   services.tailscale.enable = true;
-  services.tailscale.useRoutingFeatures = "server";
   services.zfs.autoScrub.enable = true;
-  services.fwupd.enable = true;
-  services.earlyoom.enable = true;
-
-  virtualisation.docker.enable = true;
-
-  virtualisation.docker.rootless = {
-    enable = true;
-    setSocketVariable = true;
-  };
-
-  networking.networkmanager.dispatcherScripts = [ {
-    source = pkgs.writeText "50-tailscale" ''
-        #!${pkgs.runtimeShell}
-        interface="$1"
-        event="$2"
-        set -e
-        [ "$event" == "up" ] || exit 0
-        [ "$interface" == "enp0s31f6" ] ||  exit 0
-        ${pkgs.ethtool}/bin/ethtool -K "$interface" rx-udp-gro-forwarding on rx-gro-list off
-      '';
-    type = "basic";
-    }
-  ];
-
-  zramSwap = {
-    enable = true;
-    algorithm = "zstd";
-    memoryPercent = 30;
-  };
 
   # https://nixos.wiki/wiki/FAQ/When_do_I_update_stateVersion
   system.stateVersion = "25.05";
+  
+  virtualisation.vmware.guest.enable = true;
 }

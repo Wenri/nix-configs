@@ -2,5 +2,10 @@
 # These should be stuff you would like to share with others, not your personal configurations.
 {
   # List your module files here
-  # my-module = import ./my-module.nix;
+  server-common = import ./server-common.nix;
+  users = import ./users.nix;
+  locale = import ./locale.nix;
+  secrets = import ./secrets.nix;
+  tailscale = import ./tailscale.nix;
+  disk-config = import ./disk-config.nix;
 }

@@ -6,7 +6,9 @@
   ...
 }: {
   imports = [
-    ./common.nix
+    ../../common/modules/nixos/server-common.nix
+    ../../common/modules/nixos/users.nix
+    ../../common/modules/nixos/tailscale.nix
     ./synapse.nix
   ];
 

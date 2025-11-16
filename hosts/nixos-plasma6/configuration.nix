@@ -10,20 +10,13 @@
 }: {
   # You can import other NixOS modules here
   imports = [
-    # If you want to use modules your own flake exports (from modules/nixos):
-    # outputs.nixosModules.example
+    # Shared desktop modules
+    ../../common/modules/nixos/users.nix
+    ../../common/modules/nixos/locale.nix
+    ../../common/modules/nixos/secrets.nix
 
-    # Or modules from other flakes (such as nixos-hardware):
-    # inputs.hardware.nixosModules.common-cpu-amd
-    # inputs.hardware.nixosModules.common-ssd
-
-    # You can also split up your configuration and import pieces of it here:
-    ./users.nix
-    ./locale.nix
-    ./secrets.nix
-    
     # Import your generated (nixos-generate-config) hardware configuration
-    ./hardware-configuration-nixos-gnome.nix
+    ./hardware-configuration.nix
   ];
 
   nixpkgs = {
@@ -79,15 +72,15 @@
   boot.loader.efi.canTouchEfiVariables = true;
   boot.supportedFilesystems = [ "zfs" ];
   boot.initrd.luks.devices = {
-    "luks-be8c7b36-0982-4e45-b7c1-0864ca83b166" = {
-      device = "/dev/disk/by-uuid/be8c7b36-0982-4e45-b7c1-0864ca83b166";
+    "luks-e8af78ec-280b-4662-9bbc-6bc27e1cc24a" = {
+      device = "/dev/disk/by-uuid/e8af78ec-280b-4662-9bbc-6bc27e1cc24a";
       allowDiscards = true;
       keyFileSize = 4096;
       keyFile = "/dev/sr0";
       # optionally enable fallback to password in case USB is lost
       fallbackToPassword = true;
     };
-    "luks-7f5e9ac8-ba4b-49f2-beb4-08931911ab29" = {
+    "luks-6a0ee6e9-7f65-43f2-b3df-4ef5ee243698" = {
       allowDiscards = true;
       keyFileSize = 4096;
       keyFile = "/dev/sr0";
@@ -102,11 +95,11 @@
     "splash"
     "mce=off"
   ];
-  
+
   # for local disks that are not shared over the network, we don't need this to be random
-  networking.hostId = "8425e349";
+  networking.hostId = "8425e349";  
   # TODO: Set your hostname
-  networking.hostName = "nixos-gnome";
+  networking.hostName = "nixos-plasma6";
   
   # Enable networking
   networking.networkmanager.enable = true;
@@ -115,10 +108,14 @@
   # You can disable this if you're only using the Wayland session.
   services.xserver.enable = true;
 
-  # Enable the GNOME Desktop Environment.
-  services.xserver.displayManager.gdm.enable = true;
-  services.xserver.desktopManager.gnome.enable = true;
-
+  # Enable the KDE Plasma Desktop Environment.
+  services.displayManager = {
+    sddm.enable = true;
+    autoLogin.enable = true;
+    autoLogin.user = "xsnow";
+  };
+  services.desktopManager.plasma6.enable = true;
+  
   # Configure keymap in X11
   services.xserver.xkb = {
     layout = "us";

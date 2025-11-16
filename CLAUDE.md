@@ -5,25 +5,33 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Repository Overview
 
 This is a NixOS configuration repository based on the [nix-starter-config](https://github.com/Misterio77/nix-starter-config) template. It contains:
-- **Template flakes** (`minimal/` and `standard/`) - starter configurations for new users
-- **Live configuration** (`anywhere/`) - the active NixOS and home-manager setup for user wenri
+- **Single unified flake** at root managing 6 NixOS hosts
+- **Unified infrastructure** in `common/` (overlays, modules, packages, home-manager)
+- **Per-host configurations** in `hosts/` directory
+- **All users (wenri, nixos, xsnow) are the same person: Bingchen Gong**
 
 ## Repository Structure
 
-### common/ - Unified Configuration Modules
-**All users (wenri, nixos, xsnow) are the same person: Bingchen Gong**
+### common/ - Unified Infrastructure (Exported)
 
-Shared infrastructure and home-manager modules providing identical userspace across all environments:
+Shared infrastructure providing identical userspace across all 6 hosts:
 
-**Infrastructure** (shared by anywhere/, minimal/, standard/):
+**Infrastructure** (all exported via flake outputs):
 - `overlays/default.nix` - Package overlays:
   - `additions` - Custom packages from common/pkgs
   - `modifications` - Package modifications (e.g., fcitx5-rime-lua)
-  - `unstable-packages` - Access to nixpkgs-unstable
-  - `master-packages` - Access to nixpkgs-master
+  - `unstable-packages` - Access to nixpkgs-unstable via `pkgs.unstable.*`
+  - `master-packages` - Access to nixpkgs-master via `pkgs.master.*`
   - NUR (Nix User Repository) integration for community packages
   - nix-vscode-extensions for VS Code marketplace extensions
-- `modules/` - Custom NixOS and home-manager modules shared across all configurations
+- `modules/nixos/` - Exportable NixOS modules:
+  - `server-common.nix` - Base server configuration with overlays
+  - `users.nix` - Desktop user configuration
+  - `locale.nix` - Locale and timezone settings
+  - `secrets.nix` - Secrets management configuration
+  - `tailscale.nix` - Tailscale VPN configuration
+  - `disk-config.nix` - Disko disk partitioning
+- `modules/home-manager/` - Empty, ready for exportable home-manager modules
 - `pkgs/` - Custom package definitions (example-package)
 
 **Core home-manager modules** (auto-imported via `common/home-manager/default.nix`):
@@ -50,56 +58,49 @@ Shared infrastructure and home-manager modules providing identical userspace acr
   - `firefox/` - Firefox with NUR extensions (1Password, uBlock Origin, Translate)
   - `gnome.nix` - GNOME desktop customizations
 
-**Result**: All three configs have identical userspace and share the same infrastructure (overlays, modules, pkgs).
+**Result**: All 6 hosts share identical userspace and infrastructure.
 
-### anywhere/ - Active Configuration
-The primary configuration in active use:
-- `flake.nix` - Defines system configurations and home-manager setups
-  - NixOS configs: `freenix` (aarch64-linux), `matrix` (x86_64-linux)
-  - Home configs: `wenri@matrix`, `wenri@freenix`
-  - Exports overlays, modules, and packages from `../common/`
-  - Includes NUR and nix-vscode-extensions inputs
-- `nixos/` - System-level NixOS configurations
-  - `common.nix` - Shared base configuration for all systems with common overlays
-  - `host-matrix.nix` - Matrix server config (imports common.nix + synapse.nix)
-  - `host-freenix.nix` - Freenix-specific config (imports common.nix)
-  - `disk-config.nix` - Disko declarative disk partitioning (LVM on GPT)
-  - `users.nix` - User accounts, permissions, and user-specific programs
-  - `synapse.nix` - Matrix Synapse server configuration module
-  - `tailscale.nix` - Tailscale VPN configuration module with network optimization
-  - `facter-freenix.json` / `facter-matrix.json` - Hardware detection from nixos-facter (follows pattern: `facter-${hostname}.json`)
-- `home-manager/` - User environment configurations
-  - `home.nix` - Main home-manager entrypoint (imports unified common modules only)
+### Root flake.nix - Single Unified Flake
 
-### standard/ - Standard Template
-Extended template with desktop environments:
-- `flake.nix` - Desktop-focused configuration
-  - Multiple NixOS configurations: `nixos-gnome`, `nixos-plasma6`, `irif`
-  - Home configs for user `xsnow`
-  - Exports overlays, modules, and packages from `../common/`
-  - Includes NUR and nix-vscode-extensions inputs
-- `nixos/` - System-level NixOS configurations with common overlays
-  - Desktop environment configurations (GNOME, Plasma6)
-  - ZFS support with LUKS encryption
-  - VMware guest tools integration
-- `home-manager/` - User environment configurations
-  - `home.nix` - Imports unified common + desktop-packages + development + programs from common/
+The root `flake.nix` manages all 6 hosts with a single source of truth:
 
-### minimal/ - NixOS-WSL Configuration
-NixOS-WSL configuration with modern architecture:
-- `flake.nix` - Modern flake architecture with NixOS-WSL integration
-  - NixOS config: `wslnix` (x86_64-linux)
-  - Home config: `nixos@wslnix`
-  - Uses `mkNixosSystem` and `mkHomeConfiguration` helper functions
-  - Single source of truth `hosts` attribute set
-  - Integrated home-manager as NixOS module
-  - Exports overlays, modules, and packages from `../common/`
-  - Includes NUR and nix-vscode-extensions inputs
-- `nixos/` - System-level configurations
-  - `common.nix` - Main system configuration with WSL support, Tailscale userspace networking, common overlays
-  - `users.nix` - User accounts with dynamic username support
-- `home-manager/` - User environment configurations
-  - `home.nix` - Main home-manager entrypoint (imports unified common modules only)
+```nix
+hosts = {
+  wslnix       = { system = "x86_64-linux";   username = "nixos"; type = "wsl"; };
+  nixos-gnome  = { system = "x86_64-linux";   username = "xsnow"; type = "desktop"; };
+  nixos-plasma6= { system = "x86_64-linux";   username = "xsnow"; type = "desktop"; };
+  irif         = { system = "x86_64-linux";   username = "xsnow"; type = "desktop"; };
+  matrix       = { system = "x86_64-linux";   username = "wenri"; type = "server"; };
+  freenix      = { system = "aarch64-linux";  username = "wenri"; type = "server"; };
+}
+```
+
+**Features:**
+- Auto-generates all `nixosConfigurations` and `homeConfigurations`
+- Type-based module loading (wsl, desktop, server)
+- Exports overlays, modules, and packages from `common/`
+- Integrated home-manager as NixOS module
+- Single `nix flake update` updates all hosts
+
+### hosts/ - Per-Host Configurations
+
+Each host has its own directory with minimal configuration:
+
+**wslnix/** (WSL)
+- `configuration.nix` - WSL system config, imports from `common/modules/nixos/`
+- `users.nix` - WSL-specific user configuration
+- `home.nix` - Imports common home-manager modules only
+
+**nixos-gnome/, nixos-plasma6/, irif/** (Desktops)
+- `configuration.nix` - Desktop config, imports `common/modules/nixos/users.nix`, `locale.nix`, `secrets.nix`
+- `hardware-configuration.nix` - Hardware-specific configuration
+- `home.nix` - Imports common + desktop-packages + development + programs
+
+**matrix/, freenix/** (Servers)
+- `configuration.nix` - Server config, imports `common/modules/nixos/server-common.nix`, `users.nix`, `tailscale.nix`
+- `facter.json` - nixos-facter hardware detection
+- `synapse.nix` (matrix only) - Matrix Synapse server configuration
+- `home.nix` - Imports common home-manager modules only
 
 ## Common Development Commands
 
@@ -120,16 +121,17 @@ nix flake check
 
 ### NixOS System Configuration
 ```bash
-# Apply system configuration (from anywhere/)
-sudo nixos-rebuild switch --flake /home/wenri/nix-configs/anywhere#matrix
-sudo nixos-rebuild switch --flake /home/wenri/nix-configs/anywhere#freenix
+# Apply system configuration for servers
+sudo nixos-rebuild switch --flake .#matrix
+sudo nixos-rebuild switch --flake .#freenix
 
-# Apply from standard/ (replace hostname with actual)
-sudo nixos-rebuild switch --flake /home/wenri/nix-configs/standard#nixos-gnome
-sudo nixos-rebuild switch --flake /home/wenri/nix-configs/standard#nixos-plasma6
+# Apply for desktops
+sudo nixos-rebuild switch --flake .#nixos-gnome
+sudo nixos-rebuild switch --flake .#nixos-plasma6
+sudo nixos-rebuild switch --flake .#irif
 
-# Apply from minimal/ (NixOS-WSL)
-sudo nixos-rebuild switch --flake /home/nixos/nix-configs/minimal#wslnix
+# Apply for WSL
+sudo nixos-rebuild switch --flake .#wslnix
 
 # Test without switching (dry run)
 sudo nixos-rebuild test --flake .#hostname
@@ -145,23 +147,26 @@ A single `nixos-rebuild switch` command updates both system and user environment
 
 ```bash
 # Single command updates both NixOS and home-manager
-sudo nixos-rebuild switch --flake /home/wenri/nix-configs/anywhere#matrix
+sudo nixos-rebuild switch --flake .#matrix
+sudo nixos-rebuild switch --flake .#wslnix
 
 # Standalone home-manager still available for backward compatibility
-home-manager switch --flake /home/wenri/nix-configs/anywhere#wenri@matrix
-home-manager switch --flake /home/wenri/nix-configs/anywhere#wenri@freenix
-home-manager switch --flake /home/nixos/nix-configs/minimal#nixos@wslnix
+home-manager switch --flake .#wenri@matrix
+home-manager switch --flake .#wenri@freenix
+home-manager switch --flake .#nixos@wslnix
+home-manager switch --flake .#xsnow@nixos-gnome
 ```
 
 ### Building Custom Packages
 ```bash
-# Build custom package from common/pkgs/ (exported by all flakes)
-nix build /home/wenri/nix-configs/standard#package-name
-nix build /home/wenri/nix-configs/anywhere#package-name
-nix build /home/nixos/nix-configs/minimal#package-name
+# Build custom package from common/pkgs/ (exported by the unified flake)
+nix build .#package-name
 
 # Enter development shell with package
-nix shell /home/wenri/nix-configs/standard#package-name
+nix shell .#package-name
+
+# Example: building the example-package
+nix build .#example-package
 ```
 
 ### Formatting
@@ -174,15 +179,15 @@ nix fmt
 
 ### Modern Flake Architecture (2025)
 
-Both `anywhere/` and `standard/` now follow a modernized architecture:
+The unified flake follows a modernized architecture:
 
 **Single Source of Truth:**
-- `hosts` attribute set defines all system configurations
+- `hosts` attribute set in root `flake.nix` defines all 6 system configurations
 - Auto-generates `nixosConfigurations` and `homeConfigurations` using `lib.mapAttrs`
 - Eliminates redundant declarations and reduces code duplication
 
 **Proper Package Structure:**
-- Replaced `legacyPackages` with `mkPkgs` helper function
+- Uses `mkPkgs` helper function for creating package sets
 - Packages output uses `forAllSystems` for proper cross-platform support
 - Formatter output configured for `nix fmt` using alejandra
 
@@ -193,29 +198,35 @@ Both `anywhere/` and `standard/` now follow a modernized architecture:
 - Backward compatible standalone configurations still available
 
 **Variable System:**
-- `defaultUsername` variable for consistent user configuration
+- Per-host username configuration in `hosts` attribute
 - `hostname` and `username` passed through `specialArgs` to all modules
 - Automatic derivation of paths (e.g., facter files from hostname)
 
-### anywhere/ Configuration
+### Host Type Features
+
+**WSL (wslnix):**
+- NixOS-WSL integration for Windows development
+- Tailscale with userspace networking
+- Dynamic username support
+
+**Desktop (nixos-gnome, nixos-plasma6, irif):**
+- GNOME and Plasma6 desktop environments
+- ZFS support with LUKS encryption
+- VMware guest tools integration
+- Full GUI applications and development environments
+- Input method: fcitx5 with Rime (using modified fcitx5-rime-lua from common overlays)
+
+**Server (matrix, freenix):**
 - Uses **nixos-facter** for hardware detection instead of traditional `hardware-configuration.nix`
-- Employs **disko** for declarative disk partitioning (see `disk-config.nix`)
+- Employs **disko** for declarative disk partitioning
 - Configured for remote deployment via **nixos-anywhere**
-- **Refactored architecture**: Common configuration in `common.nix` reduces duplication
-- **Unified overlays** from `common/` providing NUR, vscode-extensions, unstable packages
-- System features: Tailscale VPN, Docker, fail2ban, openssh, Matrix Synapse
+- Tailscale VPN with network optimization
+- System features: Docker, fail2ban, openssh, Matrix Synapse (matrix only)
 - Multi-architecture support: x86_64-linux and aarch64-linux
 - Swap: Both file-based swap (2GB) and zram (30% of RAM with zstd compression)
 - System tools: ethtool, usbutils (lsusb), curl, git, vim, wget, jq
 - Passwordless sudo enabled for wheel group
 - systemd-oomd enabled for OOM protection
-
-### standard/ Configuration
-- Extended template with desktop environments: GNOME, Plasma6
-- **Unified infrastructure** from `common/` (modules, overlays, packages)
-- Desktop features: ZFS with LUKS encryption, VMware guest tools
-- Input method: fcitx5 with Rime (using modified fcitx5-rime-lua from common overlays)
-- All overlays, modules, and packages exported from `common/`
 
 ### Flake Input Pattern
 All configurations follow the pattern:
@@ -251,12 +262,12 @@ This makes flake inputs and outputs accessible in all imported modules.
   - NUR overlay for Firefox extensions and community packages
   - nix-vscode-extensions overlay for VS Code marketplace extensions
 
-**All flakes export from common:**
+**The unified flake exports from common:**
 ```nix
-overlays = import ../common/overlays {inherit inputs;};
-nixosModules = import ../common/modules/nixos;
-homeManagerModules = import ../common/modules/home-manager;
-packages = forAllSystems (system: import ../common/pkgs {pkgs = mkPkgs system;});
+overlays = import ./common/overlays {inherit inputs;};
+nixosModules = import ./common/modules/nixos;
+homeManagerModules = import ./common/modules/home-manager;
+packages = forAllSystems (system: import ./common/pkgs {pkgs = mkPkgs system;});
 ```
 
 ### Home Manager Integration
@@ -270,18 +281,31 @@ packages = forAllSystems (system: import ../common/pkgs {pkgs = mkPkgs system;})
 
 ### Important Configuration Details
 
-#### anywhere/nixos/configuration.nix
+#### Server host configurations (matrix, freenix)
 - Disables global flake registry and channels (opinionated pure flake setup)
 - Maps flake inputs to nix registry and NIX_PATH for compatibility
-- Uses facter.reportPath for hardware configuration
+- Uses facter.reportPath from `facter.json` for hardware configuration
 - Tailscale routing features enabled (can act as subnet router)
 - Network optimization for Tailscale (rx-udp-gro-forwarding)
 
-#### anywhere/home-manager/home.nix
+#### Desktop host configurations (nixos-gnome, nixos-plasma6, irif)
+- Traditional `hardware-configuration.nix` for hardware detection
+- ZFS with LUKS encryption support
+- Desktop environment specific settings (GNOME, Plasma6)
+- VMware guest tools integration
+
+#### WSL host configuration (wslnix)
+- NixOS-WSL specific integration
+- Tailscale userspace networking mode
+- Dynamic username support
+
+#### Home-manager configurations
 - nixpkgs config inherited from system (when using `useGlobalPkgs`)
 - Home state version: 25.05
 - User environment reloads systemd units on switch (`sd-switch`)
 - Accepts `username` and `hostname` parameters from NixOS
+- Core modules auto-imported from `common/home-manager/default.nix`
+- Desktop-specific modules imported explicitly in desktop hosts
 
 ### Example: Modernized Flake Structure
 
@@ -290,29 +314,30 @@ packages = forAllSystems (system: import ../common/pkgs {pkgs = mkPkgs system;})
 ```nix
 # In flake.nix
 hosts = {
-  freenix = { system = "aarch64-linux"; };
-  matrix = { system = "x86_64-linux"; };
-  newhost = { system = "x86_64-linux"; };  # ← Add this
+  freenix = { system = "aarch64-linux"; username = "wenri"; type = "server"; };
+  matrix = { system = "x86_64-linux"; username = "wenri"; type = "server"; };
+  newhost = { system = "x86_64-linux"; username = "wenri"; type = "server"; };  # ← Add this
 };
 ```
 
 This automatically generates:
 - `nixosConfigurations.newhost`
-- `homeConfigurations."wenri@newhost"` (or `"xsnow@newhost"` in standard/)
+- `homeConfigurations."wenri@newhost"`
 - All necessary specialArgs and module imports
+- Type-based module loading (wsl, desktop, or server)
 
 **Helper functions** reduce boilerplate:
 ```nix
-mkNixosSystem = { hostname, system, username ? defaultUsername }: ...
-mkHomeConfiguration = { hostname, system, username ? defaultUsername }: ...
+mkNixosSystem = { hostname, system, username, type }: ...
+mkHomeConfiguration = { hostname, system, username }: ...
 mkPkgs = system: import nixpkgs { inherit system; config.allowUnfree = true; };
 ```
 
 **Benefits:**
-- DRY principle: No duplicate hostname/system declarations
-- Type safety: Impossible to mismatch system architectures
-- Maintainability: Single source of truth for all hosts
-- Consistency: Same pattern across anywhere/ and standard/
+- DRY principle: No duplicate hostname/system/username declarations
+- Type safety: Impossible to mismatch system architectures or usernames
+- Maintainability: Single source of truth for all 6 hosts
+- Consistency: Same pattern across all host types (wsl, desktop, server)
 
 ## Git Workflow
 Files must be tracked by git for Nix flakes to see them:
@@ -322,30 +347,31 @@ git add .  # Flakes only see tracked files
 Files in `.gitignore` are invisible to Nix evaluations.
 
 ## Deployment with nixos-anywhere
-For fresh installations using the anywhere/ configuration:
+For fresh installations of server hosts:
 ```bash
 # With nixos-facter hardware detection
-# Pattern: nixos-anywhere --flake .#<hostname> --generate-hardware-config nixos-facter ./nixos/facter-<hostname>.json <target>
+# Pattern: nixos-anywhere --flake .#<hostname> --generate-hardware-config nixos-facter ./hosts/<hostname>/facter.json <target>
 
 # For matrix (x86_64-linux)
 nixos-anywhere --flake .#matrix \
-  --generate-hardware-config nixos-facter ./nixos/facter-matrix.json \
+  --generate-hardware-config nixos-facter ./hosts/matrix/facter.json \
   root@target-host
 
 # For freenix (aarch64-linux)
 nixos-anywhere --flake .#freenix \
-  --generate-hardware-config nixos-facter ./nixos/facter-freenix.json \
+  --generate-hardware-config nixos-facter ./hosts/freenix/facter.json \
   root@target-host
 ```
 
 ## Important Notes
-- The repository README mentions it's "a little out of date" and pending refactor
-- All three configurations (`anywhere/`, `minimal/`, `standard/`) are actively maintained
-- **Unified infrastructure**: All configurations share infrastructure from `common/` (overlays, modules, packages)
-- **Unified userspace**: All users (wenri, nixos, xsnow) are the same person with identical home-manager configuration
+- **Single unified flake**: All 6 hosts managed by root `flake.nix`
+- **Unified infrastructure**: All hosts share infrastructure from `common/` (overlays, modules, packages)
+- **Unified userspace**: All users (wenri, nixos, xsnow) are the same person: Bingchen Gong
+- **All home-manager configuration identical**: Same packages, programs, and dotfiles across all environments
 - System state version: 25.05
-- Custom packages are accessible via `nix build .#package-name` from any of the three flakes
+- Home state version: 25.05
+- Custom packages accessible via `nix build .#package-name`
 - Firefox extensions from NUR (1Password, uBlock Origin, Translate Web Pages)
 - VS Code extensions from nix-vscode-extensions marketplace overlay
 - Coq packages from NUR (lngen, ott-sweirich)
-- The formatter is set to `alejandra` across all configurations
+- Formatter set to `alejandra` - use `nix fmt` to format all Nix files
