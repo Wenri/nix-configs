@@ -11,9 +11,9 @@
   # You can import other NixOS modules here
   imports = [
     # Shared desktop modules
-    ../../common/modules/nixos/users.nix
-    ../../common/modules/nixos/locale.nix
-    ../../common/modules/nixos/secrets.nix
+    outputs.nixosModules.users
+    outputs.nixosModules.locale
+    outputs.nixosModules.secrets
 
     # Import your generated (nixos-generate-config) hardware configuration
     ./hardware-configuration.nix

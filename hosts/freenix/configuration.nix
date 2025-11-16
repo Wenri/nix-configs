@@ -1,12 +1,13 @@
 {
   lib,
   hostname,
+  outputs,
   ...
 }: {
   imports = [
-    ../../common/modules/nixos/server-common.nix
-    ../../common/modules/nixos/users.nix
-    ../../common/modules/nixos/tailscale.nix
+    outputs.nixosModules.server-common
+    outputs.nixosModules.users
+    outputs.nixosModules.tailscale
   ];
 
   networking.hostName = hostname;
