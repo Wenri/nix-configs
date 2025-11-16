@@ -9,8 +9,7 @@
   hostname,
   ...
 }: let
-  tailscaleAuthKeySource = "/home/nixos/nix-configs/secrets/tailscale-auth.key";
-  tailscaleAuthKeyTarget = "/var/lib/tailscale/auth.key";
+  tailscaleAuthKeyFile = ../../secrets/tailscale-auth.key;
 in {
   # You can import other NixOS modules here
   imports = [
@@ -74,19 +73,8 @@ in {
     useRoutingFeatures = "client";
     interfaceName = "userspace-networking";
     port = 0;
-    authKeyFile = tailscaleAuthKeyTarget;
+    authKeyFile = tailscaleAuthKeyFile;
   };
-
-  system.activationScripts.tailscaleAuthKey = ''
-    set -euo pipefail
-
-    if [ ! -f "${tailscaleAuthKeySource}" ]; then
-      echo "tailscale auth key not found at ${tailscaleAuthKeySource}; skipping copy." >&2
-      exit 0
-    fi
-
-    install -m600 -o root -g root -D "${tailscaleAuthKeySource}" "${tailscaleAuthKeyTarget}"
-  '';
 
   # https://nixos.wiki/wiki/FAQ/When_do_I_update_stateVersion
   system.stateVersion = "25.05";
