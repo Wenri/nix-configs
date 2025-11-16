@@ -4,6 +4,13 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
+    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs-master.url = "github:NixOS/nixpkgs/master";
+
+    nur.url = "github:nix-community/NUR";
+
+    nix-vscode-extensions.url = "github:nix-community/nix-vscode-extensions";
+
     nixos-wsl = {
       url = "github:nix-community/NixOS-WSL/main";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -83,6 +90,15 @@
         modules = [./home-manager/home.nix];
       };
   in {
+    # Custom packages and modifications, exported as overlays
+    overlays = import ../common/overlays {inherit inputs;};
+
+    # Reusable nixos modules
+    nixosModules = import ../common/modules/nixos;
+
+    # Reusable home-manager modules
+    homeManagerModules = import ../common/modules/home-manager;
+
     # NixOS system configurations - generated from hosts
     nixosConfigurations = lib.mapAttrs (hostname: cfg:
       mkNixosSystem {
@@ -102,10 +118,11 @@
     # Expose system configurations as packages - only for matching system
     packages = forAllSystems (system: let
       hostsForSystem = lib.filterAttrs (hostname: cfg: cfg.system == system) hosts;
+      customPkgs = import ../common/pkgs (mkPkgs system);
     in
-      lib.mapAttrs (hostname: cfg:
+      (lib.mapAttrs (hostname: cfg:
         self.nixosConfigurations.${hostname}.config.system.build.toplevel)
-      hostsForSystem);
+      hostsForSystem) // customPkgs);
 
     # Formatter for 'nix fmt'
     formatter = forAllSystems (system: (mkPkgs system).alejandra);

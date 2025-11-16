@@ -8,6 +8,15 @@
   ...
 }: {
   nixpkgs = {
+    # Add overlays for NUR, vscode-marketplace, and custom packages
+    overlays = [
+      outputs.overlays.additions
+      outputs.overlays.modifications
+      outputs.overlays.unstable-packages
+      outputs.overlays.master-packages
+      inputs.nur.overlays.default
+      inputs.nix-vscode-extensions.overlays.default
+    ];
     config.allowUnfree = true;
   };
 

@@ -98,19 +98,19 @@
       };
   in {
     # Custom packages - accessible through 'nix build', 'nix shell', etc
-    packages = forAllSystems (system: import ./pkgs (mkPkgs system));
+    packages = forAllSystems (system: import ../common/pkgs (mkPkgs system));
 
     # Formatter for 'nix fmt'
     formatter = forAllSystems (system: (mkPkgs system).alejandra);
 
     # Custom packages and modifications, exported as overlays
-    overlays = import ./overlays {inherit inputs;};
+    overlays = import ../common/overlays {inherit inputs;};
 
     # Reusable nixos modules
-    nixosModules = import ./modules/nixos;
+    nixosModules = import ../common/modules/nixos;
 
     # Reusable home-manager modules
-    homeManagerModules = import ./modules/home-manager;
+    homeManagerModules = import ../common/modules/home-manager;
 
     # NixOS system configurations - generated from hosts
     nixosConfigurations = lib.mapAttrs (hostname: cfg:

@@ -12,6 +12,9 @@
 }: {
   # You can import other home-manager modules here
   imports = [
+    # Import common base modules shared across configurations
+    ../../common/home-manager
+
     # If you want to use modules your own flake exports (from modules/home-manager):
     # outputs.homeManagerModules.example
 
@@ -19,13 +22,10 @@
     # inputs.nix-colors.homeManagerModules.default
 
     # You can also split up your configuration and import pieces of it here:
-    ./programs
-    ./packages.nix
   ];
 
   # nixpkgs config is inherited from system when using home-manager.useGlobalPkgs
 
-  # Set your username
   home = {
     inherit username;
     homeDirectory = "/home/${username}";
@@ -34,9 +34,6 @@
   # Add stuff for your user as you see fit:
   # programs.neovim.enable = true;
   # home.packages = with pkgs; [ steam ];
-
-  # Enable home-manager
-  programs.home-manager.enable = true;
 
   # Nicely reload system units when changing configs
   systemd.user.startServices = "sd-switch";

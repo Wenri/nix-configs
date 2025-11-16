@@ -12,6 +12,14 @@
 }: {
   # You can import other home-manager modules here
   imports = [
+    # Import common base modules shared across configurations
+    ../../common/home-manager
+
+    # Import desktop and development modules from common
+    ../../common/home-manager/desktop-packages.nix
+    ../../common/home-manager/development
+    ../../common/home-manager/programs
+
     # If you want to use modules your own flake exports (from modules/home-manager):
     # outputs.homeManagerModules.example
 
@@ -20,9 +28,6 @@
 
     # You can also split up your configuration and import pieces of it here:
     # ./nvim.nix
-    ./programs
-    ./development
-    ./packages.nix
   ];
 
   # When using home-manager.useGlobalPkgs, nixpkgs config and overlays are inherited from system

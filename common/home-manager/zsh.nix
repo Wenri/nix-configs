@@ -1,4 +1,6 @@
-{ config, ... }: {
+# Base zsh configuration shared across all configurations
+# Config-specific aliases should be added in individual configs
+{config, ...}: {
   programs.zsh = {
     enable = true;
     enableCompletion = true;
@@ -7,7 +9,7 @@
 
     shellAliases = {
       ll = "ls -l";
-      update = "sudo nixos-rebuild switch --flake /home/nixos/nix-configs/minimal#nixos";
+      # Config-specific update aliases should be set in individual configs
     };
 
     history = {
@@ -17,7 +19,7 @@
 
     oh-my-zsh = {
       enable = true;
-      plugins = [ "git" ];
+      plugins = ["git"];
       theme = "robbyrussell";
     };
   };

@@ -2,6 +2,8 @@
   programs.vscode = {
     enable = true;
     mutableExtensionsDir = true;
+
+    # VS Code extensions from vscode-marketplace overlay
     extensions = with pkgs.vscode-marketplace;
       [
         akamud.vscode-theme-onedark
@@ -29,6 +31,7 @@
           sha256 = "d5oohDNF44+3FRYOIAv32hSgFvvggugDP+kbOAcYfX0=";
         }
       ];
+
     userSettings = import ./user-settings.nix;
   };
 }
