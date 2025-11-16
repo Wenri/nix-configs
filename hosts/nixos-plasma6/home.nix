@@ -13,15 +13,12 @@
   # You can import other home-manager modules here
   imports = [
     # Import common base modules shared across configurations
-    ../../common/home-manager
+    outputs.homeManagerModules.base
 
     # Import desktop and development modules from common
-    ../../common/home-manager/desktop-packages.nix
-    ../../common/home-manager/development
-    ../../common/home-manager/programs
-
-    # If you want to use modules your own flake exports (from modules/home-manager):
-    # outputs.homeManagerModules.example
+    outputs.homeManagerModules.desktop-packages
+    outputs.homeManagerModules.development
+    outputs.homeManagerModules.programs
 
     # Or modules exported from other flakes (such as nix-colors):
     # inputs.nix-colors.homeManagerModules.default
