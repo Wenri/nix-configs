@@ -7,6 +7,7 @@
   config,
   pkgs,
   hostname,
+  username,
   ...
 }: let
   tailscaleAuthKeyFile = ../../secrets/tailscale-auth.key;
@@ -75,6 +76,7 @@ in {
     port = 0;
     authKeyFile = tailscaleAuthKeyFile;
     extraUpFlags = [ "--ssh" ];
+    extraSetFlags = [ "--operator" username ];
   };
 
   # https://nixos.wiki/wiki/FAQ/When_do_I_update_stateVersion
