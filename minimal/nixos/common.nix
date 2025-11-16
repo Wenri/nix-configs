@@ -69,7 +69,7 @@
   services.tailscale = {
     enable = true;
     useRoutingFeatures = "client";
-    extraDaemonFlags = [ "--tun=userspace-networking" ];
+    interfaceName = "userspace-networking";
     port = 0;
   };
 
