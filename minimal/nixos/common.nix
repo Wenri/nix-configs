@@ -70,6 +70,7 @@
     enable = true;
     useRoutingFeatures = "client";
     extraDaemonFlags = [ "--tun=userspace-networking" ];
+    port = 0;
   };
 
   # https://nixos.wiki/wiki/FAQ/When_do_I_update_stateVersion
