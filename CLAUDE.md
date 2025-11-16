@@ -40,13 +40,13 @@ Extended template with additional structure:
 ### minimal/ - NixOS-WSL Configuration
 NixOS-WSL configuration with modern architecture:
 - `flake.nix` - Modern flake architecture with NixOS-WSL integration
-  - NixOS config: `nixos` (x86_64-linux)
-  - Home config: `nixos@nixos`
+  - NixOS config: `wslnix` (x86_64-linux)
+  - Home config: `nixos@wslnix`
   - Uses `mkNixosSystem` and `mkHomeConfiguration` helper functions
   - Single source of truth `hosts` attribute set
   - Integrated home-manager as NixOS module
 - `nixos/` - System-level configurations
-  - `common.nix` - Main system configuration with WSL support
+  - `common.nix` - Main system configuration with WSL support, Tailscale userspace networking
   - `users.nix` - User accounts with dynamic username support
 - `home-manager/` - User environment configurations
   - `home.nix` - Main home-manager entrypoint
@@ -81,7 +81,7 @@ sudo nixos-rebuild switch --flake /home/wenri/nix-configs/standard#nixos-gnome
 sudo nixos-rebuild switch --flake /home/wenri/nix-configs/standard#nixos-plasma6
 
 # Apply from minimal/ (NixOS-WSL)
-sudo nixos-rebuild switch --flake /home/nixos/nix-configs/minimal#nixos
+sudo nixos-rebuild switch --flake /home/nixos/nix-configs/minimal#wslnix
 
 # Test without switching (dry run)
 sudo nixos-rebuild test --flake .#hostname
@@ -102,7 +102,7 @@ sudo nixos-rebuild switch --flake /home/wenri/nix-configs/anywhere#matrix
 # Standalone home-manager still available for backward compatibility
 home-manager switch --flake /home/wenri/nix-configs/anywhere#wenri@matrix
 home-manager switch --flake /home/wenri/nix-configs/anywhere#wenri@freenix
-home-manager switch --flake /home/nixos/nix-configs/minimal#nixos@nixos
+home-manager switch --flake /home/nixos/nix-configs/minimal#nixos@wslnix
 ```
 
 ### Building Custom Packages (standard/)

@@ -75,8 +75,7 @@ in {
     interfaceName = "userspace-networking";
     port = 0;
     authKeyFile = tailscaleAuthKeyFile;
-    extraUpFlags = [ "--ssh" ];
-    extraSetFlags = [ "--operator" username ];
+    extraUpFlags = [ "--ssh" "--operator=${username}" ];
   };
 
   # https://nixos.wiki/wiki/FAQ/When_do_I_update_stateVersion
