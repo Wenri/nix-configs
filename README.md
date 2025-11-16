@@ -1,43 +1,92 @@
-# NixOS Starter Configs (2025 Edition)
+# NixOS Configurations (2025 Edition)
 
-**Modernized and production-ready** NixOS flake templates featuring the latest best practices.
+**Personal NixOS configurations** featuring unified infrastructure and modern best practices.
 
-This repository contains multiple NixOS + home-manager flake templates, from minimal starter configs to production-ready modular architectures with modern features like integrated home-manager, auto-generated configurations, and nixos-anywhere deployment.
+> **Note:** This is a personal configuration repository based on [nix-starter-config](https://github.com/Misterio77/nix-starter-config). All configurations share unified infrastructure from `common/` - the same overlays, modules, packages, and userspace are used across WSL, desktop, and server deployments.
+
+This repository contains three NixOS + home-manager configurations with **unified infrastructure**:
+- **minimal/** - NixOS-WSL for Windows development
+- **standard/** - Desktop environments (GNOME, Plasma6)
+- **anywhere/** - Production servers (Matrix, ARM)
+
+Features modern architecture with integrated home-manager, auto-generated configurations, and nixos-anywhere deployment.
+
+## Unified Architecture
+
+**All configurations share infrastructure from `common/`:**
+- **Overlays** - NUR (Firefox extensions, Coq packages), vscode-marketplace, unstable/master packages
+- **Modules** - Custom NixOS and home-manager modules
+- **Packages** - Custom package definitions
+- **Home-Manager** - Identical userspace across all environments (all users are the same person)
 
 ## What This Provides
 
-### [Minimal](./minimal) - Getting Started
-- Basic NixOS configuration on `nixos/configuration.nix`
-- Home-manager configuration on `home-manager/home.nix`
-- Perfect for first-time flake users or simple migrations
-- **Status:** Template starter
+### [Minimal](./minimal) - NixOS-WSL Configuration
+- **Modern 2025 architecture** with single source of truth (`hosts` attribute)
+- **NixOS-WSL** integration for Windows Subsystem for Linux
+- **Integrated home-manager** - Single `nixos-rebuild switch` updates both system and user
+- **Tailscale** with userspace networking for WSL
+- **Unified infrastructure** from `common/` - Same overlays, modules, packages as other configs
+- **Status:** ✅ Active WSL configuration with unified userspace
 
-### [Standard](./standard) - Extended Template
+### [Standard](./standard) - Desktop Environments
 - **Modern 2025 architecture** with single source of truth (`hosts` attribute)
 - **Integrated home-manager** - Single `nixos-rebuild switch` updates both system and user
-- Custom packages under `pkgs/` - Build with `nix build .#package-name`
-- Overlays for package modifications and unstable packages
-- Reusable NixOS modules (`modules/nixos/`) and home-manager modules (`modules/home-manager/`)
-- Desktop environments: GNOME, Plasma6, IRIF
-- Auto-generated configurations from `hosts` attribute set
-- **Status:** ✅ Modernized with 2025 best practices
+- **Desktop environments**: GNOME, Plasma6, IRIF with full GUI applications
+- **ZFS support** with LUKS encryption
+- **VMware guest tools** integration
+- **Unified infrastructure** from `common/` - Shares all overlays, modules, packages
+- **Development environments**: Coq, Haskell, LaTeX, Python, Typst
+- **Status:** ✅ Production desktop configurations
 
-### [Anywhere](./anywhere) - Production Modular Architecture
+### [Anywhere](./anywhere) - Production Servers
 - **Modern 2025 flake architecture** - Single source of truth with auto-generated configurations
 - **Integrated home-manager** - Single command updates both system and user environment
 - **Modular architecture** - Separate modules for services (tailscale, synapse, users)
-- **Common base config** - Shared `common.nix` to reduce duplication
 - **nixos-anywhere support** - Remote installation and deployment
 - **nixos-facter** - Modern hardware detection (no `hardware-configuration.nix`)
 - **Disko** - Declarative disk partitioning
-- **Production-ready** servers: Matrix (matrix), ARM server (freenix)
-- **Status:** ✅ Fully modernized, battle-tested production configs
+- **Production servers**: Matrix (x86_64), Freenix (aarch64)
+- **Unified infrastructure** from `common/` - Shares all overlays, modules, packages
+- **Status:** ✅ Battle-tested production configurations
 
 ## Modern Architecture (2025)
 
-Both `standard/` and `anywhere/` now follow modernized patterns:
+All three configurations (`minimal/`, `standard/`, `anywhere/`) follow modernized patterns and share unified infrastructure:
 
-### Single Source of Truth
+### Unified Infrastructure (`common/`)
+
+**All configurations share the same infrastructure:**
+
+```
+common/
+├── overlays/           # Package overlays exported by all flakes
+│   └── default.nix    # NUR, vscode-marketplace, unstable, master packages
+├── modules/           # Shared modules
+│   ├── nixos/        # Custom NixOS modules
+│   └── home-manager/ # Custom home-manager modules
+├── pkgs/             # Custom packages accessible from all flakes
+│   └── default.nix   # Package definitions
+└── home-manager/     # Unified userspace configuration
+    ├── default.nix           # Auto-imported core modules
+    ├── base-packages.nix     # Essential CLI tools
+    ├── git.nix              # Git config with 1Password signing
+    ├── zsh.nix              # Zsh with oh-my-zsh
+    ├── ssh.nix              # SSH with 1Password agent
+    ├── gh.nix               # GitHub CLI
+    ├── programs.nix         # Base program enables
+    ├── desktop-packages.nix # GUI applications (optional)
+    ├── development/         # Dev environments (optional)
+    └── programs/            # Desktop programs (optional)
+```
+
+**Benefits:**
+- **Zero duplication** - Infrastructure defined once, used everywhere
+- **Identical userspace** - Same packages, config, extensions across all environments
+- **Shared overlays** - NUR Firefox extensions, VS Code marketplace, unstable packages
+- **Single source of truth** - All users (wenri, nixos, xsnow) are the same person
+
+### Single Source of Truth (Per-Config)
 ```nix
 # Define all hosts in one place
 hosts = {
@@ -110,58 +159,48 @@ formatter = forAllSystems (system: (mkPkgs system).alejandra);
 - Git installed
 - Nix 2.4+ with flakes enabled
 
-### Which Template to Choose?
+### Which Configuration to Use?
 
-- **Minimal**: First time with flakes, or simple configuration migration
-- **Standard**: Need custom packages, overlays, desktop environment
-- **Anywhere**: Production deployments, remote servers, modular architecture
+This is a personal configuration repository with unified infrastructure. All configurations share:
+- **Same userspace** - Identical packages, programs, and dotfiles
+- **Same overlays** - NUR extensions, vscode-marketplace, unstable packages
+- **Same modules** - Custom NixOS and home-manager modules
 
-### Setup Steps
+Choose based on deployment target:
+- **minimal/** - For NixOS-WSL on Windows
+- **standard/** - For desktop machines with GUI (GNOME/Plasma6)
+- **anywhere/** - For production servers (Matrix, ARM servers)
 
-1. **Create your config repository:**
-```bash
-cd ~/Documents
-git init nix-config
-cd nix-config
-```
+### Customization
 
-2. **Enable flakes (if not already enabled):**
-```bash
-# Check Nix version (should be 2.4+)
-nix --version
+Since all configurations share `common/`, you can customize once and benefit everywhere:
 
-# Enable experimental features
-export NIX_CONFIG="experimental-features = nix-command flakes"
-```
+1. **Update user details** in `common/home-manager/git.nix`:
+   - User name and email
+   - SSH signing key
 
-3. **Get the template:**
-```bash
-# Minimal version
-nix flake init -t github:Wenri/nix-configs#minimal
+2. **Add packages** in `common/home-manager/`:
+   - `base-packages.nix` - CLI tools (applies to all configs)
+   - `desktop-packages.nix` - GUI apps (applies to standard/)
 
-# Standard version (recommended for desktops)
-nix flake init -t github:Wenri/nix-configs#standard
+3. **Configure programs** in `common/home-manager/programs/`:
+   - Firefox extensions, VS Code settings, etc.
 
-# Anywhere/modular version (recommended for servers)
-nix flake init -t github:Wenri/nix-configs#modular
-```
-
-4. **For standard/ or anywhere/, customize:**
-   - Update `defaultUsername` in `flake.nix`
+4. **Per-configuration customization:**
+   - Update `defaultUsername` in each `flake.nix`
    - Add/modify hosts in the `hosts` attribute set
-   - Edit host-specific configs in `nixos/host-*.nix`
-   - Update `users.nix` with your SSH keys and permissions
-   - Add packages in `home-manager/packages.nix`
+   - Edit host-specific configs in `nixos/`
+   - Update `users.nix` with your SSH keys
 
 5. **Update flake inputs:**
 ```bash
 nix flake update
 ```
 
-6. **Git add your changes:**
+6. **Git commit your changes:**
 ```bash
 git add .
-git push  # Or copy somewhere safe if on live medium
+git commit -m "Personal customizations"
 ```
 
 ## Usage
@@ -206,25 +245,45 @@ nixos-anywhere --flake .#matrix \
   root@target-host
 ```
 
-## Anywhere/Modular Template Details
+## Configuration Details
 
-### Structure
+### Repository Structure
 ```
-anywhere/
-├── flake.nix            # Modern flake with hosts-based config
-├── nixos/
-│   ├── common.nix       # Shared base configuration
-│   ├── host-matrix.nix  # Matrix server configuration
-│   ├── host-freenix.nix # Freenix server configuration
-│   ├── disk-config.nix  # Disko disk partitioning
-│   ├── users.nix        # User accounts (uses username variable)
-│   ├── tailscale.nix    # Tailscale VPN module
-│   ├── synapse.nix      # Matrix Synapse server
-│   └── facter-*.json    # Hardware detection (facter-${hostname}.json)
-└── home-manager/
-    ├── home.nix         # Integrated home-manager config
-    ├── packages.nix     # User packages (jq, tmux, etc.)
-    └── programs/        # Program-specific configs (git, ssh, zsh)
+nix-configs/
+├── common/              # Unified infrastructure (shared by all configs)
+│   ├── overlays/       # NUR, vscode-marketplace, unstable packages
+│   ├── modules/        # Custom NixOS and home-manager modules
+│   ├── pkgs/           # Custom package definitions
+│   └── home-manager/   # Unified userspace (packages, programs, dev envs)
+├── anywhere/           # Production servers
+│   ├── flake.nix      # Exports from ../common/, hosts-based config
+│   ├── nixos/
+│   │   ├── common.nix       # Base config with common overlays
+│   │   ├── host-matrix.nix  # Matrix server (x86_64)
+│   │   ├── host-freenix.nix # ARM server (aarch64)
+│   │   ├── disk-config.nix  # Disko partitioning
+│   │   ├── users.nix        # User accounts
+│   │   ├── tailscale.nix    # VPN module
+│   │   ├── synapse.nix      # Matrix server
+│   │   └── facter-*.json    # Hardware detection
+│   └── home-manager/
+│       └── home.nix         # Imports common modules only
+├── minimal/            # NixOS-WSL
+│   ├── flake.nix      # Exports from ../common/, NixOS-WSL integration
+│   ├── nixos/
+│   │   ├── common.nix       # WSL config with common overlays
+│   │   └── users.nix        # User accounts
+│   └── home-manager/
+│       └── home.nix         # Imports common modules only
+└── standard/           # Desktop environments
+    ├── flake.nix      # Exports from ../common/, desktop-focused
+    ├── nixos/
+    │   ├── configuration-nixos-gnome.nix   # GNOME desktop
+    │   ├── configuration-nixos-plasma6.nix # Plasma6 desktop
+    │   ├── configuration-irif.nix          # IRIF config
+    │   └── hardware-configuration-*.nix     # Hardware configs
+    └── home-manager/
+        └── home.nix   # Imports common + desktop + development + programs
 ```
 
 ### Features
@@ -276,21 +335,31 @@ Besides packages, home-manager can manage your dotfiles. Use `home-configuration
 - Or use `passwordFile` for declarative password from file
 - Advanced: [Secret management schemes](https://nixos.wiki/wiki/Comparison_of_secret_managing_schemes)
 
-### Custom Packages (standard/)
-Create a folder under `pkgs/` with a `default.nix`:
+### Custom Packages
+All custom packages are defined in `common/pkgs/` and exported by all three flakes:
 ```bash
-# Build your package
-nix build .#package-name
+# Build your package from any configuration
+nix build ./anywhere#package-name
+nix build ./minimal#package-name
+nix build ./standard#package-name
 
 # Use in shell
-nix shell .#package-name
+nix shell ./anywhere#package-name
 ```
 
+Create a folder under `common/pkgs/` with a `default.nix` - it's automatically available in all configurations.
+
 ### Overlays
-Use `overlays/default.nix` to patch or override nixpkgs packages. Keep patch files in `overlays/` folder.
+All overlays are defined in `common/overlays/default.nix` and used by all configurations:
+- **additions** - Custom packages from `common/pkgs/`
+- **modifications** - Package patches (e.g., fcitx5-rime-lua with Lua support)
+- **unstable-packages** - Access nixpkgs-unstable via `pkgs.unstable.*`
+- **master-packages** - Access nixpkgs-master via `pkgs.master.*`
+- **NUR** - Firefox extensions, Coq packages from Nix User Repository
+- **nix-vscode-extensions** - VS Code marketplace extensions
 
 ### Custom Modules
-Create reusable abstractions in `modules/nixos/` or `modules/home-manager/`. Register them in respective `default.nix` files.
+Create reusable abstractions in `common/modules/nixos/` or `common/modules/home-manager/`. Register them in respective `default.nix` files. All modules are automatically available in all configurations.
 
 ## Troubleshooting / FAQ
 
