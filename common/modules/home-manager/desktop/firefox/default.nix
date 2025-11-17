@@ -8,7 +8,7 @@
       isDefault = true;
 
       # Firefox extensions from NUR
-      extensions = with pkgs.nur.repos.rycee.firefox-addons; [
+      extensions.packages = with pkgs.nur.repos.rycee.firefox-addons; [
         onepassword-password-manager
         translate-web-pages
         ublock-origin

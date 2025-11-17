@@ -1,5 +1,4 @@
-# Desktop packages for GUI environments
-# Import via outputs.homeManagerModules.desktop.packages in desktop configs
+# Desktop packages for GUI environments (included automatically via desktop.default)
 {pkgs, ...}: {
   home.packages = with pkgs; [
     # Communication

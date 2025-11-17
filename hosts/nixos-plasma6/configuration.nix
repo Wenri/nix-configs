@@ -88,8 +88,7 @@
       fallbackToPassword = true;
     };
   };
-  boot.zfs.package = pkgs.zfs_unstable;
-  boot.kernelPackages = config.boot.zfs.package.latestCompatibleLinuxPackages;
+    boot.zfs.package = pkgs.zfs_unstable;
   boot.kernelParams = [
     "quiet"
     "splash"
@@ -127,7 +126,7 @@
 
 
   # Enable sound with pipewire.
-  hardware.pulseaudio.enable = false;
+    services.pulseaudio.enable = false;
   security.rtkit.enable = true;
   services.pipewire = {
     enable = true;
