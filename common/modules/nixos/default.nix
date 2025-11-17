@@ -8,4 +8,5 @@
   secrets = import ./secrets.nix;
   tailscale = import ./tailscale.nix;
   disk-config = import ./disk-config.nix;
+  desktop-base = import ./desktop-base.nix;
 }
