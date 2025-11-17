@@ -1,8 +1,9 @@
 # Desktop-specific program configurations
 # These are optional modules for GUI environments
-# Import via: ../../common/home-manager/programs in desktop configs
+# Import via: outputs.homeManagerModules.desktop.programs in desktop configs
 {
   imports = [
+    ./packages.nix
     ./rime
     ./vscode
     # ./wechat

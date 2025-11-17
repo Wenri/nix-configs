@@ -35,23 +35,21 @@ Shared infrastructure providing identical userspace across all 6 hosts:
 - `pkgs/` - Custom package definitions (example-package)
 
 **Core home-manager modules** (auto-imported via `common/home-manager/default.nix`):
-- `base-packages.nix` - Essential CLI tools (tmux, htop, nodejs, claude-code, cursor-cli, gemini-cli, iperf3, jq, file, parted)
-- `git.nix` - Complete git configuration with user details, 1Password SSH signing
-- `zsh.nix` - Complete zsh configuration (oh-my-zsh, completion, syntax highlighting, history)
-- `ssh.nix` - SSH configuration with 1Password agent, GitHub port 443 workaround
-- `gh.nix` - GitHub CLI configuration
-- `programs.nix` - Base program enables (home-manager, tmux, vim)
+- `core/default.nix` - Core profile combining CLI essentials + git/zsh/ssh/gh/program defaults
+- `core/packages.nix` - Essential CLI tools (tmux, htop, nodejs, claude-code, cursor-cli, gemini-cli, iperf3, jq, file, parted)
+- `core/programs.nix` - Base program enables (home-manager, tmux, vim)
+- `core/git.nix` - Complete git configuration with user details, 1Password SSH signing
+- `core/zsh.nix` - Complete zsh configuration (oh-my-zsh, completion, syntax highlighting, history)
+- `core/ssh.nix` - SSH configuration with 1Password agent, GitHub port 443 workaround
+- `core/gh.nix` - GitHub CLI configuration
 
 **Optional home-manager modules** (imported explicitly when needed):
-- `desktop-packages.nix` - GUI applications (Discord, Slack, Zoom, Chrome, etc.)
-- `development/` - Development environments:
-  - `coq.nix` - Coq proof assistant with NUR packages (lngen, ott-sweirich)
-  - `haskell.nix` - GHC, Stack, Cabal, HLS
-  - `latex.nix` - TeXLive full scheme
-  - `python.nix` - Python with requests
-  - `typst.nix` - Typst and Tinymist
-  - `pcloud.nix` - pCloud with patches
-- `programs/` - Desktop-specific program configurations:
+- `desktop/packages.nix` - GUI applications (Discord, Slack, Zoom, Chrome, etc.)
+- `desktop/default.nix` - Desktop program bundle (Firefox, VS Code, Emacs, GNOME, Rime, optional WeChat)
+- `desktop/emacs.nix`, `desktop/firefox`, `desktop/gnome`, `desktop/rime`, `desktop/vscode`, `desktop/wechat` - individual program modules
+- `development/packages.nix` - Language/toolchain bundles (Agda, Elixir, Haskell, LaTeX, Python, Typst)
+- `development/coq.nix` - Coq proof assistant with NUR packages (lngen, ott-sweirich)
+- `development/pcloud.nix` - pCloud with patches
   - `rime/` - Rime input method
   - `vscode/` - VS Code settings and vscode-marketplace extensions
   - `emacs.nix` - Emacs configuration
@@ -94,7 +92,7 @@ Each host has its own directory with minimal configuration:
 **nixos-gnome/, nixos-plasma6/, irif/** (Desktops)
 - `configuration.nix` - Desktop config, imports `common/modules/nixos/users.nix`, `locale.nix`, `secrets.nix`
 - `hardware-configuration.nix` - Hardware-specific configuration
-- `home.nix` - Imports common + desktop-packages + development + programs
+- `home.nix` - Imports `core.default` + `desktop.default` + `development`
 
 **matrix/, freenix/** (Servers)
 - `configuration.nix` - Server config, imports `common/modules/nixos/server-common.nix`, `users.nix`, `tailscale.nix`

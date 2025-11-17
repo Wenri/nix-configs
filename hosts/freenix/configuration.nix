@@ -38,4 +38,7 @@
       IPv6AcceptRA = true; # IPv6 Router Advertisement configuration
     };
   };
+
+  # https://nixos.wiki/wiki/FAQ/When_do_I_update_stateVersion
+  system.stateVersion = "25.05";
 }

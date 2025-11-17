@@ -1,5 +1,3 @@
-# Base CLI packages shared across minimal and anywhere configurations
-# These are essential command-line tools for development and system management
 {pkgs, ...}: {
   home.packages = with pkgs; [
     # Terminal multiplexer
@@ -13,6 +11,7 @@
     iperf3
 
     # Development tools
+    gnumake
     nodejs
     glab
 

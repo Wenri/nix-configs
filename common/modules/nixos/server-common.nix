@@ -125,9 +125,6 @@
   };
 
   virtualisation.docker.enable = true;
-
   # Enable systemd-oomd for OOM handling
   systemd.oomd.enable = true;
-
-  system.stateVersion = "25.05";
 }

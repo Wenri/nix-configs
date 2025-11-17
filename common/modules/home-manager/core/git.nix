@@ -1,5 +1,3 @@
-# Unified git configuration for all environments
-# All configs (wenri, nixos, xsnow) are the same user: Bingchen Gong
 {pkgs, ...}: {
   programs.git = {
     enable = true;

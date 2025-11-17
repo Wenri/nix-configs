@@ -1,5 +1,3 @@
-# Unified SSH configuration for all environments
-# Uses 1Password as SSH agent for key management
 {
   programs.ssh = {
     enable = true;

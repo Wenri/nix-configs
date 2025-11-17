@@ -3,25 +3,25 @@
 #
 # Usage in home.nix:
 #   imports = [
-#     outputs.homeManagerModules.base              # Core modules (git, zsh, ssh, etc.)
-#     outputs.homeManagerModules.desktop-packages  # GUI applications (optional)
-#     outputs.homeManagerModules.development       # Dev environments (optional)
-#     outputs.homeManagerModules.programs          # Desktop programs (optional)
+#     outputs.homeManagerModules.core.default        # Core modules (git, zsh, ssh, etc.)
+#     outputs.homeManagerModules.desktop.default     # Desktop packages + program configs
+#     outputs.homeManagerModules.development         # Dev environments (optional)
 #   ];
 {
-  # Core base configuration - includes base-packages, git, zsh, ssh, gh, programs
-  base = import ./base.nix;
+  core = {
+    default = import ./core;
+    packages = import ./core/packages.nix;
+    programs = import ./core/programs.nix;
+    git = import ./core/git.nix;
+    zsh = import ./core/zsh.nix;
+    ssh = import ./core/ssh.nix;
+    gh = import ./core/gh.nix;
+  };
 
-  # Optional modules
-  desktop-packages = import ./desktop-packages.nix;
+  desktop = {
+    default = import ./desktop/default.nix;
+    packages = import ./desktop/packages.nix;
+  };
+
   development = import ./development;
-  programs = import ./programs;
-
-  # Individual base components (if you want granular control)
-  base-packages = import ./base-packages.nix;
-  git = import ./git.nix;
-  zsh = import ./zsh.nix;
-  ssh = import ./ssh.nix;
-  gh = import ./gh.nix;
-  programs-base = import ./programs.nix;
 }

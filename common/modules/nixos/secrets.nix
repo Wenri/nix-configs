@@ -1,7 +1,7 @@
-{
+{username, ...}: {
   programs._1password-gui = {
     enable = true;
-    polkitPolicyOwners = ["xsnow"];
+    polkitPolicyOwners = [username];
   };
 
   programs._1password.enable = true;

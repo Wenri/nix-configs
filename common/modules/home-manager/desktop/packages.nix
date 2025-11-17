@@ -1,11 +1,7 @@
 # Desktop packages for GUI environments
-# Import this module in desktop configurations (like standard/)
-# Not imported by default in common/home-manager/default.nix
+# Import via outputs.homeManagerModules.desktop.packages in desktop configs
 {pkgs, ...}: {
   home.packages = with pkgs; [
-    # Build tools
-    gnumake
-
     # Communication
     element-desktop
     discord
@@ -26,9 +22,5 @@
 
     # Social
     wechat-uos
-
-    # Development languages (desktop-focused)
-    elixir
-    agda
   ];
 }

@@ -11,21 +11,20 @@
   ...
 }: {
   # You can import other home-manager modules here
-  imports = [
-    # Import common base modules shared across configurations
-    outputs.homeManagerModules.base
+    imports = [
+      # Import common base modules shared across configurations
+      outputs.homeManagerModules.core.default
 
-    # Import desktop and development modules from common
-    outputs.homeManagerModules.desktop-packages
-    outputs.homeManagerModules.development
-    outputs.homeManagerModules.programs
+      # Import desktop and development modules from common
+      outputs.homeManagerModules.desktop.default
+      outputs.homeManagerModules.development
 
-    # Or modules exported from other flakes (such as nix-colors):
-    # inputs.nix-colors.homeManagerModules.default
+      # Or modules exported from other flakes (such as nix-colors):
+      # inputs.nix-colors.homeManagerModules.default
 
-    # You can also split up your configuration and import pieces of it here:
-    # ./nvim.nix
-  ];
+      # You can also split up your configuration and import pieces of it here:
+      # ./nvim.nix
+    ];
 
   # When using home-manager.useGlobalPkgs, nixpkgs config and overlays are inherited from system
   # Overlays should be configured at the NixOS level, not here

@@ -1,5 +1,3 @@
-# Base zsh configuration shared across all configurations
-# Config-specific aliases should be added in individual configs
 {config, ...}: {
   programs.zsh = {
     enable = true;

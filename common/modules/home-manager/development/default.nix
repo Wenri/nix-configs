@@ -1,10 +1,7 @@
 {
   imports = [
+    ./packages.nix
     ./coq.nix
-    ./haskell.nix
-    ./latex.nix
-    ./python.nix
-    ./typst.nix
     ./pcloud.nix
   ];
 }

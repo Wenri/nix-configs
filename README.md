@@ -84,16 +84,26 @@ common/
 ├── pkgs/             # Custom packages (exported)
 │   └── default.nix   # Package definitions
 └── home-manager/     # Unified userspace configuration
-    ├── default.nix           # Auto-imported core modules
-    ├── base-packages.nix     # Essential CLI tools
-    ├── git.nix              # Git config with 1Password signing
-    ├── zsh.nix              # Zsh with oh-my-zsh
-    ├── ssh.nix              # SSH with 1Password agent
-    ├── gh.nix               # GitHub CLI
-    ├── programs.nix         # Base program enables
-    ├── desktop-packages.nix # GUI applications (optional)
-    ├── development/         # Dev environments (optional)
-    └── programs/            # Desktop programs (optional)
+    ├── default.nix           # Exports (core, desktop, dev, etc.)
+    ├── core/                 # Core profile used by every host
+    │   ├── default.nix       # Imports CLI packages + git/zsh/ssh/gh/program defaults
+    │   ├── packages.nix      # Essential CLI tools
+    │   ├── programs.nix      # Base program enables (home-manager, tmux, vim, ...)
+    │   ├── git.nix           # Git config with 1Password signing
+    │   ├── zsh.nix           # Zsh with oh-my-zsh
+    │   ├── ssh.nix           # SSH with 1Password agent
+    │   └── gh.nix            # GitHub CLI
+    ├── desktop/              # Desktop-specific modules
+    │   ├── packages.nix      # GUI applications (optional)
+    │   ├── default.nix       # Desktop program bundle (Firefox, VS Code, etc.)
+    │   ├── emacs.nix         # Emacs configuration
+    │   ├── firefox/
+    │   ├── gnome/
+    │   ├── rime/
+    │   ├── vscode/
+    │   └── wechat/
+    └── development/          # Dev environments (optional)
+        └── packages.nix      # Language/toolchain bundles
 ```
 
 **Benefits:**
@@ -206,11 +216,11 @@ Since all configurations share `common/`, you can customize once and benefit eve
    - SSH signing key
 
 2. **Add packages** in `common/home-manager/`:
-   - `base-packages.nix` - CLI tools (applies to all configs)
-   - `desktop-packages.nix` - GUI apps (applies to standard/)
+   - `core/packages.nix` - CLI tools (applies to all hosts)
+   - `desktop/packages.nix` - GUI apps (applies to desktop profiles)
+   - `development/packages.nix` - Language/toolchain bundles for dev hosts
 
-3. **Configure programs** in `common/home-manager/programs/`:
-   - Firefox extensions, VS Code settings, etc.
+3. **Configure desktop programs** directly in `common/home-manager/desktop/` (Firefox, VS Code, Emacs, Rime, etc.)
 
 4. **Add new hosts:**
    - Update the `hosts` attribute in `flake.nix`
