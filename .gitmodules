@@ -1,3 +1,3 @@
 [submodule "secrets"]
 	path = secrets
-	url = git@gitlab.com:gt4o4/nix-secrets.git
+	url = https://gitlab.com/gt4o4/nix-secrets.git
