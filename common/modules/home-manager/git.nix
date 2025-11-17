@@ -16,6 +16,9 @@
         "ssh".program = "${pkgs._1password-gui}/bin/op-ssh-sign";
       };
       commit.gpgsign = true;
+
+      # Use GitLab CLI for GitLab authentication
+      credential."https://gitlab.com".helper = "!${pkgs.glab}/bin/glab auth git-credential";
     };
   };
 }
