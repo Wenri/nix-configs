@@ -14,6 +14,7 @@
 
     # Development tools
     nodejs
+    glab
 
     # AI assistants and tools
     claude-code
