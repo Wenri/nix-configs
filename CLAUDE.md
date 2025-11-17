@@ -24,8 +24,9 @@ Shared infrastructure providing identical userspace across all 6 hosts:
   - `master-packages` - Access to nixpkgs-master via `pkgs.master.*`
   - NUR (Nix User Repository) integration for community packages
   - nix-vscode-extensions for VS Code marketplace extensions
-- `modules/nixos/` - Exportable NixOS modules:
-  - `server-base.nix` - Base server configuration with overlays
+  - `modules/nixos/` - Exportable NixOS modules:
+    - `common-base.nix` - Shared overlays + nix settings used everywhere
+    - `server-base.nix` - Base server configuration with overlays
   - `users.nix` - Desktop user configuration
   - `locale.nix` - Locale and timezone settings
   - `secrets.nix` - Secrets management configuration

@@ -15,7 +15,7 @@ Features modern architecture with integrated home-manager, auto-generated config
 
 **All configurations share infrastructure from `common/`:**
 - **Overlays** - NUR (Firefox extensions, Coq packages), vscode-marketplace, unstable/master packages
-- **Modules** - Exportable NixOS modules (server-base, users, locale, tailscale, etc.)
+- **Modules** - Exportable NixOS modules (common-base, server-base, users, locale, tailscale, etc.)
 - **Packages** - Custom package definitions
 - **Home-Manager** - Identical userspace across all environments (all users are the same person)
 
@@ -79,7 +79,7 @@ common/
 ├── overlays/           # Package overlays (exported)
 │   └── default.nix    # NUR, vscode-marketplace, unstable, master packages
 ├── modules/           # Exportable modules
-│   ├── nixos/        # NixOS modules (server-base, users, locale, tailscale, etc.)
+│   ├── nixos/        # NixOS modules (common-base, server-base, users, locale, tailscale, etc.)
 │   └── home-manager/ # Home-manager modules (empty, ready for future use)
 ├── pkgs/             # Custom packages (exported)
 │   └── default.nix   # Package definitions
@@ -405,6 +405,7 @@ inputs.your-configs.overlays.unstable-packages
 
 ### Custom Modules
 Exportable modules in `common/modules/nixos/`:
+- **common-base** - Shared overlays + nix settings used everywhere
 - **server-base** - Base server configuration with overlays
 - **users** - Desktop user configuration
 - **locale** - Locale and timezone settings

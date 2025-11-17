@@ -1,48 +1,14 @@
 {
-  inputs,
-  outputs,
   modulesPath,
   lib,
-  config,
   pkgs,
   ...
 }: {
-  nixpkgs = {
-    # Add overlays for NUR, vscode-marketplace, and custom packages
-    overlays = [
-      outputs.overlays.additions
-      outputs.overlays.modifications
-      outputs.overlays.unstable-packages
-      outputs.overlays.master-packages
-      inputs.nur.overlays.default
-      inputs.nix-vscode-extensions.overlays.default
-    ];
-    config.allowUnfree = true;
-  };
-
-  nix = let
-    flakeInputs = lib.filterAttrs (_: lib.isType "flake") inputs;
-  in {
-    settings = {
-      # Enable flakes and new 'nix' command
-      experimental-features = "nix-command flakes";
-      # Opinionated: disable global registry
-      flake-registry = "";
-      # Workaround for https://github.com/NixOS/nix/issues/9574
-      nix-path = config.nix.nixPath;
-    };
-    # Opinionated: disable channels
-    channel.enable = false;
-
-    # Opinionated: make flake registry and nix path match flake inputs
-    registry = lib.mapAttrs (_: flake: {inherit flake;}) flakeInputs;
-    nixPath = lib.mapAttrsToList (n: _: "${n}=flake:${n}") flakeInputs;
-  };
-
   imports = [
+    ./common-base.nix
     (modulesPath + "/installer/scan/not-detected.nix")
     (modulesPath + "/profiles/qemu-guest.nix")
-    outputs.nixosModules.disk-config
+    ./disk-config.nix
   ];
 
   boot.loader.grub = {
@@ -99,11 +65,7 @@
   
   services.resolved.enable = true;
 
-  environment.systemPackages = map lib.lowPrio [
-    pkgs.curl
-    pkgs.gitMinimal
-    pkgs.vim
-    pkgs.wget
+  environment.systemPackages = lib.mkAfter (map lib.lowPrio [
     pkgs.ethtool
     pkgs.usbutils
     pkgs.ndisc6  # IPv6 router discovery tool (rdisc6)
@@ -112,7 +74,7 @@
     (pkgs.writeShellScriptBin "ping6" ''
       exec ${pkgs.iputils}/bin/ping -6 "$@"
     '')
-  ];
+  ]);
 
   swapDevices = [
     { device = "/swapfile"; size = 2 * 1024; }
