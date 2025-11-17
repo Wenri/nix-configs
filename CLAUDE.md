@@ -25,7 +25,7 @@ Shared infrastructure providing identical userspace across all 6 hosts:
   - NUR (Nix User Repository) integration for community packages
   - nix-vscode-extensions for VS Code marketplace extensions
 - `modules/nixos/` - Exportable NixOS modules:
-  - `server-common.nix` - Base server configuration with overlays
+  - `server-base.nix` - Base server configuration with overlays
   - `users.nix` - Desktop user configuration
   - `locale.nix` - Locale and timezone settings
   - `secrets.nix` - Secrets management configuration
@@ -95,7 +95,7 @@ Each host has its own directory with minimal configuration:
 - `home.nix` - Imports `core.default` + `desktop.default` + `development`
 
 **matrix/, freenix/** (Servers)
-- `configuration.nix` - Server config, imports `common/modules/nixos/server-common.nix`, `users.nix`, `tailscale.nix`
+- `configuration.nix` - Server config, imports `common/modules/nixos/server-base.nix`, `users.nix`, `tailscale.nix`
 - `facter.json` - nixos-facter hardware detection
 - `synapse.nix` (matrix only) - Matrix Synapse server configuration
 - `home.nix` - Imports common home-manager modules only

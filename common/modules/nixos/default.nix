@@ -2,7 +2,7 @@
 # These should be stuff you would like to share with others, not your personal configurations.
 {
   # List your module files here
-  server-common = import ./server-common.nix;
+  server-base = import ./server-base.nix;
   users = import ./users.nix;
   locale = import ./locale.nix;
   secrets = import ./secrets.nix;

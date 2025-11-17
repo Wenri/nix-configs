@@ -6,12 +6,12 @@
   outputs,
   ...
 }: {
-  imports = [
-    outputs.nixosModules.server-common
-    outputs.nixosModules.users
-    outputs.nixosModules.tailscale
-    ./synapse.nix
-  ];
+    imports = [
+      outputs.nixosModules.server-base
+      outputs.nixosModules.users
+      outputs.nixosModules.tailscale
+      ./synapse.nix
+    ];
 
   # Configure systemd-networkd for ens3 interface
   # Tailscale optimization will be auto-detected if MAC address matching is configured
