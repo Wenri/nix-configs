@@ -9,52 +9,14 @@
   hostname,
   username,
   ...
-}: let
-  tailscaleAuthKeyFile = ../../secrets/tailscale-auth.key;
-in {
-  # You can import other NixOS modules here
-  imports = [
-    # You can also split up your configuration and import pieces of it here:
-    ./users.nix
-  ];
-
-  # Enable WSL
-  wsl.enable = true;
-
-  nixpkgs = {
-    # Add overlays for NUR, vscode-marketplace, and custom packages
-    overlays = [
-      outputs.overlays.additions
-      outputs.overlays.modifications
-      outputs.overlays.unstable-packages
-      outputs.overlays.master-packages
-      inputs.nur.overlays.default
-      inputs.nix-vscode-extensions.overlays.default
-    ];
-    config.allowUnfree = true;
-  };
-
-  nix = let
-    flakeInputs = lib.filterAttrs (_: lib.isType "flake") inputs;
+  }: let
+    tailscaleAuthKeyFile = ../../secrets/tailscale-auth.key;
   in {
-    settings = {
-      # Enable flakes and new 'nix' command
-      experimental-features = "nix-command flakes";
-      # Opinionated: disable global registry
-      flake-registry = "";
-      # Workaround for https://github.com/NixOS/nix/issues/9574
-      nix-path = config.nix.nixPath;
-    };
-    # Opinionated: disable channels
-    channel.enable = false;
-
-    # Opinionated: make flake registry and nix path match flake inputs
-    registry = lib.mapAttrs (_: flake: {inherit flake;}) flakeInputs;
-    nixPath = lib.mapAttrsToList (n: _: "${n}=flake:${n}") flakeInputs;
-  };
-
-  # Set hostname
-  networking.hostName = hostname;
+    # You can import other NixOS modules here
+    imports = [
+      outputs.nixosModules.wsl-base
+      ./users.nix
+    ];
 
   # Enable OpenSSH and rely on NixOS' built-in socket activation support.
   services.openssh = {
@@ -67,15 +29,6 @@ in {
     ListenStream = lib.mkForce [ "/run/sshd.sock" ];
     SocketMode = "0600";
   };
-
-  # System packages
-  environment.systemPackages = map lib.lowPrio [
-    pkgs.curl
-    pkgs.gitMinimal
-    pkgs.vim
-    pkgs.wget
-    pkgs.jq
-  ];
 
   # Enable Tailscale in userspace networking mode (no kernel TUN, ideal for WSL).
   services.tailscale = {

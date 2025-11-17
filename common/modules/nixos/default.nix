@@ -9,4 +9,5 @@
   tailscale = import ./tailscale.nix;
   disk-config = import ./disk-config.nix;
   desktop-base = import ./desktop-base.nix;
+  wsl-base = import ./wsl-base.nix;
 }
