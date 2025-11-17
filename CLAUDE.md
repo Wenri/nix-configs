@@ -264,7 +264,7 @@ This makes flake inputs and outputs accessible in all imported modules.
 ```nix
 overlays = import ./common/overlays {inherit inputs;};
 nixosModules = import ./common/modules/nixos;
-homeManagerModules = import ./common/modules/home-manager;
+homeModules = import ./common/modules/home-manager;
 packages = forAllSystems (system: import ./common/pkgs {pkgs = mkPkgs system;});
 ```
 

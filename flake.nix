@@ -169,7 +169,7 @@
     nixosModules = import ./common/modules/nixos;
 
     # Reusable home-manager modules
-    homeManagerModules = import ./common/modules/home-manager;
+    homeModules = import ./common/modules/home-manager;
 
     # NixOS system configurations - generated from hosts
     nixosConfigurations = lib.mapAttrs (hostname: cfg:
