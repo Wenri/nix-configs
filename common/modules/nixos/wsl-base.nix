@@ -17,8 +17,8 @@
   services.openssh = {
     startWhenNeeded = lib.mkForce true;
   };
-  systemd.sockets.sshd.socketConfig = lib.mkDefault {
-    ListenStream = ["/run/sshd.sock"];
+  systemd.sockets.sshd.socketConfig = {
+    ListenStream = lib.mkForce ["/run/sshd.sock"];
     SocketMode = "0600";
   };
 }
