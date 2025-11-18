@@ -2,7 +2,6 @@
   lib,
   pkgs,
   config,
-  hostname ? null,
   ...
 }: {
   config = let
@@ -18,21 +17,10 @@
 
     # Filter out null values
     optimizedMacAddresses = lib.filter (x: x != null) networkdMacAddresses;
-
-    defaultRoutingMode = "client";
-    routingOverrides = {
-      matrix = "server";
-      freenix = "server";
-      irif = "server";
-    };
-    routingMode =
-      if hostname != null && builtins.hasAttr hostname routingOverrides
-      then routingOverrides.${hostname}
-      else defaultRoutingMode;
   in {
     services.tailscale = {
       enable = lib.mkDefault true;
-      useRoutingFeatures = lib.mkDefault routingMode;
+      useRoutingFeatures = lib.mkDefault "server";
     };
 
     # Enable network optimization if MAC addresses are detected
