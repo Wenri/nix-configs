@@ -8,7 +8,7 @@ This is a NixOS configuration repository based on the [nix-starter-config](https
 - **Single unified flake** at root managing 6 NixOS hosts
 - **Unified infrastructure** in `common/` (overlays, modules, packages, home-manager)
 - **Per-host configurations** in `hosts/` directory
-- **All users (wenri, nixos, xsnow) are the same person: Bingchen Gong**
+- **All users (wenri, nixos) are the same person: Bingchen Gong**
 
 ## Repository Structure
 
@@ -66,9 +66,9 @@ The root `flake.nix` manages all 6 hosts with a single source of truth:
 ```nix
 hosts = {
   wslnix       = { system = "x86_64-linux";   username = "nixos"; type = "wsl"; };
-  nixos-gnome  = { system = "x86_64-linux";   username = "xsnow"; type = "desktop"; };
-  nixos-plasma6= { system = "x86_64-linux";   username = "xsnow"; type = "desktop"; };
-  irif         = { system = "x86_64-linux";   username = "xsnow"; type = "desktop"; };
+  nixos-gnome  = { system = "x86_64-linux";   username = "wenri"; type = "desktop"; };
+  nixos-plasma6= { system = "x86_64-linux";   username = "wenri"; type = "desktop"; };
+  irif         = { system = "x86_64-linux";   username = "wenri"; type = "desktop"; };
   matrix       = { system = "x86_64-linux";   username = "wenri"; type = "server"; };
   freenix      = { system = "aarch64-linux";  username = "wenri"; type = "server"; };
 }
@@ -153,7 +153,7 @@ sudo nixos-rebuild switch --flake .#wslnix
 home-manager switch --flake .#wenri@matrix
 home-manager switch --flake .#wenri@freenix
 home-manager switch --flake .#nixos@wslnix
-home-manager switch --flake .#xsnow@nixos-gnome
+home-manager switch --flake .#wenri@nixos-gnome
 ```
 
 ### Building Custom Packages
@@ -365,7 +365,7 @@ nixos-anywhere --flake .#freenix \
 ## Important Notes
 - **Single unified flake**: All 6 hosts managed by root `flake.nix`
 - **Unified infrastructure**: All hosts share infrastructure from `common/` (overlays, modules, packages)
-- **Unified userspace**: All users (wenri, nixos, xsnow) are the same person: Bingchen Gong
+- **Unified userspace**: All users (wenri, nixos) are the same person: Bingchen Gong
 - **All home-manager configuration identical**: Same packages, programs, and dotfiles across all environments
 - System state version: 25.05
 - Home state version: 25.05

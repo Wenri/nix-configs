@@ -59,17 +59,17 @@
       # Desktop hosts
       nixos-gnome = {
         system = "x86_64-linux";
-        username = "xsnow";
+        username = "wenri";
         type = "desktop";
       };
       nixos-plasma6 = {
         system = "x86_64-linux";
-        username = "xsnow";
+        username = "wenri";
         type = "desktop";
       };
       irif = {
         system = "x86_64-linux";
-        username = "xsnow";
+        username = "wenri";
         type = "desktop";
       };
 
