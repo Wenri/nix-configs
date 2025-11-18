@@ -3,11 +3,15 @@
   outputs,
   lib,
   config,
-  pkgs,
   ...
 }: let
   flakeInputs = lib.filterAttrs (_: lib.isType "flake") inputs;
 in {
+  imports = [
+    ./common-packages.nix
+    ./common-services.nix
+  ];
+
   nixpkgs = {
     overlays = [
       outputs.overlays.additions
@@ -31,22 +35,4 @@ in {
     nixPath = lib.mapAttrsToList (n: _: "${n}=flake:${n}") flakeInputs;
   };
 
-  environment.systemPackages = lib.mkBefore (map lib.lowPrio [
-    pkgs.curl
-    pkgs.gitMinimal
-    pkgs.vim
-    pkgs.wget
-    pkgs.jq
-  ]);
-
-  services.openssh = {
-    enable = lib.mkDefault true;
-    startWhenNeeded = lib.mkDefault false;
-    settings = {
-      PermitRootLogin = lib.mkDefault "no";
-      PasswordAuthentication = lib.mkDefault false;
-    };
-  };
-
-  services.tailscale.enable = lib.mkDefault true;
 }

@@ -10,8 +10,7 @@
   networking.hostName = lib.mkDefault hostname;
 
   services.openssh = {
-    enable = lib.mkDefault true;
-    startWhenNeeded = lib.mkDefault true;
+    startWhenNeeded = lib.mkForce true;
   };
   systemd.sockets.sshd.socketConfig = lib.mkDefault {
     ListenStream = ["/run/sshd.sock"];

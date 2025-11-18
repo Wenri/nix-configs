@@ -18,18 +18,6 @@
       ./users.nix
     ];
 
-  # Enable OpenSSH and rely on NixOS' built-in socket activation support.
-  services.openssh = {
-    enable = true;
-    startWhenNeeded = true;
-  };
-
-  # Override the socket to listen on a local UNIX domain socket instead of TCP port 22.
-  systemd.sockets.sshd.socketConfig = {
-    ListenStream = lib.mkForce [ "/run/sshd.sock" ];
-    SocketMode = "0600";
-  };
-
   # Enable Tailscale in userspace networking mode (no kernel TUN, ideal for WSL).
   services.tailscale = {
     enable = true;
