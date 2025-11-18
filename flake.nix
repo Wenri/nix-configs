@@ -52,7 +52,7 @@
       # WSL host
       wslnix = {
         system = "x86_64-linux";
-        username = "nixos";
+        username = "wenri";
         type = "wsl";
       };
 

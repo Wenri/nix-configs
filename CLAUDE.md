@@ -8,7 +8,7 @@ This is a NixOS configuration repository based on the [nix-starter-config](https
 - **Single unified flake** at root managing 6 NixOS hosts
 - **Unified infrastructure** in `common/` (overlays, modules, packages, home-manager)
 - **Per-host configurations** in `hosts/` directory
-- **All users (wenri, nixos) are the same person: Bingchen Gong**
+- **All users are the same person: Bingchen Gong (username: wenri)**
 
 ## Repository Structure
 
@@ -65,7 +65,7 @@ The root `flake.nix` manages all 6 hosts with a single source of truth:
 
 ```nix
 hosts = {
-  wslnix       = { system = "x86_64-linux";   username = "nixos"; type = "wsl"; };
+  wslnix       = { system = "x86_64-linux";   username = "wenri"; type = "wsl"; };
   nixos-gnome  = { system = "x86_64-linux";   username = "wenri"; type = "desktop"; };
   nixos-plasma6= { system = "x86_64-linux";   username = "wenri"; type = "desktop"; };
   irif         = { system = "x86_64-linux";   username = "wenri"; type = "desktop"; };
@@ -119,25 +119,43 @@ nix flake check
 ```
 
 ### NixOS System Configuration
+
+**IMPORTANT:** Always use the `--sudo` flag instead of running nixos-rebuild with `sudo`. Additionally, in zsh (the default shell), you **must quote** flake references containing `#` because zsh treats `#` as a special glob character.
+
 ```bash
 # Apply system configuration for servers
-sudo nixos-rebuild switch --flake .#matrix
-sudo nixos-rebuild switch --flake .#freenix
+nixos-rebuild switch --sudo --flake '.#matrix'
+nixos-rebuild switch --sudo --flake '.#freenix'
 
 # Apply for desktops
-sudo nixos-rebuild switch --flake .#nixos-gnome
-sudo nixos-rebuild switch --flake .#nixos-plasma6
-sudo nixos-rebuild switch --flake .#irif
+nixos-rebuild switch --sudo --flake '.#nixos-gnome'
+nixos-rebuild switch --sudo --flake '.#nixos-plasma6'
+nixos-rebuild switch --sudo --flake '.#irif'
 
 # Apply for WSL
-sudo nixos-rebuild switch --flake .#wslnix
+nixos-rebuild switch --sudo --flake '.#wslnix'
 
 # Test without switching (dry run)
-sudo nixos-rebuild test --flake .#hostname
+nixos-rebuild test --sudo --flake '.#hostname'
 
 # Build without activating
-sudo nixos-rebuild build --flake .#hostname
+nixos-rebuild build --sudo --flake '.#hostname'
 ```
+
+**Why quote flake references in zsh?**
+
+```bash
+# ❌ WRONG in zsh - will fail with "no matches found"
+nixos-rebuild switch --sudo --flake .#wslnix
+
+# ✅ CORRECT in zsh - quote the flake reference
+nixos-rebuild switch --sudo --flake '.#wslnix'
+
+# ✅ Also works - double quotes
+nixos-rebuild switch --sudo --flake ".#wslnix"
+```
+
+This issue only affects zsh. In bash, `#` starts a comment only at the beginning of a word, so `.#wslnix` works without quotes.
 
 ### Home Manager
 
@@ -146,26 +164,26 @@ A single `nixos-rebuild switch` command updates both system and user environment
 
 ```bash
 # Single command updates both NixOS and home-manager
-sudo nixos-rebuild switch --flake .#matrix
-sudo nixos-rebuild switch --flake .#wslnix
+nixos-rebuild switch --sudo --flake '.#matrix'
+nixos-rebuild switch --sudo --flake '.#wslnix'
 
 # Standalone home-manager still available for backward compatibility
-home-manager switch --flake .#wenri@matrix
-home-manager switch --flake .#wenri@freenix
-home-manager switch --flake .#nixos@wslnix
-home-manager switch --flake .#wenri@nixos-gnome
+home-manager switch --flake '.#wenri@matrix'
+home-manager switch --flake '.#wenri@freenix'
+home-manager switch --flake '.#wenri@wslnix'
+home-manager switch --flake '.#wenri@nixos-gnome'
 ```
 
 ### Building Custom Packages
 ```bash
 # Build custom package from common/pkgs/ (exported by the unified flake)
-nix build .#package-name
+nix build '.#package-name'
 
 # Enter development shell with package
-nix shell .#package-name
+nix shell '.#package-name'
 
 # Example: building the example-package
-nix build .#example-package
+nix build '.#example-package'
 ```
 
 ### Formatting
@@ -349,15 +367,15 @@ Files in `.gitignore` are invisible to Nix evaluations.
 For fresh installations of server hosts:
 ```bash
 # With nixos-facter hardware detection
-# Pattern: nixos-anywhere --flake .#<hostname> --generate-hardware-config nixos-facter ./hosts/<hostname>/facter.json <target>
+# Pattern: nixos-anywhere --flake '.#<hostname>' --generate-hardware-config nixos-facter ./hosts/<hostname>/facter.json <target>
 
 # For matrix (x86_64-linux)
-nixos-anywhere --flake .#matrix \
+nixos-anywhere --flake '.#matrix' \
   --generate-hardware-config nixos-facter ./hosts/matrix/facter.json \
   root@target-host
 
 # For freenix (aarch64-linux)
-nixos-anywhere --flake .#freenix \
+nixos-anywhere --flake '.#freenix' \
   --generate-hardware-config nixos-facter ./hosts/freenix/facter.json \
   root@target-host
 ```
@@ -365,11 +383,11 @@ nixos-anywhere --flake .#freenix \
 ## Important Notes
 - **Single unified flake**: All 6 hosts managed by root `flake.nix`
 - **Unified infrastructure**: All hosts share infrastructure from `common/` (overlays, modules, packages)
-- **Unified userspace**: All users (wenri, nixos) are the same person: Bingchen Gong
+- **Unified userspace**: All users are the same person: Bingchen Gong (username: wenri)
 - **All home-manager configuration identical**: Same packages, programs, and dotfiles across all environments
 - System state version: 25.05
 - Home state version: 25.05
-- Custom packages accessible via `nix build .#package-name`
+- Custom packages accessible via `nix build '.#package-name'`
 - Firefox extensions from NUR (1Password, uBlock Origin, Translate Web Pages)
 - VS Code extensions from nix-vscode-extensions marketplace overlay
 - Coq packages from NUR (lngen, ott-sweirich)
