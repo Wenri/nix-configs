@@ -7,7 +7,6 @@
     imports = [
       outputs.nixosModules.server-base
       outputs.nixosModules.users
-      outputs.nixosModules.tailscale
     ];
 
   networking.hostName = hostname;

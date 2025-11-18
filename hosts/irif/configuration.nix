@@ -71,9 +71,6 @@
     libreoffice-qt
   ]);
   
-  services.tailscale = {
-    useRoutingFeatures = "server";
-  };
   services.fwupd.enable = true;
   services.earlyoom.enable = true;
 

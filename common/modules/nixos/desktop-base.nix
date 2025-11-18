@@ -2,7 +2,10 @@
   lib,
   ...
 }: {
-  imports = [./common-base.nix];
+  imports = [
+    ./common-base.nix
+    ./tailscale.nix
+  ];
 
   networking.networkmanager.enable = lib.mkDefault true;
 

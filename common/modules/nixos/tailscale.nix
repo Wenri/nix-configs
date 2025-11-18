@@ -2,26 +2,52 @@
   lib,
   pkgs,
   config,
+  hostname ? null,
+  username ? null,
   ...
 }: {
   config = let
     # Extract MAC addresses from systemd-networkd configurations
     # Only include networks that have MAC address matching and IPv6AcceptRA enabled
     networkdMacAddresses = lib.mapAttrsToList (_: netCfg:
-      if netCfg.matchConfig ? MACAddress && 
+      if netCfg.matchConfig ? MACAddress &&
          netCfg.enable == true &&
          (netCfg.networkConfig ? IPv6AcceptRA && netCfg.networkConfig.IPv6AcceptRA == true)
       then netCfg.matchConfig.MACAddress
       else null
     ) config.systemd.network.networks;
-    
+
     # Filter out null values
     optimizedMacAddresses = lib.filter (x: x != null) networkdMacAddresses;
-  in {
-    services.tailscale = {
-      enable = lib.mkDefault true;
-      useRoutingFeatures = "server";
+
+    defaultRoutingMode = "client";
+    routingOverrides = {
+      matrix = "server";
+      freenix = "server";
+      irif = "server";
     };
+    routingMode =
+      if hostname != null && builtins.hasAttr hostname routingOverrides
+      then routingOverrides.${hostname}
+      else defaultRoutingMode;
+
+    tailscaleAuthKeyFile = ../../../secrets/tailscale-auth.key;
+  in {
+    services.tailscale = lib.mkMerge [
+      {
+        enable = lib.mkDefault true;
+        useRoutingFeatures = lib.mkDefault routingMode;
+      }
+      (lib.mkIf (hostname == "wslnix") {
+        useRoutingFeatures = lib.mkForce "client";
+        interfaceName = "userspace-networking";
+        port = 0;
+        authKeyFile = tailscaleAuthKeyFile;
+        extraUpFlags =
+          ["--ssh"]
+          ++ lib.optionals (username != null) ["--operator=${username}"];
+      })
+    ];
 
     # Enable network optimization if MAC addresses are detected
     services.networkd-dispatcher = lib.mkIf (optimizedMacAddresses != []) {
@@ -31,16 +57,16 @@
         script = ''
           #!${pkgs.runtimeShell}
           set -e
-          
+
           interface="$1"
-          
+
           # Get MAC address of the interface
           interface_mac="$(${pkgs.iproute2}/bin/ip link show "$interface" 2>/dev/null | grep -oP 'link/ether \K[^ ]+' || echo "")"
-          
+
           if [ -z "$interface_mac" ]; then
             exit 0
           fi
-          
+
           # Check if MAC address matches auto-detected interfaces
           ${lib.concatStringsSep "\n" (map (mac: ''
           if [ "$interface_mac" = "${mac}" ]; then
@@ -49,7 +75,7 @@
             exit 0
           fi
           '') optimizedMacAddresses)}
-          
+
           # Interface not in optimized list, skip
           exit 0
         '';

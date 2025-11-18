@@ -3,7 +3,10 @@
   hostname,
   ...
 }: {
-  imports = [./common-base.nix];
+  imports = [
+    ./common-base.nix
+    ./tailscale.nix
+  ];
 
   wsl.enable = lib.mkDefault true;
 
