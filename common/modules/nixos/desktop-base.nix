@@ -24,4 +24,10 @@
   };
 
   services.zfs.autoScrub.enable = lib.mkDefault true;
+
+  zramSwap = {
+    enable = lib.mkDefault true;
+    algorithm = lib.mkDefault "zstd";
+    memoryPercent = lib.mkDefault 30;
+  };
 }
