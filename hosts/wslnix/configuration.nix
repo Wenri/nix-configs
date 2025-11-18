@@ -15,7 +15,7 @@
     # You can import other NixOS modules here
     imports = [
       outputs.nixosModules.wsl-base
-      ./users.nix
+    outputs.nixosModules.users
     ];
 
   # Enable Tailscale in userspace networking mode (no kernel TUN, ideal for WSL).

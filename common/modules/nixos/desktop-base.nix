@@ -1,5 +1,6 @@
 {
   lib,
+  username,
   ...
 }: {
   imports = [
@@ -33,4 +34,6 @@
     algorithm = lib.mkDefault "zstd";
     memoryPercent = lib.mkDefault 30;
   };
+
+  users.users.${username}.extraGroups = lib.mkAfter ["networkmanager"];
 }
