@@ -20,7 +20,6 @@
 
   # Enable Tailscale in userspace networking mode (no kernel TUN, ideal for WSL).
   services.tailscale = {
-    enable = true;
     useRoutingFeatures = "client";
     interfaceName = "userspace-networking";
     port = 0;

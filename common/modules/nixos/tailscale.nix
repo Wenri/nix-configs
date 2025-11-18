@@ -19,7 +19,7 @@
     optimizedMacAddresses = lib.filter (x: x != null) networkdMacAddresses;
   in {
     services.tailscale = {
-      enable = true;
+      enable = lib.mkDefault true;
       useRoutingFeatures = "server";
     };
 

@@ -23,7 +23,6 @@
   # networking.useNetworkd enables networkd and automatically disables dhcpcd
   networking.useNetworkd = true;
 
-  services.openssh.enable = true;
   # Enable QEMU guest tools for all machines (applies to both matrix and freenix)
   # This provides qemu-guest-agent and optimizations for running in QEMU/KVM
   services.qemuGuest.enable = true;

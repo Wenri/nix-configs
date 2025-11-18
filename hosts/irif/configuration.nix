@@ -72,7 +72,6 @@
   ]);
   
   services.tailscale = {
-    enable = true;
     useRoutingFeatures = "server";
   };
   services.fwupd.enable = true;
