@@ -1,6 +1,7 @@
 {
   lib,
   hostname,
+  username,
   ...
 }: {
   imports = [
@@ -9,6 +10,7 @@
   ];
 
   wsl.enable = lib.mkDefault true;
+  wsl.defaultUser = lib.mkDefault username;
 
   networking.hostName = lib.mkDefault hostname;
 

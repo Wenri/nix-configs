@@ -9,6 +9,7 @@
     file
     jq
     iperf3
+    ripgrep
 
     # Development tools
     gnumake
