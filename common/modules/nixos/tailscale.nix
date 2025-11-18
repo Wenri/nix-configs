@@ -3,7 +3,6 @@
   pkgs,
   config,
   hostname ? null,
-  username ? null,
   ...
 }: {
   config = let
@@ -30,24 +29,11 @@
       if hostname != null && builtins.hasAttr hostname routingOverrides
       then routingOverrides.${hostname}
       else defaultRoutingMode;
-
-    tailscaleAuthKeyFile = ../../../secrets/tailscale-auth.key;
   in {
-    services.tailscale = lib.mkMerge [
-      {
-        enable = lib.mkDefault true;
-        useRoutingFeatures = lib.mkDefault routingMode;
-      }
-      (lib.mkIf (hostname == "wslnix") {
-        useRoutingFeatures = lib.mkForce "client";
-        interfaceName = "userspace-networking";
-        port = 0;
-        authKeyFile = tailscaleAuthKeyFile;
-        extraUpFlags =
-          ["--ssh"]
-          ++ lib.optionals (username != null) ["--operator=${username}"];
-      })
-    ];
+    services.tailscale = {
+      enable = lib.mkDefault true;
+      useRoutingFeatures = lib.mkDefault routingMode;
+    };
 
     # Enable network optimization if MAC addresses are detected
     services.networkd-dispatcher = lib.mkIf (optimizedMacAddresses != []) {
