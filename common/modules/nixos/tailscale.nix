@@ -21,6 +21,7 @@
     services.tailscale = {
       enable = lib.mkDefault true;
       useRoutingFeatures = lib.mkDefault "server";
+      extraUpFlags = lib.mkDefault ["--ssh"];
     };
 
     # Enable network optimization if MAC addresses are detected

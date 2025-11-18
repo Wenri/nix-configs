@@ -1,4 +1,5 @@
 {
+  lib,
   pkgs,
   username,
   ...
@@ -28,4 +29,6 @@
   security.sudo.wheelNeedsPassword = false;
 
   programs.zsh.enable = true;
+
+  services.tailscale.extraUpFlags = lib.mkAfter ["--operator=${username}"];
 }

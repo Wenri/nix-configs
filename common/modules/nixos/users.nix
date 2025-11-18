@@ -1,4 +1,5 @@
 {
+  lib,
   pkgs,
   username,
   ...
@@ -20,4 +21,6 @@
   programs.firefox.enable = true;
   programs.iftop.enable = true;
   services.printing.browsed.enable = false;
+
+  services.tailscale.extraUpFlags = lib.mkAfter ["--operator=${username}"];
 }
