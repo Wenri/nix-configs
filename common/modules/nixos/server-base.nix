@@ -65,17 +65,6 @@
   
   services.resolved.enable = true;
 
-  environment.systemPackages = lib.mkAfter (map lib.lowPrio [
-    pkgs.ethtool
-    pkgs.usbutils
-    pkgs.ndisc6  # IPv6 router discovery tool (rdisc6)
-    pkgs.iputils # IPv6 ping tool (ping -6)
-    # Create ping6 wrapper for compatibility
-    (pkgs.writeShellScriptBin "ping6" ''
-      exec ${pkgs.iputils}/bin/ping -6 "$@"
-    '')
-  ]);
-
   swapDevices = [
     { device = "/swapfile"; size = 2 * 1024; }
   ];
