@@ -19,6 +19,7 @@
     ];
 
   # Enable Tailscale in userspace networking mode (no kernel TUN, ideal for WSL).
+  # Note: --ssh comes from tailscale.nix default, --operator comes from users.nix
   services.tailscale = {
     useRoutingFeatures = "client";
     interfaceName = "userspace-networking";
