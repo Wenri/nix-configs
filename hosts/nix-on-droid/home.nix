@@ -28,6 +28,7 @@
 
     # AI assistants
     claude-code
+    cursor-cli
   ];
 
   # ZSH configuration

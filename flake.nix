@@ -203,6 +203,7 @@
 
       pkgs = import nixpkgs {
         system = "aarch64-linux";
+        config.allowUnfree = true;
         overlays = [
           nix-on-droid.overlays.default
         ];
