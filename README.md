@@ -4,10 +4,11 @@
 
 > **Note:** This is a personal configuration repository based on [nix-starter-config](https://github.com/Misterio77/nix-starter-config). All configurations share unified infrastructure from `common/` - the same overlays, modules, packages, and userspace are used across WSL, desktop, and server deployments.
 
-This repository contains **6 NixOS hosts** managed by a single unified flake:
+This repository contains **6 NixOS hosts + 1 nix-on-droid** managed by a single unified flake:
 - **wslnix** - NixOS-WSL for Windows development
 - **nixos-gnome, nixos-plasma6, irif** - Desktop environments (GNOME, Plasma6)
 - **matrix, freenix** - Production servers (Matrix Synapse, ARM server)
+- **nix-on-droid** - Android/Termux development environment
 
 Features modern architecture with integrated home-manager, auto-generated configurations, and nixos-anywhere deployment.
 
@@ -57,6 +58,12 @@ hosts = {
 - Matrix Synapse server (matrix)
 - Multi-architecture support (x86_64 and aarch64)
 - Tailscale VPN with network optimization
+
+**Nix-on-Droid (Android)**
+- nix-community/nix-on-droid for Android/Termux
+- Master home-manager with advanced template pattern
+- Full development environment (zsh, git, neovim, claude-code)
+- `self.submodules = true` for git submodule support
 
 ### Shared Features
 
@@ -205,6 +212,9 @@ sudo nixos-rebuild switch --flake .#irif
 # For servers
 sudo nixos-rebuild switch --flake .#matrix
 sudo nixos-rebuild switch --flake .#freenix
+
+# For Android (nix-on-droid)
+nix-on-droid switch --flake ~/.config/nix-on-droid
 ```
 
 ### Customization
@@ -320,10 +330,13 @@ nix-configs/
 │   │   ├── facter.json      # nixos-facter hardware detection
 │   │   ├── synapse.nix      # Matrix Synapse config
 │   │   └── home.nix
-│   └── freenix/
-│       ├── configuration.nix
-│       ├── facter.json
-│       └── home.nix
+│   ├── freenix/
+│   │   ├── configuration.nix
+│   │   ├── facter.json
+│   │   └── home.nix
+│   └── nix-on-droid/
+│       ├── configuration.nix  # nix-on-droid system + home-manager integration
+│       └── home.nix           # zsh, git, fzf, claude-code, dev tools
 └── secrets/           # Secrets (not in git)
     └── tailscale-auth.key
 ```

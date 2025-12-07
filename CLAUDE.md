@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Repository Overview
 
 This is a NixOS configuration repository based on the [nix-starter-config](https://github.com/Misterio77/nix-starter-config) template. It contains:
-- **Single unified flake** at root managing 6 NixOS hosts
+- **Single unified flake** at root managing 6 NixOS hosts + 1 nix-on-droid (Android)
 - **Unified infrastructure** in `common/` (overlays, modules, packages, home-manager)
 - **Per-host configurations** in `hosts/` directory
 - **All users are the same person: Bingchen Gong (username: wenri)**
@@ -72,6 +72,8 @@ hosts = {
   matrix       = { system = "x86_64-linux";   username = "wenri"; type = "server"; };
   freenix      = { system = "aarch64-linux";  username = "wenri"; type = "server"; };
 }
+
+# Plus nix-on-droid (Android) via nixOnDroidConfigurations.default
 ```
 
 **Features:**
@@ -100,6 +102,12 @@ Each host has its own directory with minimal configuration:
 - `facter.json` - nixos-facter hardware detection
 - `synapse.nix` (matrix only) - Matrix Synapse server configuration
 - `home.nix` - Imports common home-manager modules only
+
+**nix-on-droid/** (Android)
+- `configuration.nix` - Nix-on-droid system config with environment.packages and home-manager integration
+- `home.nix` - Home-manager config with zsh, git, fzf, claude-code, development tools
+- Uses advanced nix-on-droid template pattern with `home-manager-path = home-manager.outPath`
+- Master home-manager branch for latest features
 
 ## Common Development Commands
 
@@ -156,6 +164,15 @@ nixos-rebuild switch --sudo --flake ".#wslnix"
 ```
 
 This issue only affects zsh. In bash, `#` starts a comment only at the beginning of a word, so `.#wslnix` works without quotes.
+
+### Nix-on-Droid (Android)
+```bash
+# Apply nix-on-droid configuration
+nix-on-droid switch --flake ~/.config/nix-on-droid
+
+# Or with explicit path
+nix-on-droid switch --flake /path/to/config
+```
 
 ### Home Manager
 
@@ -220,6 +237,15 @@ The unified flake follows a modernized architecture:
 - Automatic derivation of paths (e.g., facter files from hostname)
 
 ### Host Type Features
+
+**Nix-on-Droid (Android):**
+- Uses nix-community/nix-on-droid for Android/Termux environment
+- Advanced template pattern with `home-manager-path = home-manager.outPath`
+- Master home-manager branch with nixpkgs-unstable
+- `nix-on-droid.overlays.default` for proper package compatibility
+- Home-manager integration via `home-manager.config = ./home.nix`
+- Packages: zsh, oh-my-zsh, git, tmux, neovim, fzf, ripgrep, htop, claude-code, nodejs
+- `self.submodules = true` for git submodule support
 
 **WSL (wslnix):**
 - NixOS-WSL integration for Windows development

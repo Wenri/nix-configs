@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git clone:*)",
+      "Bash(mkdir:*)",
+      "Bash(nix flake update:*)",
+      "Bash(nix flake check:*)",
+      "Bash(nix-on-droid switch:*)",
+      "Bash(1 --show-trace)",
+      "Bash(echo:*)",
+      "Bash(zsh:*)",
+      "Bash(nix flake show:*)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(nix eval:*)",
+      "Bash(nix search:*)",
+      "Bash(git init:*)",
+      "Bash(git add:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

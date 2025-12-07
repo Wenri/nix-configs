@@ -18,6 +18,19 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Home-manager (master for nix-on-droid, follows nixpkgs)
+    home-manager = {
+      url = "github:nix-community/home-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # Nix-on-Droid for Android
+    nix-on-droid = {
+      url = "github:nix-community/nix-on-droid";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.home-manager.follows = "home-manager";
+    };
+
     # Server deployment tools
     disko = {
       url = "github:nix-community/disko";
@@ -25,16 +38,13 @@
     };
 
     nixos-facter-modules.url = "github:numtide/nixos-facter-modules";
-
-    home-manager = {
-      url = "github:nix-community/home-manager";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
 
   outputs = {
     self,
     nixpkgs,
+    nix-on-droid,
+    home-manager,
     ...
   } @ inputs: let
     inherit (self) outputs;
@@ -178,6 +188,28 @@
         inherit (cfg) system username type;
       })
     hosts;
+
+    # Nix-on-Droid configuration for Android
+    nixOnDroidConfigurations.default = nix-on-droid.lib.nixOnDroidConfiguration {
+      modules = [
+        ./hosts/nix-on-droid/configuration.nix
+      ];
+
+      extraSpecialArgs = {
+        inherit inputs outputs;
+        hostname = "nix-on-droid";
+        username = "nix-on-droid";
+      };
+
+      pkgs = import nixpkgs {
+        system = "aarch64-linux";
+        overlays = [
+          nix-on-droid.overlays.default
+        ];
+      };
+
+      home-manager-path = home-manager.outPath;
+    };
 
     # Home-manager configurations - generated from hosts (standalone, for backward compatibility)
     homeConfigurations = lib.mapAttrs' (hostname: cfg:
