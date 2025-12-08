@@ -2,7 +2,9 @@
   lib,
   pkgs,
   outputs,
-  sshd-start, # Passed from configuration.nix via extraSpecialArgs
+  hostname,
+  username,
+  sshd-start,
   ...
 }: let
   keys = import ../../common/keys.nix;

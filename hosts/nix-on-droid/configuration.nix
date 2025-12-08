@@ -4,6 +4,8 @@
   pkgs,
   inputs,
   outputs,
+  hostname,
+  username,
   ...
 }: let
   keys = import ../../common/keys.nix;
@@ -102,7 +104,7 @@ in {
     backupFileExtension = "hm-bak";
     useGlobalPkgs = true;
     extraSpecialArgs = {
-      inherit outputs sshd-start;
+      inherit outputs hostname username sshd-start;
     };
   };
 
