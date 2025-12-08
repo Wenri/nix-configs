@@ -47,8 +47,9 @@
   ];
 
   # System tools
+  # Note: tzdata not needed - time.timeZone creates /etc/zoneinfo symlink
   systemTools = with pkgs; [
-    tzdata
+    glibc.bin # tzselect, zdump, zic, locale, iconv, etc.
     hostname
     man
     which

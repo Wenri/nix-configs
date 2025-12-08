@@ -32,7 +32,7 @@
   home-manager = {
     config = ./home.nix;
     backupFileExtension = "hm-bak";
-    useGlobalPkgs = true;
+    useGlobalPkgs = true;  # Reverted: nix-on-droid merges home-manager packages into system environment regardless
     extraSpecialArgs = {
       inherit outputs hostname username;
     };
