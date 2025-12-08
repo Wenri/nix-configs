@@ -13,6 +13,8 @@
     gnugrep
     gnused
     gnutar
+    gawk
+    file
   ];
 
   # Compression tools
@@ -29,6 +31,8 @@
     curl
     wget
     openssh
+    iproute2 # ip command
+    nettools # ifconfig command
   ];
 
   # System tools
