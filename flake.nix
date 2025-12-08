@@ -198,7 +198,7 @@
       extraSpecialArgs = {
         inherit inputs outputs;
         hostname = "nix-on-droid";
-        username = "nix-on-droid";
+        username = "wenri";
       };
 
       pkgs = import nixpkgs {

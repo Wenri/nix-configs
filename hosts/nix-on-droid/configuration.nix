@@ -5,14 +5,18 @@
   inputs,
   outputs,
   ...
-}: {
-  # Environment packages for nix-on-droid
+}: let
+  sshd-start = pkgs.writeShellScript "start-sshd" ''
+    exec ${pkgs.openssh}/bin/sshd -f $HOME/.ssh/sshd_config
+  '';
+in {
+  # Environment packages for nix-on-droid (system-level)
+  # Note: User packages are managed via home-manager in home.nix
   environment.packages = with pkgs; [
-    # User-facing stuff
-    vim
+    # Editors (neovim for nix-on-droid, vim via home-manager)
     neovim
 
-    # Some common utilities
+    # Core utilities required at system level
     procps
     killall
     diffutils
@@ -30,16 +34,10 @@
     zip
     unzip
 
-    # Additional useful tools
-    htop
-    file
-    jq
-    ripgrep
-    tmux
+    # Network and system tools
     openssh
     curl
     wget
-    git
     which
   ];
 
@@ -63,4 +61,36 @@
     backupFileExtension = "hm-bak";
     useGlobalPkgs = true;
   };
+
+  # Set default shell
+  user.shell = "${pkgs.zsh}/bin/zsh";
+
+  # SSH server setup on port 2222
+  build.activation.sshd = ''
+    $VERBOSE_ECHO "Setting up sshd..."
+    mkdir -p $HOME/.ssh
+
+    # Generate host keys if they don't exist
+    if [ ! -f $HOME/.ssh/ssh_host_ed25519_key ]; then
+      $DRY_RUN_CMD ${pkgs.openssh}/bin/ssh-keygen -t ed25519 -f $HOME/.ssh/ssh_host_ed25519_key -N ""
+    fi
+    if [ ! -f $HOME/.ssh/ssh_host_rsa_key ]; then
+      $DRY_RUN_CMD ${pkgs.openssh}/bin/ssh-keygen -t rsa -b 4096 -f $HOME/.ssh/ssh_host_rsa_key -N ""
+    fi
+
+    # Create sshd_config
+    $DRY_RUN_CMD cat > $HOME/.ssh/sshd_config << 'EOF'
+Port 2222
+HostKey ~/.ssh/ssh_host_ed25519_key
+HostKey ~/.ssh/ssh_host_rsa_key
+AuthorizedKeysFile .ssh/authorized_keys
+PasswordAuthentication no
+PubkeyAuthentication yes
+PrintMotd yes
+EOF
+
+    # Setup termux-boot to start sshd on boot
+    mkdir -p $HOME/.termux/boot
+    ln -sf ${sshd-start} $HOME/.termux/boot/start-sshd
+  '';
 }

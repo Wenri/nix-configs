@@ -10,6 +10,7 @@
     jq
     iperf3
     ripgrep
+    fzf
 
     # Development tools
     gnumake
@@ -21,4 +22,10 @@
     cursor-cli
     gemini-cli
   ];
+
+  # Fuzzy finder with shell integration
+  programs.fzf = {
+    enable = true;
+    enableZshIntegration = true;
+  };
 }

@@ -1,6 +1,7 @@
 {
   programs.ssh = {
     enable = true;
+    # Disable deprecated default config
     enableDefaultConfig = false;
     matchBlocks = {
       "github.com" = {
@@ -8,8 +9,9 @@
         port = 443;
         user = "git";
       };
+      # Set defaults explicitly (replacing deprecated default config)
       "*" = {
-        extraOptions.IdentityAgent = "~/.1password/agent.sock";
+        addKeysToAgent = "yes";
       };
     };
   };
