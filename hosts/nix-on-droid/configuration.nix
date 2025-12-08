@@ -102,7 +102,7 @@ in {
     backupFileExtension = "hm-bak";
     useGlobalPkgs = true;
     extraSpecialArgs = {
-      inherit sshd-start;
+      inherit outputs sshd-start;
     };
   };
 

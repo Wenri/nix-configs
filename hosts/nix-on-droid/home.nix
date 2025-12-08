@@ -1,6 +1,7 @@
 {
   lib,
   pkgs,
+  outputs,
   sshd-start, # Passed from configuration.nix via extraSpecialArgs
   ...
 }: let
@@ -8,7 +9,7 @@
 in {
   # Import shared core modules
   imports = [
-    ../../common/modules/home-manager/core
+    outputs.homeModules.core.default
   ];
 
   # This value determines the Home Manager release that your
