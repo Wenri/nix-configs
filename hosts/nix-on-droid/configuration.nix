@@ -108,8 +108,17 @@ in {
     };
   };
 
-  # Set default shell
-  user.shell = "${pkgs.zsh}/bin/zsh";
+  # User configuration (uses username from flake)
+  user = {
+    userName = username;
+    group = username;
+    shell = "${pkgs.zsh}/bin/zsh";
+  };
+
+  # Set hostname in /etc/hosts
+  networking.hosts = {
+    "127.0.0.1" = [hostname];
+  };
 
   # SSH host key generation (uses shared hostKeys from keys.nix)
   # Note: sshd_config, authorized_keys, and termux-boot are managed declaratively via home-manager
