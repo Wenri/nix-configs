@@ -37,6 +37,7 @@
     hostname
     man
     which
+    gnupg
   ];
 
   # Editors (neovim only - vim is provided by nixosOnly or home-manager)
