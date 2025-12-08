@@ -10,7 +10,8 @@
       "WebFetch(domain:raw.githubusercontent.com)",
       "WebFetch(domain:github.com)",
       "WebSearch",
-      "Bash(rish --help:*)"
+      "Bash(rish --help:*)",
+      "WebFetch(domain:api.github.com)"
     ],
     "deny": [],
     "ask": []

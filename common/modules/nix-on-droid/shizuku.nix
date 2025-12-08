@@ -1,6 +1,6 @@
 # Shizuku rish shell integration for nix-on-droid
 # Extracts dex file from Shizuku APK and provides rish command
-# Reference: https://oddity.oddineers.co.uk/2024/01/14/termux-shizuku-and-rish-configuration-for-android-14/
+# Reference: https://shizuku.rikka.app/guide/setup/
 {
   config,
   lib,
@@ -11,8 +11,8 @@
 
   # Fetch Shizuku APK from GitHub releases
   shizukuApk = pkgs.fetchurl {
-    url = "https://github.com/RikkaApps/Shizuku/releases/download/v13.5.4/shizuku-v13.5.4.r1049.0e53409-release.apk";
-    hash = "sha256-oFgyzjcWr7H8zPRvNIAG0qKWynd+H/PSI3l9x00Gsx8=";
+    url = "https://github.com/RikkaApps/Shizuku/releases/download/v13.6.0/shizuku-v13.6.0.r1086.2650830c-release.apk";
+    hash = "sha256-bic6sOmRxOebyLG7ubndc5zKwahxKlQaIUB4iGt7eQ8=";
   };
 
   # Extract the dex file from the APK
@@ -22,27 +22,19 @@
     unzip -p ${shizukuApk} assets/rish_shizuku.dex > $out
   '';
 
-  # Create the rish shell script
-  # Based on the official rish script from Shizuku
-  rishScript = pkgs.writeShellScriptBin "rish" ''
-    #!/bin/sh
-    # rish - Shizuku shell interface
-    # Provides ADB-level shell access via Shizuku
-
+  # Create the rish shell script (based on official template from Shizuku)
+  # Note: Android 14+ requires dex to be read-only, which Nix store already guarantees
+  rishScript = pkgs.writeScriptBin "rish" ''
+    #!/system/bin/sh
     DEX="${shizukuDex}"
 
     if [ ! -f "$DEX" ]; then
-      echo "Error: rish_shizuku.dex not found at $DEX" >&2
+      echo "Cannot find $DEX, please check the tutorial in Shizuku app"
       exit 1
     fi
 
-    # Check if Shizuku is running
-    if ! /system/bin/app_process -Djava.class.path="$DEX" /system/bin --nice-name=rish rikka.shizuku.shell.ShizukuShellLoader --version >/dev/null 2>&1; then
-      echo "Error: Shizuku is not running or not accessible" >&2
-      echo "Make sure Shizuku app is running with ADB or root privileges" >&2
-      exit 1
-    fi
-
+    # Application ID for Termux/nix-on-droid
+    [ -z "$RISH_APPLICATION_ID" ] && export RISH_APPLICATION_ID="com.termux.nix"
     exec /system/bin/app_process -Djava.class.path="$DEX" /system/bin --nice-name=rish rikka.shizuku.shell.ShizukuShellLoader "$@"
   '';
 in {
@@ -53,6 +45,12 @@ in {
       type = lib.types.package;
       default = rishScript;
       description = "The rish package to use";
+    };
+
+    applicationId = lib.mkOption {
+      type = lib.types.str;
+      default = "com.termux.nix";
+      description = "The application ID of the terminal app";
     };
   };
 
