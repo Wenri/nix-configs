@@ -6,9 +6,58 @@
   outputs,
   ...
 }: let
+  keys = import ../../common/keys.nix;
+
+  # SSH server configuration (uses shared hostKeys from keys.nix)
+  sshdConfig = {
+    Port = 2222;
+    HostKey = map (k: k.path) keys.hostKeys;
+    # AuthorizedKeysFile defaults to ".ssh/authorized_keys"
+    PasswordAuthentication = false;
+    PubkeyAuthentication = true;
+    PrintMotd = true;
+  };
+
+  # Convert attrset to sshd_config format
+  formatSshdConfig = cfg:
+    lib.concatStringsSep "\n" (lib.flatten (lib.mapAttrsToList (
+        name: value:
+          if lib.isList value
+          then map (v: "${name} ${toString v}") value
+          else "${name} ${
+            if lib.isBool value
+            then
+              (
+                if value
+                then "yes"
+                else "no"
+              )
+            else toString value
+          }"
+      )
+      cfg));
+
+  sshdConfigFile = pkgs.writeText "sshd_config" (formatSshdConfig sshdConfig);
+
+  # Termux-boot script to start sshd (uses config file directly from Nix store)
   sshd-start = pkgs.writeShellScript "start-sshd" ''
-    exec ${pkgs.openssh}/bin/sshd -f $HOME/.ssh/sshd_config
+    exec ${pkgs.openssh}/bin/sshd -f ${sshdConfigFile}
   '';
+
+  # Generate host key creation commands from keys.hostKeys
+  hostKeyGenCommands = lib.concatStringsSep "\n" (map (
+      key: let
+        bits =
+          if key ? bits
+          then "-b ${toString key.bits}"
+          else "";
+      in ''
+        if [ ! -f ${key.path} ]; then
+          $DRY_RUN_CMD ${pkgs.openssh}/bin/ssh-keygen -t ${key.type} ${bits} -f ${key.path} -N ""
+        fi
+      ''
+    )
+    keys.hostKeys);
 in {
   # Environment packages for nix-on-droid (system-level)
   # Note: User packages are managed via home-manager in home.nix
@@ -60,37 +109,20 @@ in {
     config = ./home.nix;
     backupFileExtension = "hm-bak";
     useGlobalPkgs = true;
+    extraSpecialArgs = {
+      inherit sshd-start;
+    };
   };
 
   # Set default shell
   user.shell = "${pkgs.zsh}/bin/zsh";
 
-  # SSH server setup on port 2222
+  # SSH host key generation (uses shared hostKeys from keys.nix)
+  # Note: sshd_config, authorized_keys, and termux-boot are managed declaratively via home-manager
   build.activation.sshd = ''
-    $VERBOSE_ECHO "Setting up sshd..."
-    mkdir -p $HOME/.ssh
+    $VERBOSE_ECHO "Setting up sshd host keys..."
+    mkdir -p /etc/ssh
 
-    # Generate host keys if they don't exist
-    if [ ! -f $HOME/.ssh/ssh_host_ed25519_key ]; then
-      $DRY_RUN_CMD ${pkgs.openssh}/bin/ssh-keygen -t ed25519 -f $HOME/.ssh/ssh_host_ed25519_key -N ""
-    fi
-    if [ ! -f $HOME/.ssh/ssh_host_rsa_key ]; then
-      $DRY_RUN_CMD ${pkgs.openssh}/bin/ssh-keygen -t rsa -b 4096 -f $HOME/.ssh/ssh_host_rsa_key -N ""
-    fi
-
-    # Create sshd_config
-    $DRY_RUN_CMD cat > $HOME/.ssh/sshd_config << 'EOF'
-Port 2222
-HostKey ~/.ssh/ssh_host_ed25519_key
-HostKey ~/.ssh/ssh_host_rsa_key
-AuthorizedKeysFile .ssh/authorized_keys
-PasswordAuthentication no
-PubkeyAuthentication yes
-PrintMotd yes
-EOF
-
-    # Setup termux-boot to start sshd on boot
-    mkdir -p $HOME/.termux/boot
-    ln -sf ${sshd-start} $HOME/.termux/boot/start-sshd
+    ${hostKeyGenCommands}
   '';
 }

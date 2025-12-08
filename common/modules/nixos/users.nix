@@ -3,15 +3,15 @@
   pkgs,
   username,
   ...
-}: {
+}: let
+  keys = import ../../keys.nix;
+in {
   users.users = {
     ${username} = lib.mkMerge [
       {
         isNormalUser = true;
         description = "Bingchen Gong";
-        openssh.authorizedKeys.keys = [
-          # TODO: Add your SSH public key(s) here, if you plan on using SSH to connect
-        ];
+        openssh.authorizedKeys.keys = keys.all;
         extraGroups = ["wheel"];
         packages = with pkgs; [
           # thunderbird
@@ -20,9 +20,7 @@
       }
     ];
 
-    root.openssh.authorizedKeys.keys = [
-      # TODO: Add your SSH public key(s) here for root access
-    ];
+    root.openssh.authorizedKeys.keys = keys.all;
   };
 
   programs.zsh.enable = true;
