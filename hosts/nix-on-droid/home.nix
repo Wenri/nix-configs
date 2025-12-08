@@ -37,7 +37,7 @@ in {
   # nix-on-droid specific shell aliases
   programs.zsh.shellAliases = {
     update = "nix-on-droid switch --flake ~/.config/nix-on-droid";
-    sshd-start = "exec ~/.termux/boot/start-sshd";
+    sshd-start = "~/.termux/boot/start-sshd";
     sshd-stop = "pkill -f 'sshd -f'";
     ldd = "patchelf --print-needed";
   };

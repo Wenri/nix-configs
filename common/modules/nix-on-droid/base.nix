@@ -65,7 +65,7 @@ in {
       # These are erased by the login script before proot runs
       # Filter out PATH, HOME, USER, TMPDIR, LANG, TERM which are managed by nix-on-droid
       if [ -f "${termuxEnvPath}" ]; then
-        eval "$(grep -v -E '^export (PATH|HOME|USER|TMPDIR|LANG|TERM)=' "${termuxEnvPath}")"
+        eval "$(${pkgs.gnugrep}/bin/grep -v -E '^export (PATH|HOME|USER|TMPDIR|LANG|TERM)=' "${termuxEnvPath}")"
       fi
     '';
     # Marker to detect if already patched
@@ -73,7 +73,7 @@ in {
   in ''
     patch_login_inner() {
       local file="$1"
-      if [ -f "$file" ] && ! grep -q "${marker}" "$file"; then
+      if [ -f "$file" ] && ! ${pkgs.gnugrep}/bin/grep -q "${marker}" "$file"; then
         $VERBOSE_ECHO "Patching $file to source Android environment variables..."
         # Use awk to insert after "set -eo pipefail" line
         $DRY_RUN_CMD ${pkgs.gawk}/bin/awk '
@@ -83,7 +83,7 @@ in {
             next
           }
           { print }
-        ' "$file" > "$file.patched" && $DRY_RUN_CMD mv "$file.patched" "$file"
+        ' "$file" > "$file.patched" && $DRY_RUN_CMD ${pkgs.coreutils}/bin/mv "$file.patched" "$file"
       fi
     }
 
