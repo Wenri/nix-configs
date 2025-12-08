@@ -15,6 +15,11 @@
     gnutar
     gawk
     file
+    tree
+    less
+    bc # calculator
+    dos2unix
+    watch
   ];
 
   # Compression tools
@@ -24,6 +29,8 @@
     xz
     zip
     unzip
+    zstd
+    p7zip
   ];
 
   # Network tools
@@ -33,6 +40,10 @@
     openssh
     iproute2 # ip command
     nettools # ifconfig command
+    dnsutils # dig, nslookup
+    netcat-gnu
+    rsync
+    aria2
   ];
 
   # System tools
@@ -44,6 +55,8 @@
     gnupg
     patchelf # use patchelf --print-needed instead of ldd
     ncurses # reset, clear, tput
+    htop
+    lsof
   ];
 
   # Editors (neovim only - vim is provided by nixosOnly or home-manager)
@@ -51,10 +64,20 @@
     neovim
   ];
 
+  # Modern CLI tools
+  modernCli = with pkgs; [
+    ripgrep # rg - better grep
+    fd # better find
+    bat # better cat
+    eza # better ls
+    fzf # fuzzy finder
+    yq # jq for yaml
+  ];
+
   # Development tools (shared)
   devTools = with pkgs; [
-    gitMinimal
     jq
+    gnumake
   ];
 
   # NixOS-specific packages (require real system, not proot)
