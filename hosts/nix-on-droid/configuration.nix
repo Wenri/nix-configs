@@ -83,8 +83,8 @@ in {
     experimental-features = nix-command flakes
   '';
 
-  # Set your time zone (uncomment and set as needed)
-  # time.timeZone = "Asia/Shanghai";
+  # Set your time zone
+  time.timeZone = "Europe/Paris";
 
   # Android integration - termux tools
   android-integration = {
