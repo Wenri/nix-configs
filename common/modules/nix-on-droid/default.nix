@@ -4,4 +4,5 @@
   android-integration = import ./android-integration.nix;
   sshd = import ./sshd.nix;
   locale = import ./locale.nix;
+  shizuku = import ./shizuku.nix;
 }

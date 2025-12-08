@@ -16,6 +16,7 @@
     outputs.nixOnDroidModules.android-integration
     outputs.nixOnDroidModules.sshd
     outputs.nixOnDroidModules.locale
+    outputs.nixOnDroidModules.shizuku
   ];
 
   # Enable Android/Termux integration tools
@@ -23,6 +24,9 @@
 
   # Enable SSH server
   services.sshd.enable = true;
+
+  # Enable Shizuku rish shell
+  programs.shizuku.enable = true;
 
   # Configure home-manager
   home-manager = {
