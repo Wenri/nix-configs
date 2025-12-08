@@ -42,6 +42,7 @@
     man
     which
     gnupg
+    patchelf # use patchelf --print-needed instead of ldd
   ];
 
   # Editors (neovim only - vim is provided by nixosOnly or home-manager)
