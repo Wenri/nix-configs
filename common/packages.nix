@@ -43,6 +43,7 @@
     which
     gnupg
     patchelf # use patchelf --print-needed instead of ldd
+    ncurses # reset, clear, tput
   ];
 
   # Editors (neovim only - vim is provided by nixosOnly or home-manager)
