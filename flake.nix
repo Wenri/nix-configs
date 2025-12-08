@@ -94,6 +94,13 @@
         username = "wenri";
         type = "server";
       };
+
+      # Android host (nix-on-droid)
+      nix-on-droid = {
+        system = "aarch64-linux";
+        username = "wenri";
+        type = "android";
+      };
     };
 
     # Create properly configured pkgs instances for each system
@@ -171,6 +178,41 @@
         };
         modules = [./hosts/${hostname}/home.nix];
       };
+
+    # Helper to create nix-on-droid configurations
+    mkNixOnDroidConfiguration = {
+      hostname,
+      system,
+      username,
+      ...
+    }:
+      nix-on-droid.lib.nixOnDroidConfiguration {
+        modules = [
+          ./hosts/${hostname}/configuration.nix
+        ];
+
+        extraSpecialArgs = {
+          inherit inputs outputs hostname username;
+        };
+
+        pkgs = import nixpkgs {
+          inherit system;
+          config.allowUnfree = true;
+          overlays = [
+            nix-on-droid.overlays.default
+            outputs.overlays.additions
+            outputs.overlays.modifications
+            outputs.overlays.unstable-packages
+            outputs.overlays.master-packages
+          ];
+        };
+
+        home-manager-path = home-manager.outPath;
+      };
+
+    # Filter hosts by type
+    nixosHosts = lib.filterAttrs (_: cfg: cfg.type != "android") hosts;
+    androidHosts = lib.filterAttrs (_: cfg: cfg.type == "android") hosts;
   in {
     # Custom packages and modifications, exported as overlays
     overlays = import ./common/overlays {inherit inputs;};
@@ -181,51 +223,50 @@
     # Reusable home-manager modules
     homeModules = import ./common/modules/home-manager;
 
-    # NixOS system configurations - generated from hosts
+    # Reusable nix-on-droid modules
+    nixOnDroidModules = import ./common/modules/nix-on-droid;
+
+    # NixOS system configurations - generated from hosts (excluding android type)
     nixosConfigurations = lib.mapAttrs (hostname: cfg:
       mkNixosSystem {
         inherit hostname;
         inherit (cfg) system username type;
       })
-    hosts;
+    nixosHosts;
 
-    # Nix-on-Droid configuration for Android
-    nixOnDroidConfigurations.default = nix-on-droid.lib.nixOnDroidConfiguration {
-      modules = [
-        ./hosts/nix-on-droid/configuration.nix
-      ];
-
-      extraSpecialArgs = {
-        inherit inputs outputs;
-        hostname = "nix-on-droid";
-        username = "wenri";
+    # Nix-on-Droid configurations - generated from androidHosts
+    # Note: nix-on-droid uses "default" as the standard configuration name
+    nixOnDroidConfigurations =
+      lib.mapAttrs (hostname: cfg:
+        mkNixOnDroidConfiguration {
+          inherit hostname;
+          inherit (cfg) system username;
+        })
+      androidHosts
+      // {
+        # Also expose as "default" for `nix-on-droid switch --flake .`
+        default = mkNixOnDroidConfiguration {
+          hostname = "nix-on-droid";
+          system = "aarch64-linux";
+          username = "wenri";
+        };
       };
 
-      pkgs = import nixpkgs {
-        system = "aarch64-linux";
-        config.allowUnfree = true;
-        overlays = [
-          nix-on-droid.overlays.default
-        ];
-      };
-
-      home-manager-path = home-manager.outPath;
-    };
-
-    # Home-manager configurations - generated from hosts (standalone, for backward compatibility)
+    # Home-manager configurations - generated from nixosHosts (standalone, for backward compatibility)
+    # Note: android hosts use nix-on-droid's integrated home-manager
     homeConfigurations = lib.mapAttrs' (hostname: cfg:
       lib.nameValuePair "${cfg.username}@${hostname}" (mkHomeConfiguration {
         inherit hostname;
         inherit (cfg) username system;
       }))
-    hosts;
+    nixosHosts;
 
     # Expose system configurations and custom packages
     packages = forAllSystems (system: let
-      hostsForSystem = lib.filterAttrs (hostname: cfg: cfg.system == system) hosts;
+      hostsForSystem = lib.filterAttrs (_: cfg: cfg.system == system) nixosHosts;
       customPkgs = import ./common/pkgs (mkPkgs system);
     in
-      (lib.mapAttrs (hostname: cfg:
+      (lib.mapAttrs (hostname: _:
         self.nixosConfigurations.${hostname}.config.system.build.toplevel)
       hostsForSystem) // customPkgs);
 

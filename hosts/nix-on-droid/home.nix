@@ -1,10 +1,13 @@
+# Home-manager configuration for nix-on-droid
+# Minimal host-specific config - shared modules provide most functionality
 {
   lib,
   pkgs,
   outputs,
   hostname,
   username,
-  sshd-start,
+  sshd-start ? null,
+  sshdAuthorizedKeys ? [],
   ...
 }: let
   keys = import ../../common/keys.nix;
@@ -14,16 +17,22 @@ in {
     outputs.homeModules.core.default
   ];
 
-  # This value determines the Home Manager release that your
-  # configuration is compatible with.
+  # Home Manager release compatibility
   home.stateVersion = "24.05";
 
   # Declarative SSH authorized_keys and termux-boot
-  # Note: sshd_config is embedded directly in the start script (Nix store)
-  home.file = {
-    ".ssh/authorized_keys".text = lib.concatStringsSep "\n" keys.all;
-    ".termux/boot/start-sshd".source = sshd-start;
-  };
+  home.file = lib.mkMerge [
+    {
+      ".ssh/authorized_keys".text = lib.concatStringsSep "\n" (
+        if sshdAuthorizedKeys != []
+        then sshdAuthorizedKeys
+        else keys.all
+      );
+    }
+    (lib.mkIf (sshd-start != null) {
+      ".termux/boot/start-sshd".source = sshd-start;
+    })
+  ];
 
   # nix-on-droid specific shell aliases
   programs.zsh.shellAliases = {
