@@ -7,6 +7,7 @@
   ...
 }: let
   keys = import ../../common/keys.nix;
+  packages = import ../../common/packages.nix {inherit pkgs;};
 
   # SSH server configuration (uses shared hostKeys from keys.nix)
   sshdConfig = {
@@ -60,35 +61,14 @@
     keys.hostKeys);
 in {
   # Environment packages for nix-on-droid (system-level)
+  # Uses shared package lists from common/packages.nix
   # Note: User packages are managed via home-manager in home.nix
-  environment.packages = with pkgs; [
-    # Editors (neovim for nix-on-droid, vim via home-manager)
-    neovim
-
-    # Core utilities required at system level
-    procps
-    killall
-    diffutils
-    findutils
-    util-linux
-    tzdata
-    hostname
-    man
-    gnugrep
-    gnused
-    gnutar
-    bzip2
-    gzip
-    xz
-    zip
-    unzip
-
-    # Network and system tools
-    openssh
-    curl
-    wget
-    which
-  ];
+  environment.packages =
+    packages.coreUtils
+    ++ packages.compression
+    ++ packages.networkTools
+    ++ packages.systemTools
+    ++ packages.editors;
 
   # Backup etc files instead of failing to activate generation if a file already exists in /etc
   environment.etcBackupExtension = ".bak";
@@ -103,6 +83,18 @@ in {
 
   # Set your time zone (uncomment and set as needed)
   # time.timeZone = "Asia/Shanghai";
+
+  # Android integration - termux tools
+  android-integration = {
+    am.enable = true;
+    termux-open.enable = true;
+    termux-open-url.enable = true;
+    termux-setup-storage.enable = true;
+    termux-reload-settings.enable = true;
+    termux-wake-lock.enable = true;
+    termux-wake-unlock.enable = true;
+    xdg-open.enable = true;
+  };
 
   # Configure home-manager
   home-manager = {
