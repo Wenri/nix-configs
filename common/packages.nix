@@ -79,6 +79,9 @@
   devTools = with pkgs; [
     jq
     gnumake
+    binutils
+    gcc
+    stdenv.cc
   ];
 
   # NixOS-specific packages (require real system, not proot)

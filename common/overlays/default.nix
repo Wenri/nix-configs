@@ -8,6 +8,7 @@
     fcitx5-rime-lua = prev.fcitx5-rime.overrideAttrs (_: {
       buildInputs = [prev.fcitx5 final.librime-lua];
     });
+    fakechroot = prev.fakechroot.overrideAttrs (import ./fakechroot.nix final);
   };
 
   # When applied, the unstable nixpkgs set (declared in the flake inputs) will
@@ -18,7 +19,7 @@
       config.allowUnfree = true;
     };
   };
-  
+
   master-packages = final: _prev: {
     master = import inputs.nixpkgs-master {
       system = final.system;

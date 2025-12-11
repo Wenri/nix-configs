@@ -16,6 +16,7 @@
     gnumake
     nodejs
     glab
+    guix
 
     # AI assistants and tools
     claude-code

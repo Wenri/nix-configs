@@ -17,7 +17,17 @@
       "WebSearch",
       "Bash(env)",
       "Bash(grep:*)",
-      "Bash(termux-am:*)"
+      "Bash(termux-am:*)",
+      "Bash(ls:*)",
+      "Bash(readlink:*)",
+      "Bash(gcc:*)",
+      "Bash(/system/bin/sh:*)",
+      "Bash(/system/bin/ls:*)",
+      "Bash(chmod:*)",
+      "Bash(/system/bin/readlink:*)",
+      "Bash(nix-prefetch-git:*)",
+      "Bash(curl:*)",
+      "Bash(gh repo fork:*)"
     ],
     "deny": [],
     "ask": []

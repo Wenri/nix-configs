@@ -21,7 +21,8 @@ in {
     ++ packages.systemTools
     ++ packages.editors
     ++ packages.modernCli
-    ++ packages.devTools;
+    ++ packages.devTools
+    ++ [pkgs.fakechroot];
 
   # Backup etc files instead of failing to activate generation if a file already exists in /etc
   environment.etcBackupExtension = ".bak";
