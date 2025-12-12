@@ -240,12 +240,17 @@ The unified flake follows a modernized architecture:
 
 **Nix-on-Droid (Android):**
 - Uses nix-community/nix-on-droid for Android/Termux environment
-- Advanced template pattern with `home-manager-path = home-manager.outPath`
-- Master home-manager branch with nixpkgs-unstable
-- `nix-on-droid.overlays.default` for proper package compatibility
+- **Custom Android-patched glibc 2.40** with Termux patches for kernel compatibility
+- **patchelf-based binary rewriting** to use Android glibc while preserving binary cache
+- Modular configuration: base, android-integration, sshd, locale, shizuku
 - Home-manager integration via `home-manager.config = ./home.nix`
-- Packages: zsh, oh-my-zsh, git, tmux, neovim, fzf, ripgrep, htop, claude-code, nodejs
+- SSH server with auto-start via Termux:Boot
+- Shizuku integration for `rish` shell access
+- Shared packages from `common/packages.nix` (not home-manager)
 - `self.submodules = true` for git submodule support
+- See `docs/NIX-ON-DROID.md` for detailed configuration guide
+- See `docs/GLIBC_REPLACEMENT.md` for Android glibc technical details
+- See `docs/TERMUX-PATCHES.md` for patch documentation
 
 **WSL (wslnix):**
 - NixOS-WSL integration for Windows development
@@ -407,14 +412,96 @@ nixos-anywhere --flake '.#freenix' \
 ```
 
 ## Important Notes
-- **Single unified flake**: All 6 hosts managed by root `flake.nix`
+- **Single unified flake**: All 6 NixOS hosts + 1 nix-on-droid managed by root `flake.nix`
 - **Unified infrastructure**: All hosts share infrastructure from `common/` (overlays, modules, packages)
 - **Unified userspace**: All users are the same person: Bingchen Gong (username: wenri)
 - **All home-manager configuration identical**: Same packages, programs, and dotfiles across all environments
 - System state version: 25.05
-- Home state version: 25.05
+- Home state version: 25.05 (24.05 for nix-on-droid)
 - Custom packages accessible via `nix build '.#package-name'`
 - Firefox extensions from NUR (1Password, uBlock Origin, Translate Web Pages)
 - VS Code extensions from nix-vscode-extensions marketplace overlay
 - Coq packages from NUR (lngen, ott-sweirich)
 - Formatter set to `alejandra` - use `nix fmt` to format all Nix files
+
+## Documentation Structure
+
+```
+docs/
+├── GLIBC_REPLACEMENT.md   # Android glibc patching strategy and technical details
+├── NIX-ON-DROID.md        # nix-on-droid installation, configuration, and usage
+└── TERMUX-PATCHES.md      # Detailed documentation of all Termux glibc patches
+
+CLAUDE.md                  # This file - AI assistant guidance (root level)
+README.md                  # Project README
+```
+
+### Key Documentation Topics
+
+| Document | Topics Covered |
+|----------|---------------|
+| **GLIBC_REPLACEMENT.md** | Android seccomp restrictions, patchelf strategy, building androidGlibc, troubleshooting |
+| **NIX-ON-DROID.md** | Installation, module structure, services (SSH, Shizuku), home-manager integration |
+| **TERMUX-PATCHES.md** | All 28 patches explained, source files, helper scripts, updating patches |
+
+## Android-Specific (nix-on-droid)
+
+### Key Concepts
+
+1. **Android glibc**: Standard glibc won't work on Android due to seccomp-blocked syscalls (clone3, set_robust_list, rseq)
+2. **Termux Patches**: Community-maintained patches that disable/workaround blocked syscalls
+3. **patchelf Strategy**: Instead of rebuilding all packages, we patch ELF headers to use our glibc
+4. **Binary Cache**: Most packages still come from nixpkgs binary cache
+
+### File Locations
+
+```
+common/overlays/
+├── glibc.nix                           # Android glibc overlay (builds patched glibc)
+└── patches/glibc-termux/               # 28 patch files + source files
+
+common/modules/nix-on-droid/
+├── base.nix                            # Core packages, nix settings
+├── android-integration.nix             # Termux tools
+├── sshd.nix                            # SSH server
+├── locale.nix                          # Timezone/locale
+└── shizuku.nix                         # Shizuku rish shell
+
+common/packages.nix                     # Shared package lists for nix-on-droid
+
+hosts/nix-on-droid/
+├── configuration.nix                   # System config (imports modules)
+└── home.nix                            # Home-manager config
+```
+
+### nix-on-droid Commands
+
+```bash
+# Apply configuration
+nix-on-droid switch --flake ~/.config/nix-on-droid
+
+# Build without switching
+nix-on-droid build --flake .
+
+# Rollback to previous generation
+nix-on-droid rollback
+
+# List generations
+nix-on-droid list-generations
+
+# Build Android glibc separately
+nix build .#androidGlibc
+```
+
+### Flake Outputs for Android
+
+```nix
+# Available outputs for aarch64-linux
+packages.aarch64-linux.androidGlibc           # Android-patched glibc 2.40
+lib.aarch64-linux.androidGlibc                # Same, via lib output
+lib.aarch64-linux.patchPackageForAndroidGlibc # Function to patch any package
+
+# nix-on-droid configurations
+nixOnDroidConfigurations.default              # Main config
+nixOnDroidConfigurations.nix-on-droid         # Named config
+```
