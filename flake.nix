@@ -343,6 +343,48 @@
         self.nixosConfigurations.${hostname}.config.system.build.toplevel)
       hostsForSystem) // customPkgs // androidPackages);
 
+    # Export Android glibc utilities for external use
+    lib = {
+      aarch64-linux = let
+        basePkgs = mkPkgs "aarch64-linux";
+        glibcOverlay = import ./common/overlays/glibc.nix basePkgs basePkgs;
+        androidGlibc = glibcOverlay.glibc;
+        standardGlibc = basePkgs.glibc;
+      in {
+        inherit androidGlibc;
+        
+        # Function to patch a package to use Android glibc
+        patchPackageForAndroidGlibc = pkg: basePkgs.runCommand "${pkg.pname or pkg.name or "package"}-android-glibc" ({
+          nativeBuildInputs = [ basePkgs.patchelf basePkgs.file ];
+          passthru = pkg.passthru or {};
+        } // (if pkg ? meta.priority then {meta.priority = pkg.meta.priority;} else {})) ''
+          echo "=== Patching package for Android glibc ==="
+          echo "Package: ${pkg.pname or pkg.name or "unknown"}"
+          
+          cp -rL ${pkg} $out
+          chmod -R u+w $out
+          
+          find $out -type f | while read -r file; do
+            if ! file "$file" 2>/dev/null | grep -q "ELF.*dynamic"; then
+              continue
+            fi
+            
+            INTERP=$(patchelf --print-interpreter "$file" 2>/dev/null || echo "")
+            if [ -n "$INTERP" ] && echo "$INTERP" | grep -q "${standardGlibc}"; then
+              echo "Patching: $file"
+              patchelf --set-interpreter "${androidGlibc}/lib/ld-linux-aarch64.so.1" "$file" 2>/dev/null || true
+              RPATH=$(patchelf --print-rpath "$file" 2>/dev/null || echo "")
+              if [ -n "$RPATH" ]; then
+                NEW_RPATH=$(echo "$RPATH" | sed "s|${standardGlibc}/lib|${androidGlibc}/lib|g")
+                patchelf --set-rpath "$NEW_RPATH" "$file" 2>/dev/null || true
+              fi
+            fi
+          done
+          echo "=== Done ==="
+        '';
+      };
+    };
+
     # Formatter for 'nix fmt'
     formatter = forAllSystems (system: (mkPkgs system).alejandra);
   };
