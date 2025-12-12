@@ -147,12 +147,29 @@ in {
         echo "=== Android modifications complete ==="
       '';
       
-      # Fix broken symlinks in getconf (32-bit variants don't exist on aarch64)
+      # Fix broken symlinks and cross-output references
       postInstall = (oldAttrs.postInstall or "") + ''
         echo "=== Fixing broken getconf symlinks ==="
         find $out -xtype l -name "*LP64*" -delete 2>/dev/null || true
         find $out -xtype l -name "*XBS5*" -delete 2>/dev/null || true
         echo "✓ Removed broken LP64/XBS5 symlinks"
+        
+        # Fix cross-output symlinks in libexec/getconf that create cycles
+        # These symlinks point from out/libexec/getconf/* to bin/bin/getconf
+        # Replace them with copies to break the cycle
+        echo "=== Fixing getconf cross-output references ==="
+        if [ -d "$out/libexec/getconf" ]; then
+          for link in $out/libexec/getconf/*; do
+            if [ -L "$link" ]; then
+              target=$(readlink -f "$link")
+              if [ -f "$target" ]; then
+                rm "$link"
+                cp "$target" "$link"
+                echo "  ✓ Converted symlink to copy: $(basename $link)"
+              fi
+            fi
+          done
+        fi
       '';
       
       # Configure flags for Android
@@ -165,6 +182,9 @@ in {
         "--disable-profile"
         "--disable-werror"
       ];
+      
+      # Disable separateDebugInfo to avoid output cycles
+      separateDebugInfo = false;
     })
   else
     prev.glibc;
