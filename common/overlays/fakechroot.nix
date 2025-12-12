@@ -7,6 +7,8 @@ final: oldAttrs: {
     rev = "e7c1f3a446e594a4d0cce5f5d499c9439ce1d5c5";
     hash = "sha256-a4bA7iGLp47oJ0VGNbRG/1mMS9ZjtD3IcHZ02YwyTD0=";
   };
-  # Remove patches that are already integrated upstream
-  patches = [];
+  patches = [
+    # Preserve LD_AUDIT env var for rtld-audit integration
+    ./patches/fakechroot-preserve-ld-audit.patch
+  ];
 }

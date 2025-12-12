@@ -5,7 +5,7 @@
 {pkgs}: {
   # Core Unix utilities (needed at system level)
   coreUtils = with pkgs; [
-    procps
+    (lib.hiPrio procps) # Prioritize procps's kill over util-linux's kill
     killall
     diffutils
     findutils

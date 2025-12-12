@@ -27,7 +27,15 @@
       "Bash(/system/bin/readlink:*)",
       "Bash(nix-prefetch-git:*)",
       "Bash(curl:*)",
-      "Bash(gh repo fork:*)"
+      "Bash(gh repo fork:*)",
+      "Bash(readelf:*)",
+      "Bash(# Check where builds happen echo \"\"=== Build directory ===\"\" nix show-config)",
+      "Bash(__NEW_LINE__ echo \"\")",
+      "Bash(pgrep:*)",
+      "Bash(export PROOT_TMP_DIR=/data/data/com.termux.nix/files/usr/tmp)",
+      "Bash(export PROOT_L2S_DIR=/data/data/com.termux.nix/files/usr/.l2s)",
+      "Bash(__NEW_LINE__ cd ~/.config/nix-on-droid)",
+      "Bash(# Check nix daemon configuration options nix show-config)"
     ],
     "deny": [],
     "ask": []

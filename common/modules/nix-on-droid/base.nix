@@ -7,13 +7,13 @@
   outputs,
   hostname,
   username,
+  patchPackageForAndroidGlibc ? null,
   ...
 }: let
   packages = import ../../packages.nix {inherit pkgs;};
 in {
   # Environment packages for nix-on-droid (system-level)
   # Uses shared package lists from common/packages.nix
-  # Note: time.timeZone (in locale.nix) creates /etc/zoneinfo symlink to tzdata
   environment.packages =
     packages.coreUtils
     ++ packages.compression

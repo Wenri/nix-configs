@@ -5,6 +5,11 @@
 
   # This one contains whatever you want to overlay
   modifications = final: prev: {
+    # NOTE: glibc built separately in flake.nix to avoid triggering mass rebuilds.
+    # Android-patched glibc is available via androidGlibc package and used via LD_LIBRARY_PATH.
+    # This allows using binary cache for all other packages while using custom glibc at runtime.
+    # Patches preserved in ./glibc.nix and ./patches/glibc-termux/.
+
     fcitx5-rime-lua = prev.fcitx5-rime.overrideAttrs (_: {
       buildInputs = [prev.fcitx5 final.librime-lua];
     });

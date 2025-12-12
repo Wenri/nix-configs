@@ -1,9 +1,11 @@
-{pkgs, ...}: {
+{
+  pkgs,
+  lib,
+  patchPackageForAndroidGlibc ? null,
+  ...
+}: {
   home.packages = with pkgs; [
-    # Terminal multiplexer
-    tmux
-
-    # System utilities
+    # System utilities (tmux enabled via programs.tmux)
     parted
     htop
     file
@@ -16,12 +18,13 @@
     gnumake
     nodejs
     glab
-    guix
+    # guix  # Disabled: too complex to patch for Android glibc
 
     # AI assistants and tools
     claude-code
     cursor-cli
     gemini-cli
+    github-copilot-cli
   ];
 
   # Fuzzy finder with shell integration

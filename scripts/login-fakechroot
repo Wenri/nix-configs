@@ -1,0 +1,22 @@
+#!/system/bin/sh
+# Login script using fakechroot instead of proot
+# TEMPORARY: Currently executes login-proot directly until fakechroot issues are resolved
+#
+# This script is a workaround to allow booting into the nix environment
+# while fakechroot library loading issues are being debugged.
+
+set -eu
+
+# Get the directory where this script is located
+SCRIPT_DIR="/data/data/com.termux.nix/files/home/.config/nix-on-droid/scripts"
+LOGIN_PROOT="$SCRIPT_DIR/login-proot"
+
+# Check if login-proot exists
+if [ ! -f "$LOGIN_PROOT" ]; then
+    echo "Error: login-proot not found at $LOGIN_PROOT" >&2
+    exit 1
+fi
+
+# Execute login-proot directly
+# This bypasses fakechroot and uses proot instead
+exec "$LOGIN_PROOT" "$@"

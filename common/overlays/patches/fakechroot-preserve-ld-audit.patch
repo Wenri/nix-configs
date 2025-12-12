@@ -1,0 +1,26 @@
+From: Bingchen Gong <wenri@users.noreply.github.com>
+Subject: [PATCH] Add LD_AUDIT to preserve_env_list
+
+When using fakechroot with ld.so's rtld-audit interface for library path
+redirection, the LD_AUDIT environment variable must be preserved across
+exec calls so that child processes also load the audit module.
+
+Without this, child processes spawned via FAKECHROOT_ELFLOADER won't have
+the audit module loaded, causing library path redirection to fail.
+
+---
+ src/libfakechroot.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/libfakechroot.c b/src/libfakechroot.c
+index 1234567..abcdefg 100644
+--- a/src/libfakechroot.c
++++ b/src/libfakechroot.c
+@@ -67,6 +67,7 @@ char *preserve_env_list[] = {
+     "FAKEROOTKEY",
+     "FAKED_MODE",
+     "LD_LIBRARY_PATH",
++    "LD_AUDIT",
+     "LD_PRELOAD"
+ };
+ const int preserve_env_list_count = sizeof preserve_env_list / sizeof preserve_env_list[0];

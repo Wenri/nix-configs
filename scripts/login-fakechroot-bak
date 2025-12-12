@@ -1,0 +1,95 @@
+#!/system/bin/sh
+# Login script using fakechroot + rtld-audit instead of proot
+#
+# This script uses the ld.so audit interface to redirect /nix/store paths
+# to the actual location at $PREFIX/nix/store. Combined with fakechroot
+# for syscall interception, this allows running Nix binaries without proot.
+#
+# How it works:
+# 1. ld.so --audit pack-audit.so intercepts library lookups and redirects
+#    /nix/store/... paths to $FAKECHROOT_BASE/nix/store/...
+# 2. LD_PRELOAD=libfakechroot.so intercepts syscalls (open, stat, etc) and
+#    redirects file paths similarly
+# 3. We invoke ld.so directly to bypass the kernel's ELF interpreter lookup
+#    which would fail for /nix/store/... paths embedded in binaries
+
+set -eu
+
+# Base paths
+PREFIX="/data/data/com.termux.nix/files/usr"
+STORE="$PREFIX/nix/store"
+SCRIPT_DIR="/data/data/com.termux.nix/files/home/.config/nix-on-droid/scripts"
+
+# User configuration
+export USER="wenri"
+export HOME="/data/data/com.termux.nix/files/home"
+
+# Hardcoded paths to Nix store packages
+# Update these after nix-on-droid switch if package hashes change
+LD_LINUX="$STORE/89n0gcl1yjp37ycca45rn50h7lms5p6f-glibc-2.40-66/lib/ld-linux-aarch64.so.1"
+BASH_BIN="$STORE/9ifraby9hyh9mycwm3krfhi7q88hh6d5-bash-interactive-5.3p3/bin/sh"
+FAKECHROOT_LIB="$STORE/519zc2mj7d6m50z81ywwcp98hh1lpmrm-fakechroot-unstable-2021-02-26/lib/fakechroot/libfakechroot.so"
+AUDIT_LIB="$SCRIPT_DIR/pack-audit.so"
+LOGIN_INNER="$PREFIX/usr/lib/login-inner"
+
+# Verify critical files exist
+for _file in "$LD_LINUX" "$FAKECHROOT_LIB" "$BASH_BIN" "$AUDIT_LIB" "$LOGIN_INNER"; do
+    if [ ! -e "$_file" ]; then
+        echo "Error: Required file not found: $_file" >&2
+        exit 1
+    fi
+done
+
+# Set up fakechroot environment
+export FAKECHROOT="true"
+export FAKECHROOT_BASE="$PREFIX"
+
+# Paths to exclude from fakechroot translation (real Android paths)
+FAKECHROOT_EXCLUDE_PATH="/3rdmodem:/3rdmodemnvm:/3rdmodemnvmbkp"
+FAKECHROOT_EXCLUDE_PATH="$FAKECHROOT_EXCLUDE_PATH:/acct:/apex:/android"
+FAKECHROOT_EXCLUDE_PATH="$FAKECHROOT_EXCLUDE_PATH:/bugreports"
+FAKECHROOT_EXCLUDE_PATH="$FAKECHROOT_EXCLUDE_PATH:/cache:/config:/cust"
+FAKECHROOT_EXCLUDE_PATH="$FAKECHROOT_EXCLUDE_PATH:/d:/data:/data_mirror:/debug_ramdisk:/dev"
+FAKECHROOT_EXCLUDE_PATH="$FAKECHROOT_EXCLUDE_PATH:/eng"
+FAKECHROOT_EXCLUDE_PATH="$FAKECHROOT_EXCLUDE_PATH:/fstab.zram256m:/fstab.zram512m:/fstab.zram768m:/fstab.zram1024m:/fstab.zram1280m:/fstab.zram1536m:/fstab.zram2048m:/fstab.zram2240m:/fstab.zram2800m:/fstab.zram4096m:/fstab.zram6144m:/fstab.zram8192m:/fstab.zram10240m:/fstab.zram14336m"
+FAKECHROOT_EXCLUDE_PATH="$FAKECHROOT_EXCLUDE_PATH:/hw_product"
+FAKECHROOT_EXCLUDE_PATH="$FAKECHROOT_EXCLUDE_PATH:/init:/init.environ.rc:/init.usb.configfs.rc"
+FAKECHROOT_EXCLUDE_PATH="$FAKECHROOT_EXCLUDE_PATH:/linkerconfig:/log"
+FAKECHROOT_EXCLUDE_PATH="$FAKECHROOT_EXCLUDE_PATH:/metadata:/mnt:/modem_log"
+FAKECHROOT_EXCLUDE_PATH="$FAKECHROOT_EXCLUDE_PATH:/odm:/odm_dlkm:/oem"
+FAKECHROOT_EXCLUDE_PATH="$FAKECHROOT_EXCLUDE_PATH:/patch_hw:/postinstall:/preas:/preavs:/preload:/prets:/pretvs:/proc:/product"
+FAKECHROOT_EXCLUDE_PATH="$FAKECHROOT_EXCLUDE_PATH:/res:/resetFactory.cfg"
+FAKECHROOT_EXCLUDE_PATH="$FAKECHROOT_EXCLUDE_PATH:/sdcard:/sec_storage:/second_stage_resources:/splash2:/storage:/sys:/system:/system_ext"
+FAKECHROOT_EXCLUDE_PATH="$FAKECHROOT_EXCLUDE_PATH:/vendor:/vendor_dlkm:/verity_key:/version"
+export FAKECHROOT_EXCLUDE_PATH
+
+# ELF loader configuration for fakechroot
+# Used when fakechroot needs to spawn new processes
+export FAKECHROOT_ELFLOADER="$LD_LINUX"
+export FAKECHROOT_ELFLOADER_OPT_ARGV0="--argv0"
+
+# Set LD_AUDIT and LD_PRELOAD so child processes inherit them
+# fakechroot preserves these in its env list
+export LD_AUDIT="$AUDIT_LIB"
+export LD_PRELOAD="$FAKECHROOT_LIB"
+
+# Disable glibc's rseq (Restartable Sequences) syscall registration
+# Android's seccomp filter blocks syscall 293 (rseq), causing SIGSYS (signal 31)
+# glibc 2.35+ enables rseq by default; this tunable disables it
+export GLIBC_TUNABLES=glibc.pthread.rseq=0
+
+# Debug mode: set PACK_AUDIT_DEBUG=1 to see library path redirections
+# export PACK_AUDIT_DEBUG=1
+
+"$LD_LINUX" --help
+"$LD_LINUX" \
+    --audit "$AUDIT_LIB" \
+    --preload "$FAKECHROOT_LIB" \
+    "$PREFIX/nix/store/d9jxdwalyr5qzmyz9m5avmzn7w40h7iy-coreutils-9.8/bin/true"
+
+# Execute using ld.so with audit module and fakechroot preload
+exec "$LD_LINUX" \
+    --audit "$AUDIT_LIB" \
+    --preload "$FAKECHROOT_LIB" \
+    --argv0 "$BASH_BIN" \
+    "$BASH_BIN" -x "$LOGIN_INNER" "$@"

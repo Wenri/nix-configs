@@ -185,27 +185,92 @@
       system,
       username,
       ...
-    }:
+    }: let
+      # Build Android-patched glibc using the Termux patches from overlays
+      # Uses glibc 2.40 (from nixpkgs) with Termux's Android-specific patches
+      androidGlibc = let
+        glibcOverlay = import ./common/overlays/glibc.nix basePkgs basePkgs;
+      in glibcOverlay.glibc;
+      
+      # Create base pkgs without glibc overlay (uses binary cache)
+      basePkgs = import nixpkgs {
+        inherit system;
+        config.allowUnfree = true;
+        overlays = [
+          nix-on-droid.overlays.default
+          outputs.overlays.additions
+          outputs.overlays.modifications
+          outputs.overlays.unstable-packages
+          outputs.overlays.master-packages
+        ];
+      };
+      
+      standardGlibc = basePkgs.stdenv.cc.libc;
+      
+      # Function to patch a single package to use Android glibc
+      # Uses patchelf to rewrite interpreter and RPATH at build time
+      patchPackageForAndroidGlibc = pkg: basePkgs.runCommand "${pkg.pname or pkg.name or "package"}-android-glibc" ({
+        nativeBuildInputs = [ basePkgs.patchelf basePkgs.file ];
+        passthru = pkg.passthru or {};
+      } // (if pkg ? meta.priority then {meta.priority = pkg.meta.priority;} else {})) ''
+        echo "=== Patching package for Android glibc ==="
+        echo "Package: ${pkg.pname or pkg.name or "unknown"}"
+        echo "Standard glibc: ${standardGlibc}"
+        echo "Android glibc: ${androidGlibc}"
+        
+        # Copy the entire package
+        cp -rL ${pkg} $out
+        chmod -R u+w $out
+        
+        # Find and patch all ELF files
+        find $out -type f | while read -r file; do
+          # Skip if not ELF
+          if ! file "$file" 2>/dev/null | grep -q "ELF.*dynamic"; then
+            continue
+          fi
+          
+          PATCHED=0
+          
+          # Patch interpreter if it references standard glibc
+          INTERP=$(patchelf --print-interpreter "$file" 2>/dev/null || echo "")
+          if [ -n "$INTERP" ] && echo "$INTERP" | grep -q "${standardGlibc}"; then
+            echo "Patching interpreter: $file"
+            patchelf --set-interpreter "${androidGlibc}/lib/ld-linux-aarch64.so.1" "$file" 2>/dev/null || true
+            PATCHED=1
+          fi
+          
+          # Patch RPATH if it references standard glibc
+          RPATH=$(patchelf --print-rpath "$file" 2>/dev/null || echo "")
+          if [ -n "$RPATH" ] && echo "$RPATH" | grep -q "${standardGlibc}"; then
+            NEW_RPATH=$(echo "$RPATH" | sed "s|${standardGlibc}/lib|${androidGlibc}/lib|g")
+            echo "Patching RPATH: $file"
+            echo "  Old: $RPATH"
+            echo "  New: $NEW_RPATH"
+            patchelf --set-rpath "$NEW_RPATH" "$file" 2>/dev/null || true
+            PATCHED=1
+          fi
+          
+          [ "$PATCHED" = "1" ] && echo "  ✓ Patched: $file"
+        done
+        
+        echo "=== Patching complete ==="
+      '';
+    in
       nix-on-droid.lib.nixOnDroidConfiguration {
         modules = [
           ./hosts/${hostname}/configuration.nix
+          {
+            # Add Android glibc and patched packages
+            # To use: environment.packages = map patchPackageForAndroidGlibc [ pkg1 pkg2 ... ];
+            environment.packages = [ androidGlibc ];
+          }
         ];
 
         extraSpecialArgs = {
-          inherit inputs outputs hostname username;
+          inherit inputs outputs hostname username androidGlibc patchPackageForAndroidGlibc;
         };
 
-        pkgs = import nixpkgs {
-          inherit system;
-          config.allowUnfree = true;
-          overlays = [
-            nix-on-droid.overlays.default
-            outputs.overlays.additions
-            outputs.overlays.modifications
-            outputs.overlays.unstable-packages
-            outputs.overlays.master-packages
-          ];
-        };
+        pkgs = basePkgs;
 
         home-manager-path = home-manager.outPath;
       };
@@ -265,10 +330,18 @@
     packages = forAllSystems (system: let
       hostsForSystem = lib.filterAttrs (_: cfg: cfg.system == system) nixosHosts;
       customPkgs = import ./common/pkgs (mkPkgs system);
+      
+      # Expose androidGlibc for aarch64-linux
+      androidPackages = if system == "aarch64-linux" then {
+        androidGlibc = let
+          basePkgs = mkPkgs system;
+          glibcOverlay = import ./common/overlays/glibc.nix basePkgs basePkgs;
+        in glibcOverlay.glibc;
+      } else {};
     in
       (lib.mapAttrs (hostname: _:
         self.nixosConfigurations.${hostname}.config.system.build.toplevel)
-      hostsForSystem) // customPkgs);
+      hostsForSystem) // customPkgs // androidPackages);
 
     # Formatter for 'nix fmt'
     formatter = forAllSystems (system: (mkPkgs system).alejandra);
