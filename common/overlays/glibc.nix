@@ -1,5 +1,5 @@
 # glibc overlay for Android (nix-on-droid)
-# Applies Termux patches incrementally for Android kernel compatibility
+# Applies Termux patches for Android kernel compatibility
 # Based on: https://github.com/termux-pacman/glibc-packages/tree/main/gpkg/glibc
 final: prev: let
   # Only apply this overlay for aarch64-linux (Android)
@@ -8,54 +8,161 @@ final: prev: let
   # Path to Termux patches and source files
   termuxPatches = ./patches/glibc-termux;
 
-  # nix-on-droid paths
+  # nix-on-droid paths (equivalent to Termux's prefix paths)
   nixOnDroidPrefix = "/data/data/com.termux.nix/files/usr";
   nixOnDroidPrefixClassical = "/data/data/com.termux.nix/files";
 
   lib = final.lib;
+  
+  # All Termux patches for glibc 2.40 (adapted from 2.41)
+  # Order matters - some patches depend on changes from earlier patches
+  allPatches = [
+    # Essential: disable clone3 which Android kernel doesn't support
+    "disable-clone3.patch"
+    # Kernel feature flags for Android
+    "kernel-features.h.patch"
+    # Makefile modifications for Android-specific files
+    "misc-Makefile.patch"
+    "misc-Versions.patch"
+    "nss-Makefile.patch"
+    "posix-Makefile.patch"
+    "sysvipc-Makefile.patch"
+    # Code patches for Android compatibility
+    "clock_gettime.c.patch"
+    "dl-execstack.c.patch"
+    "faccessat.c.patch"
+    "fchmodat.c.patch"
+    "fstatat64.c.patch"
+    "getXXbyYY.c.patch"
+    "getXXbyYY_r.c.patch"
+    "getgrgid.c.patch"
+    "getgrnam.c.patch"
+    "getpwnam.c.patch"
+    "getpwuid.c.patch"
+    "sem_open.c.patch"
+    "tcsetattr.c.patch"
+    "unistd.h.patch"
+    # Large patches: path replacements, syscall wrappers, etc.
+    "set-dirs.patch"          # Path replacements for Android
+    "set-fakesyscalls.patch"  # Fake syscall implementations
+    "set-ld-variables.patch"  # LD environment variables
+    "set-nptl-syscalls.patch" # Disable blocked NPTL syscalls (adapted for 2.40)
+    "set-sigrestore.patch"    # Signal restore handling
+    "set-static-stubs.patch"  # Static linking stubs
+    "syscall.S.patch"         # Assembly syscall wrapper
+  ];
+
 in {
   glibc = if isAndroid then
     prev.glibc.overrideAttrs (oldAttrs: {
-      # Force a new derivation name to avoid stale builds
+      # Force a new derivation name to track Android-specific builds
       pname = "glibc-android";
       
-      # Start with minimal patches - add more incrementally
-      # Phase 1: disable-clone3 patch (essential for Android)
-      patches = (oldAttrs.patches or []) ++ [
-        (termuxPatches + "/disable-clone3.patch")
-      ];
+      # Apply all Termux patches
+      patches = (oldAttrs.patches or []) ++ (map (p: termuxPatches + "/${p}") allPatches);
+      
+      # Add jq for processing fakesyscall.json
+      nativeBuildInputs = (oldAttrs.nativeBuildInputs or []) ++ [ final.jq ];
       
       # Post-patch phase: apply Termux pre-configure modifications
+      # These are file copies and in-place edits that aren't done via patches
       postPatch = (oldAttrs.postPatch or "") + ''
         echo "=== Applying nix-on-droid Android modifications ==="
         
-        # Step 1: Remove clone3.S files (Termux: rm clone3.S)
+        # Step 1: Remove clone3.S files (Android doesn't support clone3)
         find . -name "clone3.S" -type f -delete
         echo "✓ Removed clone3.S files"
 
-        # Step 2: Remove x86_64 configure scripts (Termux: rm configure*)
+        # Step 2: Remove x86_64 configure scripts
         rm -f sysdeps/unix/sysv/linux/x86_64/configure* || true
         echo "✓ Removed x86_64 configure scripts"
+
+        # Step 3: Install syscall wrapper files
+        for f in shmat.c shmctl.c shmdt.c shmget.c mprotect.c syscall.c \
+                 fakesyscall-base.h fakesyscall.h fake_epoll_pwait2.c \
+                 setfsuid.c setfsgid.c; do
+          if [ -f "${termuxPatches}/$f" ]; then
+            cp "${termuxPatches}/$f" sysdeps/unix/sysv/linux/
+            echo "  ✓ Copied: $f -> sysdeps/unix/sysv/linux/"
+          fi
+        done
+
+        # Step 4: Install Android passwd/group handling
+        for f in android_passwd_group.c android_passwd_group.h android_system_user_ids.h; do
+          if [ -f "${termuxPatches}/$f" ]; then
+            cp "${termuxPatches}/$f" nss/
+            echo "  ✓ Copied: $f -> nss/"
+          fi
+        done
+
+        # Step 5: Generate android_ids.h
+        if [ -f "${termuxPatches}/gen-android-ids.sh" ]; then
+          bash ${termuxPatches}/gen-android-ids.sh ${nixOnDroidPrefixClassical} \
+            nss/android_ids.h \
+            ${termuxPatches}/android_system_user_ids.h || echo "Warning: gen-android-ids.sh failed (non-fatal)"
+          echo "✓ Generated android_ids.h"
+        fi
+
+        # Step 6: Install Android syslog
+        if [ -f "${termuxPatches}/syslog.c" ]; then
+          cp ${termuxPatches}/syslog.c misc/
+          echo "✓ Installed Android syslog"
+        fi
+
+        # Step 7: Install shmem-android (System V shared memory emulation)
+        for f in shmem-android.c shmem-android.h; do
+          if [ -f "${termuxPatches}/$f" ]; then
+            cp "${termuxPatches}/$f" sysvipc/
+            echo "  ✓ Copied: $f -> sysvipc/"
+          fi
+        done
+
+        # Step 8: Install SDT (SystemTap) stub headers
+        mkdir -p include/sys
+        for f in sdt.h sdt-config.h; do
+          if [ -f "${termuxPatches}/$f" ]; then
+            cp "${termuxPatches}/$f" include/sys/
+            echo "  ✓ Copied: $f -> include/sys/"
+          fi
+        done
+
+        # Step 9: Process fakesyscall.json to generate disabled-syscall.h
+        if [ -f "${termuxPatches}/process-fakesyscalls.sh" ]; then
+          bash ${termuxPatches}/process-fakesyscalls.sh . ${termuxPatches} aarch64 || \
+            echo "Warning: fakesyscalls processing failed (non-fatal)"
+          echo "✓ Processed fakesyscalls"
+        fi
+
+        # Step 10: Replace /dev/* paths with /proc/self/fd/*
+        for replacement in /dev/stderr:/proc/self/fd/2 \
+                          /dev/stdin:/proc/self/fd/0 \
+                          /dev/stdout:/proc/self/fd/1; do
+          old_path="''${replacement%%:*}"
+          new_path="''${replacement##*:}"
+          find . -type f \( -name "*.c" -o -name "*.h" \) -exec grep -l "$old_path" {} + 2>/dev/null | \
+            xargs -r sed -i "s|$old_path|$new_path|g" || true
+        done
+        echo "✓ Replaced /dev/* paths with /proc/self/fd/*"
         
-        echo "=== Phase 1 modifications complete ==="
+        echo "=== Android modifications complete ==="
       '';
       
-      # Fix broken symlinks in getconf - these point to 32-bit getconf variants
-      # which don't exist on aarch64-only builds. Remove them in postInstall.
+      # Fix broken symlinks in getconf (32-bit variants don't exist on aarch64)
       postInstall = (oldAttrs.postInstall or "") + ''
         echo "=== Fixing broken getconf symlinks ==="
-        # Remove broken symlinks that point to non-existent 32-bit variants
         find $out -xtype l -name "*LP64*" -delete 2>/dev/null || true
         find $out -xtype l -name "*XBS5*" -delete 2>/dev/null || true
         echo "✓ Removed broken LP64/XBS5 symlinks"
       '';
       
-      # Minimal configure flags
+      # Configure flags for Android
       configureFlags = let
         oldFlags = if lib.isFunction (oldAttrs.configureFlags or [])
           then (oldAttrs.configureFlags {})
           else (oldAttrs.configureFlags or []);
       in oldFlags ++ [
+        "--disable-nscd"
+        "--disable-profile"
         "--disable-werror"
       ];
     })
