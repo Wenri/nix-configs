@@ -25,40 +25,48 @@ if [ -f "$ARCH_DIR/syscall.S" ]; then
   mv "$ARCH_DIR/syscall.S" "$ARCH_DIR/syscallS.S"
 fi
 
-# Create disabled-syscall.h header
+# Create disabled-syscall.h header by moving syscall definitions from arch-syscall.h
 HEADER_FILE="$ARCH_DIR/disabled-syscall.h"
-echo "/* Disabled syscalls for Android */" > "$HEADER_FILE"
+echo "/* Disabled syscalls for Android - definitions moved from arch-syscall.h */" > "$HEADER_FILE"
 
-# Extract syscall numbers from fakesyscall.json and remove them from arch-syscall.h
+# Extract syscall definitions from arch-syscall.h and move them to disabled-syscall.h
 if [ -f "$ARCH_DIR/arch-syscall.h" ]; then
-  for syscall in $(jq -r '.[] | .[]' "$TERMUX_PKG_BUILDER_DIR/fakesyscall.json" | grep -v '^[0-9]\+$'); do
+  for syscall in $(jq -r '.[] | .[]' "$TERMUX_PKG_BUILDER_DIR/fakesyscall.json" 2>/dev/null); do
+    # Skip numeric entries
+    if [[ "$syscall" =~ ^[0-9]+$ ]]; then
+      continue
+    fi
+    # Copy the #define line to disabled-syscall.h, then remove from arch-syscall.h
     if grep -q "#define __NR_$syscall " "$ARCH_DIR/arch-syscall.h"; then
+      grep "#define __NR_$syscall " "$ARCH_DIR/arch-syscall.h" >> "$HEADER_FILE" || true
       sed -i "/#define __NR_$syscall /d" "$ARCH_DIR/arch-syscall.h"
-      echo "#define __NR_$syscall DISABLED" >> "$HEADER_FILE"
     fi
   done
 fi
 
-# Generate DISABLED_SYSCALL_WITH_FAKESYSCALL macro
-echo "" >> "$HEADER_FILE"
-echo "#define DISABLED_SYSCALL_WITH_FAKESYSCALL \\" >> "$HEADER_FILE"
+# Generate DISABLED_SYSCALL_WITH_FAKESYSCALL macro for the syscall() wrapper
+{
+  echo ""
+  echo "#define DISABLED_SYSCALL_WITH_FAKESYSCALL \\"
 
-for fakesyscall in $(jq -r '. | keys | .[]' "$TERMUX_PKG_BUILDER_DIR/fakesyscall.json"); do
-  need_return=false
-  for syscall in $(jq -r '."'"$fakesyscall"'" | .[]' "$TERMUX_PKG_BUILDER_DIR/fakesyscall.json"); do
-    if grep -q "^#define __NR_$syscall DISABLED" "$HEADER_FILE" || echo "$syscall" | grep -q '^[0-9]\+$'; then
-      if echo "$syscall" | grep -q '^[0-9]\+$'; then
-        echo -e "\tcase $syscall: \\" >> "$HEADER_FILE"
-      else
-        echo -e "\tcase __NR_$syscall: \\" >> "$HEADER_FILE"
+  for fakesyscall in $(jq -r '. | keys | .[]' "$TERMUX_PKG_BUILDER_DIR/fakesyscall.json" 2>/dev/null); do
+    need_return=false
+    for syscall in $(jq -r '."'"$fakesyscall"'" | .[]' "$TERMUX_PKG_BUILDER_DIR/fakesyscall.json" 2>/dev/null); do
+      if [[ "$syscall" =~ ^[0-9]+$ ]]; then
+        echo -e "\tcase $syscall: \\"
+        need_return=true
+      elif grep -q "^#define __NR_$syscall " "$HEADER_FILE"; then
+        echo -e "\tcase __NR_$syscall: \\"
+        need_return=true
       fi
-      need_return=true
+    done
+    if [ "$need_return" = "true" ]; then
+      echo -e "\t\treturn $fakesyscall; \\"
     fi
   done
-  if [ "$need_return" = "true" ]; then
-    echo -e "\t\treturn $fakesyscall; \\" >> "$HEADER_FILE"
-  fi
-done
+} >> "$HEADER_FILE"
 
-# Remove trailing backslash
+# Remove trailing backslash from last line
 sed -i '$ s| \\||' "$HEADER_FILE"
+
+echo "✓ Created disabled-syscall.h"

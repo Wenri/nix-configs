@@ -27,12 +27,12 @@ diff --git a/elf/ldconfig.c b/elf/ldconfig.c
 index 1432187e..f29a8b66 100644
 --- a/elf/ldconfig.c
 +++ b/elf/ldconfig.c
-@@ -48,7 +48,7 @@
+@@ -57,7 +57,7 @@
  #include <dl-procinfo.h>
  
  #ifndef LD_SO_CONF
--# define LD_SO_CONF SYSCONFDIR "/ld.so.conf"
-+# define LD_SO_CONF SYSCONFDIR "/" LD_SO ".conf"
+-# define LD_SO_CONF PREFIX "/etc/ld.so.conf"
++# define LD_SO_CONF PREFIX "/etc/" LD_SO ".conf"
  #endif
  
  /* Get libc version number.  */
@@ -40,7 +40,7 @@ diff --git a/elf/rtld.c b/elf/rtld.c
 index 00bec153..bc37ac08 100644
 --- a/elf/rtld.c
 +++ b/elf/rtld.c
-@@ -360,7 +360,7 @@ struct rtld_global_ro _rtld_global_ro attribute_relro =
+@@ -363,7 +363,7 @@ struct rtld_global_ro _rtld_global_ro attribute_relro =
      ._dl_fpu_control = _FPU_DEFAULT,
      ._dl_pagesize = EXEC_PAGESIZE,
      ._dl_inhibit_cache = 0,
@@ -49,11 +49,11 @@ index 00bec153..bc37ac08 100644
  
      /* Function pointers.  */
      ._dl_debug_printf = _dl_debug_printf,
-@@ -1822,7 +1822,7 @@ dl_main (const ElfW(Phdr) *phdr,
+@@ -1865,7 +1865,7 @@ dl_main (const ElfW(Phdr) *phdr,
       open().  So we do this first.  If it succeeds we do almost twice
       the work but this does not matter, since it is not for production
       use.  */
--  static const char preload_file[] = "/etc/ld.so.preload";
+-  static const char preload_file[] = "/etc/ld-nix.so.preload";
 +  static const char preload_file[] = "@TERMUX_PREFIX@/etc/ld.so.preload";
    if (__glibc_unlikely (__access (preload_file, R_OK) == 0))
      {
@@ -600,7 +600,7 @@ diff --git a/posix/bug-getopt5.c b/posix/bug-getopt5.c
 index 4f67d9b2..11645956 100644
 --- a/posix/bug-getopt5.c
 +++ b/posix/bug-getopt5.c
-@@ -48,7 +48,7 @@ one_test (const char *fmt, int argc, char *argv[], int n, int expected[n])
+@@ -57,7 +57,7 @@ one_test (const char *fmt, int argc, char *argv[], int n, int expected[n])
  static int
  do_test (void)
  {
@@ -649,7 +649,7 @@ diff --git a/resolv/res_hconf.c b/resolv/res_hconf.c
 index 186af816..d2e09c5b 100644
 --- a/resolv/res_hconf.c
 +++ b/resolv/res_hconf.c
-@@ -48,7 +48,7 @@
+@@ -57,7 +57,7 @@
  # define fgets_unlocked __fgets_unlocked
  #endif
  
@@ -862,7 +862,7 @@ diff --git a/sysdeps/generic/dl-cache.h b/sysdeps/generic/dl-cache.h
 index 0ee65713..549fca17 100644
 --- a/sysdeps/generic/dl-cache.h
 +++ b/sysdeps/generic/dl-cache.h
-@@ -34,8 +34,14 @@
+@@ -37,8 +37,14 @@
    ((flags) == 1 || (flags) == _DL_CACHE_DEFAULT_ID)
  #endif
  
@@ -873,8 +873,8 @@ index 0ee65713..549fca17 100644
 +#endif
 +
  #ifndef LD_SO_CACHE
--# define LD_SO_CACHE SYSCONFDIR "/ld.so.cache"
-+# define LD_SO_CACHE SYSCONFDIR "/" LD_SO ".cache"
+-# define LD_SO_CACHE PREFIX "/etc/ld.so.cache"
++# define LD_SO_CACHE PREFIX "/etc/" LD_SO ".cache"
  #endif
  
  #ifndef add_system_dir
@@ -987,7 +987,7 @@ index 15859c3b..3bc390f5 100644
 --- a/sysdeps/unix/confstr.h
 +++ b/sysdeps/unix/confstr.h
 @@ -1 +1 @@
--#define	CS_PATH	"/bin:/usr/bin"
+-#define	CS_PATH	"/run/current-system/sw/bin:/bin:/usr/bin"
 +#define	CS_PATH	"@TERMUX_PREFIX@/bin:@TERMUX_PREFIX_CLASSICAL@/bin:/system/bin"
 diff --git a/sysdeps/unix/sysv/linux/gentempfd.c b/sysdeps/unix/sysv/linux/gentempfd.c
 index 1cdadc1f..c3efd981 100644
