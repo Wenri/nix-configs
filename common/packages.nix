@@ -48,8 +48,8 @@
 
   # System tools
   # Note: tzdata not needed - time.timeZone creates /etc/zoneinfo symlink
+  # Note: glibc.bin removed - causes conflict with Android glibc on nix-on-droid
   systemTools = with pkgs; [
-    glibc.bin # tzselect, zdump, zic, locale, iconv, etc.
     hostname
     man
     which
