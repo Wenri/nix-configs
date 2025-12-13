@@ -1,6 +1,6 @@
 # Termux glibc Patches for Android Compatibility
 
-> **Last Updated:** December 2024
+> **Last Updated:** December 2025
 > **Source:** [Termux glibc-packages](https://github.com/niclasr/glibc-packages)
 > **Target glibc Version:** 2.40 (from nixpkgs-unstable)
 
@@ -338,11 +338,13 @@ These patches fix glibc code for Android compatibility.
 
 | Original Path | Replacement |
 |---------------|-------------|
-| `/usr` | `/data/data/com.termux.nix/files/usr` |
+| `/tmp` | `/data/data/com.termux.nix/files/tmp` |
 | `/etc` | `/data/data/com.termux.nix/files/usr/etc` |
 | `/var` | `/data/data/com.termux.nix/files/usr/var` |
+| `/bin` | `/data/data/com.termux.nix/files/usr/bin` |
+| `/sbin` | `/data/data/com.termux.nix/files/usr/bin` |
 
-**Note:** This patch uses `@PREFIX@` placeholder substituted at build time
+**Note:** Paths are hardcoded for nix-on-droid (unlike Termux's template approach)
 
 ---
 
@@ -528,22 +530,21 @@ These patches were originally written for Termux's glibc 2.41 and adapted for ni
 2. **Path Handling**
    - Termux: `/data/data/com.termux/files/usr`
    - nix-on-droid: `/data/data/com.termux.nix/files/usr`
-   - Patches use `@PREFIX@` placeholder
+   - Paths now hardcoded in patches (no placeholders)
 
 3. **nixpkgs Pre-patches**
    - nixpkgs applies its own patches before ours
    - `set-nptl-syscalls.patch` adjusted for nixpkgs source state
-   - Original Termux version saved as `.patch.orig-2.41`
 
 4. **Build System Differences**
    - nixpkgs uses different configure flags
    - Some patches adjusted for nixpkgs build environment
 
-### Files with `.orig-2.41` Suffix
-
-These are the original Termux patches for reference:
-- `set-nptl-syscalls.patch.orig-2.41`
-- `set-dirs.patch.orig-2.41`
+5. **Path Hardcoding**
+   - `set-dirs.patch` uses hardcoded nix-on-droid paths:
+     - `/data/data/com.termux.nix/files/usr` (prefix)
+     - `/data/data/com.termux.nix/files` (classical prefix)
+   - Unlike Termux's template approach with `@TERMUX_PREFIX@`
 
 ---
 
