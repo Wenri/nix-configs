@@ -519,6 +519,91 @@ nix flake show
 
 ## Advanced Topics
 
+### Fakechroot Login Script
+
+nix-on-droid supports an alternative login method using `fakechroot` instead of `proot`. The fakechroot approach uses `rtld-audit` (pack-audit.so) to rewrite `/nix/store/...` paths and `LD_PRELOAD` to intercept syscalls, providing better performance than proot.
+
+#### Script Location
+
+The fakechroot login script is located at:
+```
+~/.config/nix-on-droid/scripts/login-fakechroot
+```
+
+#### Automatic Library Discovery
+
+A working implementation (`login-fakechroot-autofind`) includes automatic library discovery that:
+
+1. **Searches for required libraries** in the nix store using Android system tools (`/system/bin/find`)
+2. **Automatically adds library paths** to `LD_LIBRARY_PATH` for:
+   - `libreadline.so.8` (from readline package)
+   - `libncursesw.so.6` (from ncurses package)
+   - Any other missing libraries discovered at runtime
+
+3. **Uses Android system binaries** for file operations:
+   - `/system/bin/find` - Search for libraries
+   - `/system/bin/head`, `/system/bin/basename`, `/system/bin/dirname` - Path manipulation
+   - Shell built-ins (`[`, `test`) - File existence checks
+
+#### Key Implementation Details
+
+**Path Translation:**
+- Uses actual paths (`$STORE/package-name/lib/`) instead of `/nix/store/...` which doesn't exist
+- The `rtld-audit` module (`pack-audit.so`) rewrites `/nix/store/...` paths to actual paths
+- `LD_LIBRARY_PATH` provides fallback paths if audit module doesn't intercept in time
+
+**Library Search Function:**
+```bash
+find_lib_in_store() {
+    # Uses /system/bin/find to search for libraries
+    # Falls back to manual directory iteration if find fails
+    # Returns package name containing the library
+}
+```
+
+**Environment Setup:**
+- `FAKECHROOT_BASE` set to nix-on-droid prefix
+- `FAKECHROOT_EXCLUDE_PATH` excludes Android system paths
+- `LD_AUDIT` points to pack-audit.so for path rewriting
+- `LD_PRELOAD` loads libfakechroot.so for syscall interception
+
+#### Known Issues and Solutions
+
+**Issue:** `libreadline.so.8: cannot open shared object file`
+
+**Solution:** The automatic library discovery finds and adds the readline package path to `LD_LIBRARY_PATH`. The script searches through all packages in the nix store to locate required libraries.
+
+**Issue:** Signal 4 (SIGILL - Illegal Instruction)
+
+**Solution:** Removed unsupported flags like `--inhibit-rpath` and `--library-path` (not valid for `ld-linux.so`). Use `LD_LIBRARY_PATH` environment variable instead.
+
+**Issue:** Android binaries can't be loaded by Nix glibc
+
+**Solution:** Use Android system binaries (`/system/bin/*`) for file operations, but use shell built-ins for file existence checks since Android binaries can't be executed by the Nix dynamic linker.
+
+#### Using Fakechroot
+
+To use the fakechroot login script:
+
+```bash
+# Backup current login script
+cp ~/.config/nix-on-droid/scripts/login-fakechroot \
+   ~/.config/nix-on-droid/scripts/login-fakechroot-proot-backup
+
+# Restore the autofind version
+cp ~/.config/nix-on-droid/scripts/login-fakechroot-autofind \
+   ~/.config/nix-on-droid/scripts/login-fakechroot
+
+# Or use it directly
+~/.config/nix-on-droid/scripts/login-fakechroot-autofind
+```
+
+**Note:** The fakechroot script requires:
+- Android-patched glibc (`glibc-android-2.40-66`)
+- `pack-audit.so` in the scripts directory
+- `libfakechroot.so` in the nix store
+- All required libraries discoverable in the nix store
+
 ### Android glibc Patching
 
 See [GLIBC_REPLACEMENT.md](./GLIBC_REPLACEMENT.md) for detailed information on:

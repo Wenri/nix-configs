@@ -87,17 +87,22 @@ Our solution uses a **two-stage approach**:
                                │
                                ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│              Stage 2: patchelf Binary Rewriting                 │
+│           Stage 2: Runtime glibc Redirection                    │
 ├─────────────────────────────────────────────────────────────────┤
-│  For each package from binary cache:                            │
+│  Using rtld-audit (pack-audit.so) at runtime:                   │
 │                                                                 │
-│  Original binary:                                               │
-│    Interpreter: /nix/store/xxx-glibc-2.40/lib/ld-linux-*.so.1  │
-│    RPATH: /nix/store/xxx-glibc-2.40/lib:...                    │
+│  1. Path Translation:                                           │
+│     /nix/store/... → $FAKECHROOT_BASE/nix/store/...            │
 │                                                                 │
-│  After patchelf:                                                │
-│    Interpreter: /nix/store/yyy-glibc-android/lib/ld-linux-*.so.1│
-│    RPATH: /nix/store/yyy-glibc-android/lib:...                 │
+│  2. glibc Redirection (NEW!):                                   │
+│     Standard glibc hash → Android glibc hash                    │
+│                                                                 │
+│  Example:                                                       │
+│    Binary requests: .../89n0gcl1...-glibc-2.40-66/lib/libc.so.6│
+│    Audit redirects: .../lb0hd462...-glibc-android-2.40-66/...  │
+│                                                                 │
+│  Result: Binary cache packages use Android glibc without        │
+│          rebuild or patchelf!                                   │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -106,9 +111,10 @@ Our solution uses a **two-stage approach**:
 | Component | Source | Build Time | Size |
 |-----------|--------|------------|------|
 | Android glibc | **Built from source** | ~20 minutes | ~50 MB |
-| patchelf wrappers | Built (trivial) | Seconds | Copies only |
-| Original packages | **Binary cache** | Downloaded | Varies |
-| Final patched packages | Built (copy+patch) | Seconds per pkg | ~Same as original |
+| pack-audit.so | Built (trivial) | Seconds | ~70 KB |
+| All other packages | **Binary cache** | Downloaded | Varies |
+
+**Key Advantage:** No patchelf needed! The rtld-audit module redirects glibc at runtime.
 
 ---
 
@@ -423,6 +429,55 @@ glibc = prev.glibc.overrideAttrs (oldAttrs: {
 ## Troubleshooting
 
 ### Common Issues
+
+#### Library Loading Errors with Fakechroot
+
+**Symptom:**
+```bash
+error while loading shared libraries: libreadline.so.8: cannot open shared object file
+```
+
+**Cause:** The dynamic linker can't find required libraries because:
+1. Libraries are in separate nix packages (not in the binary's package)
+2. The binary's RPATH points to `/nix/store/...` which doesn't exist on Android
+3. The `rtld-audit` module redirects `/nix/store` → `$FAKECHROOT_BASE/nix/store`
+
+**Solution:** The `pack-audit.so` rtld-audit module handles this automatically:
+- Redirects `/nix/store/...` to `$FAKECHROOT_BASE/nix/store/...`
+- Also redirects standard glibc to Android glibc (see below)
+
+No `LD_LIBRARY_PATH` is needed!
+
+#### glibc Redirection (Standard → Android)
+
+**Symptom:**
+```bash
+$ ./some-binary
+Bad system call (core dumped)
+```
+
+**Cause:** Binary from nixpkgs binary cache has RPATH pointing to standard glibc:
+```
+/nix/store/89n0gcl1yjp37ycca45rn50h7lms5p6f-glibc-2.40-66/lib
+```
+Standard glibc uses syscalls (clone3, rseq) that are blocked by Android seccomp.
+
+**Solution:** The `pack-audit.so` audit module can redirect standard glibc to Android glibc:
+
+```bash
+# Set these environment variables before running ld.so
+export STANDARD_GLIBC="89n0gcl1yjp37ycca45rn50h7lms5p6f-glibc-2.40-66"
+export ANDROID_GLIBC="lb0hd462xiicipri33q3idk43nzz0983-glibc-android-2.40-66"
+```
+
+The audit module will redirect:
+```
+$FAKECHROOT_BASE/nix/store/89n0gcl1yjp37ycca45rn50h7lms5p6f-glibc-2.40-66/lib/libc.so.6
+                                    ↓
+$FAKECHROOT_BASE/nix/store/lb0hd462xiicipri33q3idk43nzz0983-glibc-android-2.40-66/lib/libc.so.6
+```
+
+This applies to ALL libraries from standard glibc: `libc.so.6`, `libpthread.so.0`, `libm.so.6`, `libdl.so.2`, etc.
 
 #### "Bad system call" Error
 

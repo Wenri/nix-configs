@@ -1,0 +1,1234 @@
+[
+  {
+    "name": "flake.nix",
+    "path": "flake.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fflake.nix",
+    "is_dir": false,
+    "size": 12676
+  },
+  {
+    "name": "flake.lock",
+    "path": "flake.lock",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fflake.lock",
+    "is_dir": false,
+    "size": 10450
+  },
+  {
+    "name": "CLAUDE.md",
+    "path": "CLAUDE.md",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2FCLAUDE.md",
+    "is_dir": false,
+    "size": 20706
+  },
+  {
+    "name": "common",
+    "path": "common",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon",
+    "is_dir": true,
+    "size": 0
+  },
+  {
+    "name": "modules",
+    "path": "common/modules",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules",
+    "is_dir": true,
+    "size": 0
+  },
+  {
+    "name": "home-manager",
+    "path": "common/modules/home-manager",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fhome-manager",
+    "is_dir": true,
+    "size": 0
+  },
+  {
+    "name": "core",
+    "path": "common/modules/home-manager/core",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fhome-manager%2Fcore",
+    "is_dir": true,
+    "size": 0
+  },
+  {
+    "name": "default.nix",
+    "path": "common/modules/home-manager/core/default.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fhome-manager%2Fcore%2Fdefault.nix",
+    "is_dir": false,
+    "size": 116
+  },
+  {
+    "name": "gh.nix",
+    "path": "common/modules/home-manager/core/gh.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fhome-manager%2Fcore%2Fgh.nix",
+    "is_dir": false,
+    "size": 253
+  },
+  {
+    "name": "git.nix",
+    "path": "common/modules/home-manager/core/git.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fhome-manager%2Fcore%2Fgit.nix",
+    "is_dir": false,
+    "size": 1185
+  },
+  {
+    "name": "packages.nix",
+    "path": "common/modules/home-manager/core/packages.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fhome-manager%2Fcore%2Fpackages.nix",
+    "is_dir": false,
+    "size": 564
+  },
+  {
+    "name": "programs.nix",
+    "path": "common/modules/home-manager/core/programs.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fhome-manager%2Fcore%2Fprograms.nix",
+    "is_dir": false,
+    "size": 220
+  },
+  {
+    "name": "ssh.nix",
+    "path": "common/modules/home-manager/core/ssh.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fhome-manager%2Fcore%2Fssh.nix",
+    "is_dir": false,
+    "size": 383
+  },
+  {
+    "name": "zsh.nix",
+    "path": "common/modules/home-manager/core/zsh.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fhome-manager%2Fcore%2Fzsh.nix",
+    "is_dir": false,
+    "size": 484
+  },
+  {
+    "name": "default.nix",
+    "path": "common/modules/home-manager/default.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fhome-manager%2Fdefault.nix",
+    "is_dir": false,
+    "size": 805
+  },
+  {
+    "name": "desktop",
+    "path": "common/modules/home-manager/desktop",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fhome-manager%2Fdesktop",
+    "is_dir": true,
+    "size": 0
+  },
+  {
+    "name": "default.nix",
+    "path": "common/modules/home-manager/desktop/default.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fhome-manager%2Fdesktop%2Fdefault.nix",
+    "is_dir": false,
+    "size": 299
+  },
+  {
+    "name": "emacs.nix",
+    "path": "common/modules/home-manager/desktop/emacs.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fhome-manager%2Fdesktop%2Femacs.nix",
+    "is_dir": false,
+    "size": 244
+  },
+  {
+    "name": "firefox",
+    "path": "common/modules/home-manager/desktop/firefox",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fhome-manager%2Fdesktop%2Ffirefox",
+    "is_dir": true,
+    "size": 0
+  },
+  {
+    "name": "default.nix",
+    "path": "common/modules/home-manager/desktop/firefox/default.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fhome-manager%2Fdesktop%2Ffirefox%2Fdefault.nix",
+    "is_dir": false,
+    "size": 1414
+  },
+  {
+    "name": "gnome.nix",
+    "path": "common/modules/home-manager/desktop/gnome.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fhome-manager%2Fdesktop%2Fgnome.nix",
+    "is_dir": false,
+    "size": 231
+  },
+  {
+    "name": "gnome",
+    "path": "common/modules/home-manager/desktop/gnome",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fhome-manager%2Fdesktop%2Fgnome",
+    "is_dir": true,
+    "size": 0
+  },
+  {
+    "name": "default.nix",
+    "path": "common/modules/home-manager/desktop/gnome/default.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fhome-manager%2Fdesktop%2Fgnome%2Fdefault.nix",
+    "is_dir": false,
+    "size": 3346
+  },
+  {
+    "name": "paperwm.nix",
+    "path": "common/modules/home-manager/desktop/gnome/paperwm.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fhome-manager%2Fdesktop%2Fgnome%2Fpaperwm.nix",
+    "is_dir": false,
+    "size": 4023
+  },
+  {
+    "name": "wallpapers",
+    "path": "common/modules/home-manager/desktop/gnome/wallpapers",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fhome-manager%2Fdesktop%2Fgnome%2Fwallpapers",
+    "is_dir": true,
+    "size": 0
+  },
+  {
+    "name": "comet.png",
+    "path": "common/modules/home-manager/desktop/gnome/wallpapers/comet.png",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fhome-manager%2Fdesktop%2Fgnome%2Fwallpapers%2Fcomet.png",
+    "is_dir": false,
+    "size": 4810784
+  },
+  {
+    "name": "sun.png",
+    "path": "common/modules/home-manager/desktop/gnome/wallpapers/sun.png",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fhome-manager%2Fdesktop%2Fgnome%2Fwallpapers%2Fsun.png",
+    "is_dir": false,
+    "size": 4294521
+  },
+  {
+    "name": "packages.nix",
+    "path": "common/modules/home-manager/desktop/packages.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fhome-manager%2Fdesktop%2Fpackages.nix",
+    "is_dir": false,
+    "size": 398
+  },
+  {
+    "name": "rime",
+    "path": "common/modules/home-manager/desktop/rime",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fhome-manager%2Fdesktop%2Frime",
+    "is_dir": true,
+    "size": 0
+  },
+  {
+    "name": "configs",
+    "path": "common/modules/home-manager/desktop/rime/configs",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fhome-manager%2Fdesktop%2Frime%2Fconfigs",
+    "is_dir": true,
+    "size": 0
+  },
+  {
+    "name": "default.yaml",
+    "path": "common/modules/home-manager/desktop/rime/configs/default.yaml",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fhome-manager%2Fdesktop%2Frime%2Fconfigs%2Fdefault.yaml",
+    "is_dir": false,
+    "size": 12000
+  },
+  {
+    "name": "default.nix",
+    "path": "common/modules/home-manager/desktop/rime/default.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fhome-manager%2Fdesktop%2Frime%2Fdefault.nix",
+    "is_dir": false,
+    "size": 204
+  },
+  {
+    "name": "rime-ice.nix",
+    "path": "common/modules/home-manager/desktop/rime/rime-ice.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fhome-manager%2Fdesktop%2Frime%2Frime-ice.nix",
+    "is_dir": false,
+    "size": 764
+  },
+  {
+    "name": "vscode",
+    "path": "common/modules/home-manager/desktop/vscode",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fhome-manager%2Fdesktop%2Fvscode",
+    "is_dir": true,
+    "size": 0
+  },
+  {
+    "name": "default.nix",
+    "path": "common/modules/home-manager/desktop/vscode/default.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fhome-manager%2Fdesktop%2Fvscode%2Fdefault.nix",
+    "is_dir": false,
+    "size": 1128
+  },
+  {
+    "name": "latex-input.nix",
+    "path": "common/modules/home-manager/desktop/vscode/latex-input.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fhome-manager%2Fdesktop%2Fvscode%2Flatex-input.nix",
+    "is_dir": false,
+    "size": 7210
+  },
+  {
+    "name": "user-settings.nix",
+    "path": "common/modules/home-manager/desktop/vscode/user-settings.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fhome-manager%2Fdesktop%2Fvscode%2Fuser-settings.nix",
+    "is_dir": false,
+    "size": 4079
+  },
+  {
+    "name": "wechat",
+    "path": "common/modules/home-manager/desktop/wechat",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fhome-manager%2Fdesktop%2Fwechat",
+    "is_dir": true,
+    "size": 0
+  },
+  {
+    "name": "default.nix",
+    "path": "common/modules/home-manager/desktop/wechat/default.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fhome-manager%2Fdesktop%2Fwechat%2Fdefault.nix",
+    "is_dir": false,
+    "size": 124
+  },
+  {
+    "name": "license.tar.gz",
+    "path": "common/modules/home-manager/desktop/wechat/license.tar.gz",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fhome-manager%2Fdesktop%2Fwechat%2Flicense.tar.gz",
+    "is_dir": false,
+    "size": 1354
+  },
+  {
+    "name": "development",
+    "path": "common/modules/home-manager/development",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fhome-manager%2Fdevelopment",
+    "is_dir": true,
+    "size": 0
+  },
+  {
+    "name": "coq.nix",
+    "path": "common/modules/home-manager/development/coq.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fhome-manager%2Fdevelopment%2Fcoq.nix",
+    "is_dir": false,
+    "size": 303
+  },
+  {
+    "name": "default.nix",
+    "path": "common/modules/home-manager/development/default.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fhome-manager%2Fdevelopment%2Fdefault.nix",
+    "is_dir": false,
+    "size": 73
+  },
+  {
+    "name": "packages.nix",
+    "path": "common/modules/home-manager/development/packages.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fhome-manager%2Fdevelopment%2Fpackages.nix",
+    "is_dir": false,
+    "size": 482
+  },
+  {
+    "name": "pcloud.nix",
+    "path": "common/modules/home-manager/development/pcloud.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fhome-manager%2Fdevelopment%2Fpcloud.nix",
+    "is_dir": false,
+    "size": 543
+  },
+  {
+    "name": "nixos",
+    "path": "common/modules/nixos",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fnixos",
+    "is_dir": true,
+    "size": 0
+  },
+  {
+    "name": "common-base.nix",
+    "path": "common/modules/nixos/common-base.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fnixos%2Fcommon-base.nix",
+    "is_dir": false,
+    "size": 1132
+  },
+  {
+    "name": "common-services.nix",
+    "path": "common/modules/nixos/common-services.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fnixos%2Fcommon-services.nix",
+    "is_dir": false,
+    "size": 1191
+  },
+  {
+    "name": "default.nix",
+    "path": "common/modules/nixos/default.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fnixos%2Fdefault.nix",
+    "is_dir": false,
+    "size": 576
+  },
+  {
+    "name": "desktop-base.nix",
+    "path": "common/modules/nixos/desktop-base.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fnixos%2Fdesktop-base.nix",
+    "is_dir": false,
+    "size": 889
+  },
+  {
+    "name": "disk-config.nix",
+    "path": "common/modules/nixos/disk-config.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fnixos%2Fdisk-config.nix",
+    "is_dir": false,
+    "size": 1185
+  },
+  {
+    "name": "locale.nix",
+    "path": "common/modules/nixos/locale.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fnixos%2Flocale.nix",
+    "is_dir": false,
+    "size": 673
+  },
+  {
+    "name": "secrets.nix",
+    "path": "common/modules/nixos/secrets.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fnixos%2Fsecrets.nix",
+    "is_dir": false,
+    "size": 244
+  },
+  {
+    "name": "server-base.nix",
+    "path": "common/modules/nixos/server-base.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fnixos%2Fserver-base.nix",
+    "is_dir": false,
+    "size": 1239
+  },
+  {
+    "name": "tailscale.nix",
+    "path": "common/modules/nixos/tailscale.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fnixos%2Ftailscale.nix",
+    "is_dir": false,
+    "size": 1861
+  },
+  {
+    "name": "users.nix",
+    "path": "common/modules/nixos/users.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fnixos%2Fusers.nix",
+    "is_dir": false,
+    "size": 728
+  },
+  {
+    "name": "wsl-base.nix",
+    "path": "common/modules/nixos/wsl-base.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fnixos%2Fwsl-base.nix",
+    "is_dir": false,
+    "size": 426
+  },
+  {
+    "name": "nix-on-droid",
+    "path": "common/modules/nix-on-droid",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fnix-on-droid",
+    "is_dir": true,
+    "size": 0
+  },
+  {
+    "name": "android-integration.nix",
+    "path": "common/modules/nix-on-droid/android-integration.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fnix-on-droid%2Fandroid-integration.nix",
+    "is_dir": false,
+    "size": 649
+  },
+  {
+    "name": "base.nix",
+    "path": "common/modules/nix-on-droid/base.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fnix-on-droid%2Fbase.nix",
+    "is_dir": false,
+    "size": 1382
+  },
+  {
+    "name": "default.nix",
+    "path": "common/modules/nix-on-droid/default.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fnix-on-droid%2Fdefault.nix",
+    "is_dir": false,
+    "size": 226
+  },
+  {
+    "name": "sshd.nix",
+    "path": "common/modules/nix-on-droid/sshd.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fnix-on-droid%2Fsshd.nix",
+    "is_dir": false,
+    "size": 2611
+  },
+  {
+    "name": "locale.nix",
+    "path": "common/modules/nix-on-droid/locale.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fnix-on-droid%2Flocale.nix",
+    "is_dir": false,
+    "size": 321
+  },
+  {
+    "name": "shizuku.nix",
+    "path": "common/modules/nix-on-droid/shizuku.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fmodules%2Fnix-on-droid%2Fshizuku.nix",
+    "is_dir": false,
+    "size": 1843
+  },
+  {
+    "name": "overlays",
+    "path": "common/overlays",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays",
+    "is_dir": true,
+    "size": 0
+  },
+  {
+    "name": "default.nix",
+    "path": "common/overlays/default.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fdefault.nix",
+    "is_dir": false,
+    "size": 1246
+  },
+  {
+    "name": "patches",
+    "path": "common/overlays/patches",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fpatches",
+    "is_dir": true,
+    "size": 0
+  },
+  {
+    "name": "glibc-termux",
+    "path": "common/overlays/patches/glibc-termux",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fpatches%2Fglibc-termux",
+    "is_dir": true,
+    "size": 0
+  },
+  {
+    "name": "android_passwd_group.c",
+    "path": "common/overlays/patches/glibc-termux/android_passwd_group.c",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fpatches%2Fglibc-termux%2Fandroid_passwd_group.c",
+    "is_dir": false,
+    "size": 7008
+  },
+  {
+    "name": "android_passwd_group.h",
+    "path": "common/overlays/patches/glibc-termux/android_passwd_group.h",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fpatches%2Fglibc-termux%2Fandroid_passwd_group.h",
+    "is_dir": false,
+    "size": 896
+  },
+  {
+    "name": "android_system_user_ids.h",
+    "path": "common/overlays/patches/glibc-termux/android_system_user_ids.h",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fpatches%2Fglibc-termux%2Fandroid_system_user_ids.h",
+    "is_dir": false,
+    "size": 7448
+  },
+  {
+    "name": "clock_gettime.c.patch",
+    "path": "common/overlays/patches/glibc-termux/clock_gettime.c.patch",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fpatches%2Fglibc-termux%2Fclock_gettime.c.patch",
+    "is_dir": false,
+    "size": 986
+  },
+  {
+    "name": "disable-clone3.patch",
+    "path": "common/overlays/patches/glibc-termux/disable-clone3.patch",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fpatches%2Fglibc-termux%2Fdisable-clone3.patch",
+    "is_dir": false,
+    "size": 1894
+  },
+  {
+    "name": "dl-execstack.c.patch",
+    "path": "common/overlays/patches/glibc-termux/dl-execstack.c.patch",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fpatches%2Fglibc-termux%2Fdl-execstack.c.patch",
+    "is_dir": false,
+    "size": 436
+  },
+  {
+    "name": "faccessat.c.patch",
+    "path": "common/overlays/patches/glibc-termux/faccessat.c.patch",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fpatches%2Fglibc-termux%2Ffaccessat.c.patch",
+    "is_dir": false,
+    "size": 849
+  },
+  {
+    "name": "fake_epoll_pwait2.c",
+    "path": "common/overlays/patches/glibc-termux/fake_epoll_pwait2.c",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fpatches%2Fglibc-termux%2Ffake_epoll_pwait2.c",
+    "is_dir": false,
+    "size": 675
+  },
+  {
+    "name": "fakesyscall-base.h",
+    "path": "common/overlays/patches/glibc-termux/fakesyscall-base.h",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fpatches%2Fglibc-termux%2Ffakesyscall-base.h",
+    "is_dir": false,
+    "size": 546
+  },
+  {
+    "name": "fakesyscall.h",
+    "path": "common/overlays/patches/glibc-termux/fakesyscall.h",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fpatches%2Fglibc-termux%2Ffakesyscall.h",
+    "is_dir": false,
+    "size": 249
+  },
+  {
+    "name": "fakesyscall.json",
+    "path": "common/overlays/patches/glibc-termux/fakesyscall.json",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fpatches%2Fglibc-termux%2Ffakesyscall.json",
+    "is_dir": false,
+    "size": 2011
+  },
+  {
+    "name": "fchmodat.c.patch",
+    "path": "common/overlays/patches/glibc-termux/fchmodat.c.patch",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fpatches%2Fglibc-termux%2Ffchmodat.c.patch",
+    "is_dir": false,
+    "size": 929
+  },
+  {
+    "name": "fstatat64.c.patch",
+    "path": "common/overlays/patches/glibc-termux/fstatat64.c.patch",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fpatches%2Fglibc-termux%2Ffstatat64.c.patch",
+    "is_dir": false,
+    "size": 2316
+  },
+  {
+    "name": "gen-android-ids.sh",
+    "path": "common/overlays/patches/glibc-termux/gen-android-ids.sh",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fpatches%2Fglibc-termux%2Fgen-android-ids.sh",
+    "is_dir": false,
+    "size": 3158
+  },
+  {
+    "name": "getgrgid.c.patch",
+    "path": "common/overlays/patches/glibc-termux/getgrgid.c.patch",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fpatches%2Fglibc-termux%2Fgetgrgid.c.patch",
+    "is_dir": false,
+    "size": 993
+  },
+  {
+    "name": "getgrnam.c.patch",
+    "path": "common/overlays/patches/glibc-termux/getgrnam.c.patch",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fpatches%2Fglibc-termux%2Fgetgrnam.c.patch",
+    "is_dir": false,
+    "size": 1040
+  },
+  {
+    "name": "getpwnam.c.patch",
+    "path": "common/overlays/patches/glibc-termux/getpwnam.c.patch",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fpatches%2Fglibc-termux%2Fgetpwnam.c.patch",
+    "is_dir": false,
+    "size": 1042
+  },
+  {
+    "name": "getpwuid.c.patch",
+    "path": "common/overlays/patches/glibc-termux/getpwuid.c.patch",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fpatches%2Fglibc-termux%2Fgetpwuid.c.patch",
+    "is_dir": false,
+    "size": 1018
+  },
+  {
+    "name": "getXXbyYY.c.patch",
+    "path": "common/overlays/patches/glibc-termux/getXXbyYY.c.patch",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fpatches%2Fglibc-termux%2FgetXXbyYY.c.patch",
+    "is_dir": false,
+    "size": 595
+  },
+  {
+    "name": "getXXbyYY_r.c.patch",
+    "path": "common/overlays/patches/glibc-termux/getXXbyYY_r.c.patch",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fpatches%2Fglibc-termux%2FgetXXbyYY_r.c.patch",
+    "is_dir": false,
+    "size": 888
+  },
+  {
+    "name": "i386-syscalls.list.patch",
+    "path": "common/overlays/patches/glibc-termux/i386-syscalls.list.patch",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fpatches%2Fglibc-termux%2Fi386-syscalls.list.patch",
+    "is_dir": false,
+    "size": 565
+  },
+  {
+    "name": "kernel-features.h.patch",
+    "path": "common/overlays/patches/glibc-termux/kernel-features.h.patch",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fpatches%2Fglibc-termux%2Fkernel-features.h.patch",
+    "is_dir": false,
+    "size": 1119
+  },
+  {
+    "name": "misc-Makefile.patch",
+    "path": "common/overlays/patches/glibc-termux/misc-Makefile.patch",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fpatches%2Fglibc-termux%2Fmisc-Makefile.patch",
+    "is_dir": false,
+    "size": 243
+  },
+  {
+    "name": "misc-Versions.patch",
+    "path": "common/overlays/patches/glibc-termux/misc-Versions.patch",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fpatches%2Fglibc-termux%2Fmisc-Versions.patch",
+    "is_dir": false,
+    "size": 469
+  },
+  {
+    "name": "mprotect.c",
+    "path": "common/overlays/patches/glibc-termux/mprotect.c",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fpatches%2Fglibc-termux%2Fmprotect.c",
+    "is_dir": false,
+    "size": 2718
+  },
+  {
+    "name": "nss-Makefile.patch",
+    "path": "common/overlays/patches/glibc-termux/nss-Makefile.patch",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fpatches%2Fglibc-termux%2Fnss-Makefile.patch",
+    "is_dir": false,
+    "size": 257
+  },
+  {
+    "name": "posix-Makefile.patch",
+    "path": "common/overlays/patches/glibc-termux/posix-Makefile.patch",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fpatches%2Fglibc-termux%2Fposix-Makefile.patch",
+    "is_dir": false,
+    "size": 716
+  },
+  {
+    "name": "sdt-config.h",
+    "path": "common/overlays/patches/glibc-termux/sdt-config.h",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fpatches%2Fglibc-termux%2Fsdt-config.h",
+    "is_dir": false,
+    "size": 276
+  },
+  {
+    "name": "sdt.h",
+    "path": "common/overlays/patches/glibc-termux/sdt.h",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fpatches%2Fglibc-termux%2Fsdt.h",
+    "is_dir": false,
+    "size": 18600
+  },
+  {
+    "name": "sem_open.c.patch",
+    "path": "common/overlays/patches/glibc-termux/sem_open.c.patch",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fpatches%2Fglibc-termux%2Fsem_open.c.patch",
+    "is_dir": false,
+    "size": 626
+  },
+  {
+    "name": "set-dirs.patch",
+    "path": "common/overlays/patches/glibc-termux/set-dirs.patch",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fpatches%2Fglibc-termux%2Fset-dirs.patch",
+    "is_dir": false,
+    "size": 39830
+  },
+  {
+    "name": "set-fakesyscalls.patch",
+    "path": "common/overlays/patches/glibc-termux/set-fakesyscalls.patch",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fpatches%2Fglibc-termux%2Fset-fakesyscalls.patch",
+    "is_dir": false,
+    "size": 16770
+  },
+  {
+    "name": "setfsgid.c",
+    "path": "common/overlays/patches/glibc-termux/setfsgid.c",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fpatches%2Fglibc-termux%2Fsetfsgid.c",
+    "is_dir": false,
+    "size": 155
+  },
+  {
+    "name": "setfsuid.c",
+    "path": "common/overlays/patches/glibc-termux/setfsuid.c",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fpatches%2Fglibc-termux%2Fsetfsuid.c",
+    "is_dir": false,
+    "size": 155
+  },
+  {
+    "name": "set-ld-variables.patch",
+    "path": "common/overlays/patches/glibc-termux/set-ld-variables.patch",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fpatches%2Fglibc-termux%2Fset-ld-variables.patch",
+    "is_dir": false,
+    "size": 4307
+  },
+  {
+    "name": "set-nptl-syscalls.patch",
+    "path": "common/overlays/patches/glibc-termux/set-nptl-syscalls.patch",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fpatches%2Fglibc-termux%2Fset-nptl-syscalls.patch",
+    "is_dir": false,
+    "size": 3654
+  },
+  {
+    "name": "set-sigrestore.patch",
+    "path": "common/overlays/patches/glibc-termux/set-sigrestore.patch",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fpatches%2Fglibc-termux%2Fset-sigrestore.patch",
+    "is_dir": false,
+    "size": 1333
+  },
+  {
+    "name": "set-static-stubs.patch",
+    "path": "common/overlays/patches/glibc-termux/set-static-stubs.patch",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fpatches%2Fglibc-termux%2Fset-static-stubs.patch",
+    "is_dir": false,
+    "size": 2325
+  },
+  {
+    "name": "shmat.c",
+    "path": "common/overlays/patches/glibc-termux/shmat.c",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fpatches%2Fglibc-termux%2Fshmat.c",
+    "is_dir": false,
+    "size": 1269
+  },
+  {
+    "name": "shmctl.c",
+    "path": "common/overlays/patches/glibc-termux/shmctl.c",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fpatches%2Fglibc-termux%2Fshmctl.c",
+    "is_dir": false,
+    "size": 3655
+  },
+  {
+    "name": "shmdt.c",
+    "path": "common/overlays/patches/glibc-termux/shmdt.c",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fpatches%2Fglibc-termux%2Fshmdt.c",
+    "is_dir": false,
+    "size": 1035
+  },
+  {
+    "name": "shmem-android.c",
+    "path": "common/overlays/patches/glibc-termux/shmem-android.c",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fpatches%2Fglibc-termux%2Fshmem-android.c",
+    "is_dir": false,
+    "size": 7226
+  },
+  {
+    "name": "shmem-android.h",
+    "path": "common/overlays/patches/glibc-termux/shmem-android.h",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fpatches%2Fglibc-termux%2Fshmem-android.h",
+    "is_dir": false,
+    "size": 2321
+  },
+  {
+    "name": "shmget.c",
+    "path": "common/overlays/patches/glibc-termux/shmget.c",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fpatches%2Fglibc-termux%2Fshmget.c",
+    "is_dir": false,
+    "size": 4617
+  },
+  {
+    "name": "syscall.c",
+    "path": "common/overlays/patches/glibc-termux/syscall.c",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fpatches%2Fglibc-termux%2Fsyscall.c",
+    "is_dir": false,
+    "size": 668
+  },
+  {
+    "name": "syscall.S.patch",
+    "path": "common/overlays/patches/glibc-termux/syscall.S.patch",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fpatches%2Fglibc-termux%2Fsyscall.S.patch",
+    "is_dir": false,
+    "size": 2125
+  },
+  {
+    "name": "syslog.c",
+    "path": "common/overlays/patches/glibc-termux/syslog.c",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fpatches%2Fglibc-termux%2Fsyslog.c",
+    "is_dir": false,
+    "size": 13774
+  },
+  {
+    "name": "sysvipc-Makefile.patch",
+    "path": "common/overlays/patches/glibc-termux/sysvipc-Makefile.patch",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fpatches%2Fglibc-termux%2Fsysvipc-Makefile.patch",
+    "is_dir": false,
+    "size": 363
+  },
+  {
+    "name": "tcsetattr.c.patch",
+    "path": "common/overlays/patches/glibc-termux/tcsetattr.c.patch",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fpatches%2Fglibc-termux%2Ftcsetattr.c.patch",
+    "is_dir": false,
+    "size": 474
+  },
+  {
+    "name": "unistd.h.patch",
+    "path": "common/overlays/patches/glibc-termux/unistd.h.patch",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fpatches%2Fglibc-termux%2Funistd.h.patch",
+    "is_dir": false,
+    "size": 418
+  },
+  {
+    "name": "process-fakesyscalls.sh",
+    "path": "common/overlays/patches/glibc-termux/process-fakesyscalls.sh",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fpatches%2Fglibc-termux%2Fprocess-fakesyscalls.sh",
+    "is_dir": false,
+    "size": 2377
+  },
+  {
+    "name": "fakechroot-preserve-ld-audit.patch",
+    "path": "common/overlays/patches/fakechroot-preserve-ld-audit.patch",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fpatches%2Ffakechroot-preserve-ld-audit.patch",
+    "is_dir": false,
+    "size": 900
+  },
+  {
+    "name": "glibc.nix",
+    "path": "common/overlays/glibc.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Fglibc.nix",
+    "is_dir": false,
+    "size": 8366
+  },
+  {
+    "name": "fakechroot.nix",
+    "path": "common/overlays/fakechroot.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Foverlays%2Ffakechroot.nix",
+    "is_dir": false,
+    "size": 440
+  },
+  {
+    "name": "pkgs",
+    "path": "common/pkgs",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fpkgs",
+    "is_dir": true,
+    "size": 0
+  },
+  {
+    "name": "default.nix",
+    "path": "common/pkgs/default.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fpkgs%2Fdefault.nix",
+    "is_dir": false,
+    "size": 175
+  },
+  {
+    "name": "packages.nix",
+    "path": "common/packages.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fpackages.nix",
+    "is_dir": false,
+    "size": 1924
+  },
+  {
+    "name": "keys.nix",
+    "path": "common/keys.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fcommon%2Fkeys.nix",
+    "is_dir": false,
+    "size": 2001
+  },
+  {
+    "name": "hosts",
+    "path": "hosts",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fhosts",
+    "is_dir": true,
+    "size": 0
+  },
+  {
+    "name": "freenix",
+    "path": "hosts/freenix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fhosts%2Ffreenix",
+    "is_dir": true,
+    "size": 0
+  },
+  {
+    "name": "configuration.nix",
+    "path": "hosts/freenix/configuration.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fhosts%2Ffreenix%2Fconfiguration.nix",
+    "is_dir": false,
+    "size": 1117
+  },
+  {
+    "name": "facter.json",
+    "path": "hosts/freenix/facter.json",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fhosts%2Ffreenix%2Ffacter.json",
+    "is_dir": false,
+    "size": 22183
+  },
+  {
+    "name": "home.nix",
+    "path": "hosts/freenix/home.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fhosts%2Ffreenix%2Fhome.nix",
+    "is_dir": false,
+    "size": 1081
+  },
+  {
+    "name": "irif",
+    "path": "hosts/irif",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fhosts%2Firif",
+    "is_dir": true,
+    "size": 0
+  },
+  {
+    "name": "configuration.nix",
+    "path": "hosts/irif/configuration.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fhosts%2Firif%2Fconfiguration.nix",
+    "is_dir": false,
+    "size": 2678
+  },
+  {
+    "name": "hardware-configuration.nix",
+    "path": "hosts/irif/hardware-configuration.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fhosts%2Firif%2Fhardware-configuration.nix",
+    "is_dir": false,
+    "size": 1623
+  },
+  {
+    "name": "home.nix",
+    "path": "hosts/irif/home.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fhosts%2Firif%2Fhome.nix",
+    "is_dir": false,
+    "size": 1369
+  },
+  {
+    "name": "matrix",
+    "path": "hosts/matrix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fhosts%2Fmatrix",
+    "is_dir": true,
+    "size": 0
+  },
+  {
+    "name": "configuration.nix",
+    "path": "hosts/matrix/configuration.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fhosts%2Fmatrix%2Fconfiguration.nix",
+    "is_dir": false,
+    "size": 1501
+  },
+  {
+    "name": "facter.json",
+    "path": "hosts/matrix/facter.json",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fhosts%2Fmatrix%2Ffacter.json",
+    "is_dir": false,
+    "size": 60512
+  },
+  {
+    "name": "home.nix",
+    "path": "hosts/matrix/home.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fhosts%2Fmatrix%2Fhome.nix",
+    "is_dir": false,
+    "size": 1081
+  },
+  {
+    "name": "synapse.nix",
+    "path": "hosts/matrix/synapse.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fhosts%2Fmatrix%2Fsynapse.nix",
+    "is_dir": false,
+    "size": 8121
+  },
+  {
+    "name": "nixos-gnome",
+    "path": "hosts/nixos-gnome",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fhosts%2Fnixos-gnome",
+    "is_dir": true,
+    "size": 0
+  },
+  {
+    "name": "configuration.nix",
+    "path": "hosts/nixos-gnome/configuration.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fhosts%2Fnixos-gnome%2Fconfiguration.nix",
+    "is_dir": false,
+    "size": 2040
+  },
+  {
+    "name": "hardware-configuration.nix",
+    "path": "hosts/nixos-gnome/hardware-configuration.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fhosts%2Fnixos-gnome%2Fhardware-configuration.nix",
+    "is_dir": false,
+    "size": 1499
+  },
+  {
+    "name": "home.nix",
+    "path": "hosts/nixos-gnome/home.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fhosts%2Fnixos-gnome%2Fhome.nix",
+    "is_dir": false,
+    "size": 1369
+  },
+  {
+    "name": "nixos-plasma6",
+    "path": "hosts/nixos-plasma6",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fhosts%2Fnixos-plasma6",
+    "is_dir": true,
+    "size": 0
+  },
+  {
+    "name": "configuration.nix",
+    "path": "hosts/nixos-plasma6/configuration.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fhosts%2Fnixos-plasma6%2Fconfiguration.nix",
+    "is_dir": false,
+    "size": 2126
+  },
+  {
+    "name": "hardware-configuration.nix",
+    "path": "hosts/nixos-plasma6/hardware-configuration.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fhosts%2Fnixos-plasma6%2Fhardware-configuration.nix",
+    "is_dir": false,
+    "size": 1499
+  },
+  {
+    "name": "home.nix",
+    "path": "hosts/nixos-plasma6/home.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fhosts%2Fnixos-plasma6%2Fhome.nix",
+    "is_dir": false,
+    "size": 1369
+  },
+  {
+    "name": "wslnix",
+    "path": "hosts/wslnix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fhosts%2Fwslnix",
+    "is_dir": true,
+    "size": 0
+  },
+  {
+    "name": "configuration.nix",
+    "path": "hosts/wslnix/configuration.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fhosts%2Fwslnix%2Fconfiguration.nix",
+    "is_dir": false,
+    "size": 876
+  },
+  {
+    "name": "home.nix",
+    "path": "hosts/wslnix/home.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fhosts%2Fwslnix%2Fhome.nix",
+    "is_dir": false,
+    "size": 1064
+  },
+  {
+    "name": "nix-on-droid",
+    "path": "hosts/nix-on-droid",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fhosts%2Fnix-on-droid",
+    "is_dir": true,
+    "size": 0
+  },
+  {
+    "name": "configuration.nix",
+    "path": "hosts/nix-on-droid/configuration.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fhosts%2Fnix-on-droid%2Fconfiguration.nix",
+    "is_dir": false,
+    "size": 965
+  },
+  {
+    "name": "home.nix",
+    "path": "hosts/nix-on-droid/home.nix",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fhosts%2Fnix-on-droid%2Fhome.nix",
+    "is_dir": false,
+    "size": 1700
+  },
+  {
+    "name": "README.md",
+    "path": "README.md",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2FREADME.md",
+    "is_dir": false,
+    "size": 17274
+  },
+  {
+    "name": "LICENSE",
+    "path": "LICENSE",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2FLICENSE",
+    "is_dir": false,
+    "size": 7048
+  },
+  {
+    "name": "secrets",
+    "path": "secrets",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fsecrets",
+    "is_dir": true,
+    "size": 0
+  },
+  {
+    "name": ".git",
+    "path": "secrets/.git",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fsecrets%2F.git",
+    "is_dir": false,
+    "size": 32
+  },
+  {
+    "name": "tailscale-auth.key",
+    "path": "secrets/tailscale-auth.key",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fsecrets%2Ftailscale-auth.key",
+    "is_dir": false,
+    "size": 63
+  },
+  {
+    "name": ".claude",
+    "path": ".claude",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2F.claude",
+    "is_dir": true,
+    "size": 0
+  },
+  {
+    "name": "settings.local.json",
+    "path": ".claude/settings.local.json",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2F.claude%2Fsettings.local.json",
+    "is_dir": false,
+    "size": 1272
+  },
+  {
+    "name": "scripts",
+    "path": "scripts",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fscripts",
+    "is_dir": true,
+    "size": 0
+  },
+  {
+    "name": "login-fakechroot",
+    "path": "scripts/login-fakechroot",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fscripts%2Flogin-fakechroot",
+    "is_dir": false,
+    "size": 4708
+  },
+  {
+    "name": "login-fakechroot-orig",
+    "path": "scripts/login-fakechroot-orig",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fscripts%2Flogin-fakechroot-orig",
+    "is_dir": false,
+    "size": 4708
+  },
+  {
+    "name": "login-proot",
+    "path": "scripts/login-proot",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fscripts%2Flogin-proot",
+    "is_dir": false,
+    "size": 2031
+  },
+  {
+    "name": "pack-audit.c",
+    "path": "scripts/pack-audit.c",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fscripts%2Fpack-audit.c",
+    "is_dir": false,
+    "size": 6872
+  },
+  {
+    "name": "pack-audit.so",
+    "path": "scripts/pack-audit.so",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fscripts%2Fpack-audit.so",
+    "is_dir": false,
+    "size": 70608
+  },
+  {
+    "name": "launcher.c",
+    "path": "scripts/launcher.c",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fscripts%2Flauncher.c",
+    "is_dir": false,
+    "size": 19663
+  },
+  {
+    "name": "login-fakechroot-bak",
+    "path": "scripts/login-fakechroot-bak",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fscripts%2Flogin-fakechroot-bak",
+    "is_dir": false,
+    "size": 4496
+  },
+  {
+    "name": "test-fakechroot.sh",
+    "path": "scripts/test-fakechroot.sh",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fscripts%2Ftest-fakechroot.sh",
+    "is_dir": false,
+    "size": 1827
+  },
+  {
+    "name": "login-fakechroot-autofind",
+    "path": "scripts/login-fakechroot-autofind",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fscripts%2Flogin-fakechroot-autofind",
+    "is_dir": false,
+    "size": 4522
+  },
+  {
+    "name": "build-pack-audit.sh",
+    "path": "scripts/build-pack-audit.sh",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fscripts%2Fbuild-pack-audit.sh",
+    "is_dir": false,
+    "size": 1839
+  },
+  {
+    "name": "docs",
+    "path": "docs",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fdocs",
+    "is_dir": true,
+    "size": 0
+  },
+  {
+    "name": "GLIBC_REPLACEMENT.md",
+    "path": "docs/GLIBC_REPLACEMENT.md",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fdocs%2FGLIBC_REPLACEMENT.md",
+    "is_dir": false,
+    "size": 21049
+  },
+  {
+    "name": "NIX-ON-DROID.md",
+    "path": "docs/NIX-ON-DROID.md",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fdocs%2FNIX-ON-DROID.md",
+    "is_dir": false,
+    "size": 18896
+  },
+  {
+    "name": "TERMUX-PATCHES.md",
+    "path": "docs/TERMUX-PATCHES.md",
+    "uri": "content://com.termux.nix.documents/tree/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome/document/%2Fdata%2Fdata%2Fcom.termux.nix%2Ffiles%2Fhome%2F.config%2Fnix-on-droid%2Fdocs%2FTERMUX-PATCHES.md",
+    "is_dir": false,
+    "size": 17137
+  }
+]

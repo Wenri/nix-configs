@@ -625,5 +625,14 @@ These patches were originally written for Termux's glibc 2.41 and adapted for ni
 ### Related Documentation
 
 - [GLIBC_REPLACEMENT.md](./GLIBC_REPLACEMENT.md) - Overall glibc strategy
-- [NIX-ON-DROID.md](./NIX-ON-DROID.md) - nix-on-droid configuration guide
+- [NIX-ON-DROID.md](./NIX-ON-DROID.md) - nix-on-droid configuration guide (includes fakechroot documentation)
 - [../CLAUDE.md](../CLAUDE.md) - Repository overview
+
+### Fakechroot Integration Notes
+
+The fakechroot login script uses the Android-patched glibc with `rtld-audit` (pack-audit.so) for path rewriting. Key points:
+
+- **Path Translation:** The audit module rewrites `/nix/store/...` paths to actual paths under `/data/data/com.termux.nix/files/usr/nix/store/...`
+- **Library Discovery:** Required libraries (readline, ncursesw) are automatically discovered and added to `LD_LIBRARY_PATH`
+- **Android System Tools:** The script uses `/system/bin/find` and other Android binaries for file operations since it runs locally
+- **Performance:** Fakechroot provides better performance than proot by avoiding syscall emulation overhead
