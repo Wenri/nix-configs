@@ -331,12 +331,56 @@
       hostsForSystem = lib.filterAttrs (_: cfg: cfg.system == system) nixosHosts;
       customPkgs = import ./common/pkgs (mkPkgs system);
       
-      # Expose androidGlibc for aarch64-linux
-      androidPackages = if system == "aarch64-linux" then {
-        androidGlibc = let
-          basePkgs = mkPkgs system;
-          glibcOverlay = import ./common/overlays/glibc.nix basePkgs basePkgs;
-        in glibcOverlay.glibc;
+      # Expose androidGlibc and androidFakechroot for aarch64-linux
+      androidPackages = if system == "aarch64-linux" then let
+        basePkgs = mkPkgs system;
+        glibcOverlay = import ./common/overlays/glibc.nix basePkgs basePkgs;
+        androidGlibc = glibcOverlay.glibc;
+      in {
+        inherit androidGlibc;
+        
+        # Fakechroot patched for Android glibc
+        androidFakechroot = let
+          fakechroot = basePkgs.fakechroot.overrideAttrs (oldAttrs: {
+            version = "unstable-2024-12-14";
+            src = basePkgs.fetchFromGitHub {
+              owner = "Wenri";
+              repo = "fakechroot";
+              rev = "cfc132d2dbec1b5a87bd9a4b426e3ac62f06c14a";
+              hash = "sha256-qgXqmKGD2vxhGgKPaIBDsyEhYNWy4vFUbwh36tOuQKk=";
+            };
+            patches = [];
+          });
+        in basePkgs.runCommand "fakechroot-android" {
+          nativeBuildInputs = [ basePkgs.patchelf ];
+        } ''
+          echo "=== Building Android-patched fakechroot ==="
+          cp -rL ${fakechroot} $out
+          chmod -R u+w $out
+          
+          # Patch libfakechroot.so RUNPATH
+          for lib in $out/lib/fakechroot/libfakechroot.so; do
+            if [ -f "$lib" ]; then
+              echo "  Patching RUNPATH: $lib"
+              patchelf --set-rpath "${androidGlibc}/lib" "$lib" || true
+            fi
+          done
+          
+          # Patch executables
+          for bin in $out/bin/fakechroot $out/bin/ldd.fakechroot; do
+            if [ -f "$bin" ] && [ -x "$bin" ]; then
+              if patchelf --print-interpreter "$bin" 2>/dev/null | grep -q ld-linux; then
+                echo "  Patching: $bin"
+                patchelf \
+                  --set-interpreter "${androidGlibc}/lib/ld-linux-aarch64.so.1" \
+                  --set-rpath "${androidGlibc}/lib" \
+                  "$bin" 2>/dev/null || true
+              fi
+            fi
+          done
+          
+          echo "=== Done ==="
+        '';
       } else {};
     in
       (lib.mapAttrs (hostname: _:
@@ -352,6 +396,33 @@
         standardGlibc = basePkgs.glibc;
       in {
         inherit androidGlibc;
+        
+        # Android-patched fakechroot with elfloader audit/preload support
+        androidFakechroot = let
+          fakechroot = basePkgs.fakechroot.overrideAttrs (oldAttrs: {
+            version = "unstable-2024-12-14";
+            src = basePkgs.fetchFromGitHub {
+              owner = "Wenri";
+              repo = "fakechroot";
+              rev = "cfc132d2dbec1b5a87bd9a4b426e3ac62f06c14a";
+              hash = "sha256-qgXqmKGD2vxhGgKPaIBDsyEhYNWy4vFUbwh36tOuQKk=";
+            };
+            patches = [];
+          });
+        in basePkgs.runCommand "fakechroot-android" {
+          nativeBuildInputs = [ basePkgs.patchelf ];
+        } ''
+          cp -rL ${fakechroot} $out
+          chmod -R u+w $out
+          for lib in $out/lib/fakechroot/libfakechroot.so; do
+            [ -f "$lib" ] && patchelf --set-rpath "${androidGlibc}/lib" "$lib" || true
+          done
+          for bin in $out/bin/fakechroot $out/bin/ldd.fakechroot; do
+            if [ -f "$bin" ] && patchelf --print-interpreter "$bin" 2>/dev/null | grep -q ld-linux; then
+              patchelf --set-interpreter "${androidGlibc}/lib/ld-linux-aarch64.so.1" --set-rpath "${androidGlibc}/lib" "$bin" 2>/dev/null || true
+            fi
+          done
+        '';
         
         # Function to patch a package to use Android glibc
         patchPackageForAndroidGlibc = pkg: basePkgs.runCommand "${pkg.pname or pkg.name or "package"}-android-glibc" ({

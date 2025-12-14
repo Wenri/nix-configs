@@ -1,14 +1,50 @@
-# Fakechroot from Wenri's fork (forked from lipnitsk)
-final: oldAttrs: {
-  version = "unstable-2021-02-26";
+# Fakechroot from Wenri's fork with elfloader audit/preload support
+# Built against Android glibc for nix-on-droid compatibility
+final: oldAttrs: let
+  # Get Android glibc from flake outputs (must be passed via specialArgs or pkgs)
+  androidGlibcLib = "/data/data/com.termux.nix/files/usr/nix/store/4c9dx2bn6wyjq5kz4x0smbfkvdr0c2qh-glibc-android-2.40-66/lib";
+  isAndroid = (final.stdenv.hostPlatform.system or final.system) == "aarch64-linux";
+in {
+  version = "unstable-2024-12-14";
   src = final.fetchFromGitHub {
     owner = "Wenri";
     repo = "fakechroot";
-    rev = "e7c1f3a446e594a4d0cce5f5d499c9439ce1d5c5";
-    hash = "sha256-a4bA7iGLp47oJ0VGNbRG/1mMS9ZjtD3IcHZ02YwyTD0=";
+    rev = "cfc132d2dbec1b5a87bd9a4b426e3ac62f06c14a";
+    hash = "sha256-qgXqmKGD2vxhGgKPaIBDsyEhYNWy4vFUbwh36tOuQKk=";
   };
-  patches = [
-    # Preserve LD_AUDIT env var for rtld-audit integration
-    ./patches/fakechroot-preserve-ld-audit.patch
-  ];
+
+  # No additional patches needed - our changes are in the fork
+  patches = [];
+
+  # Add patchelf for RUNPATH patching on Android
+  nativeBuildInputs = (oldAttrs.nativeBuildInputs or []) ++ 
+    (if isAndroid then [ final.patchelf ] else []);
+
+  # Patch RUNPATH to use Android glibc on aarch64-linux
+  postFixup = (oldAttrs.postFixup or "") + (if isAndroid then ''
+    echo "=== Patching fakechroot for Android glibc ==="
+    
+    # Patch libfakechroot.so
+    for lib in $out/lib/fakechroot/libfakechroot.so; do
+      if [ -f "$lib" ]; then
+        echo "  Patching RUNPATH: $lib"
+        ${final.patchelf}/bin/patchelf --set-rpath "${androidGlibcLib}" "$lib" || true
+      fi
+    done
+    
+    # Patch the fakechroot binary if it exists
+    for bin in $out/bin/fakechroot $out/bin/ldd.fakechroot; do
+      if [ -f "$bin" ] && [ -x "$bin" ]; then
+        if ${final.patchelf}/bin/patchelf --print-interpreter "$bin" 2>/dev/null | grep -q ld-linux; then
+          echo "  Patching interpreter and RUNPATH: $bin"
+          ${final.patchelf}/bin/patchelf \
+            --set-interpreter "${androidGlibcLib}/ld-linux-aarch64.so.1" \
+            --set-rpath "${androidGlibcLib}" \
+            "$bin" 2>/dev/null || true
+        fi
+      fi
+    done
+    
+    echo "=== Fakechroot Android patching complete ==="
+  '' else "");
 }
