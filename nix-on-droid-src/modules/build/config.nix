@@ -34,6 +34,37 @@ with lib;
         default = [ ];
         description = "Extra options passed to proot, e.g., extra bind mounts.";
       };
+
+      # Fakechroot support options
+      androidGlibc = mkOption {
+        type = types.nullOr types.package;
+        default = null;
+        description = "Android-patched glibc package for fakechroot login.";
+      };
+
+      standardGlibc = mkOption {
+        type = types.nullOr types.package;
+        default = null;
+        description = "Standard glibc package for path redirection.";
+      };
+
+      androidFakechroot = mkOption {
+        type = types.nullOr types.package;
+        default = null;
+        description = "Android-patched fakechroot package.";
+      };
+
+      packAuditLib = mkOption {
+        type = types.nullOr types.path;
+        default = null;
+        description = "Path to pack-audit.so library for glibc redirection.";
+      };
+
+      bashInteractive = mkOption {
+        type = types.nullOr types.package;
+        default = null;
+        description = "Bash interactive package for login shell.";
+      };
     };
 
   };

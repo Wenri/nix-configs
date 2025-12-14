@@ -255,14 +255,62 @@
         
         echo "=== Patching complete ==="
       '';
+      # Build Android-patched fakechroot
+      androidFakechroot = let
+        fakechroot = basePkgs.fakechroot.overrideAttrs (oldAttrs: {
+          version = "unstable-2024-12-14";
+          src = basePkgs.fetchFromGitHub {
+            owner = "Wenri";
+            repo = "fakechroot";
+            rev = "cfc132d8c9b6a2cd34a00292be5ce8c5d5fb25e4";
+            hash = "sha256-ILcm0ZGkS46uIBr+aoAv3a5y9AGN9Y9/2HU7CsTL/gU=";
+          };
+          patches = [];
+        });
+      in basePkgs.runCommand "fakechroot-android" {
+        nativeBuildInputs = [ basePkgs.patchelf ];
+      } ''
+        cp -rL ${fakechroot} $out
+        chmod -R u+w $out
+        for lib in $out/lib/fakechroot/libfakechroot.so; do
+          [ -f "$lib" ] && patchelf --set-rpath "${androidGlibc}/lib" "$lib" || true
+        done
+        for bin in $out/bin/fakechroot $out/bin/ldd.fakechroot; do
+          if [ -f "$bin" ] && patchelf --print-interpreter "$bin" 2>/dev/null | grep -q ld-linux; then
+            patchelf --set-interpreter "${androidGlibc}/lib/ld-linux-aarch64.so.1" --set-rpath "${androidGlibc}/lib" "$bin" 2>/dev/null || true
+          fi
+        done
+      '';
+
+      # Build pack-audit.so library
+      packAuditLib = basePkgs.runCommand "pack-audit" {
+        nativeBuildInputs = [ basePkgs.gcc basePkgs.patchelf ];
+        src = ./scripts/pack-audit.c;
+      } ''
+        mkdir -p $out/lib
+        gcc -shared -fPIC -O2 -Wall \
+          -Wl,--dynamic-linker="${androidGlibc}/lib/ld-linux-aarch64.so.1" \
+          -Wl,-rpath,"${androidGlibc}/lib" \
+          -o $out/lib/pack-audit.so \
+          $src \
+          -L"${androidGlibc}/lib" \
+          -ldl
+        patchelf --set-rpath "${androidGlibc}/lib" $out/lib/pack-audit.so
+      '';
     in
       nix-on-droid.lib.nixOnDroidConfiguration {
         modules = [
           ./hosts/${hostname}/configuration.nix
           {
             # Add Android glibc and patched packages
-            # To use: environment.packages = map patchPackageForAndroidGlibc [ pkg1 pkg2 ... ];
-            environment.packages = [ androidGlibc ];
+            environment.packages = [ androidGlibc androidFakechroot ];
+            
+            # Configure fakechroot login
+            build.androidGlibc = androidGlibc;
+            build.standardGlibc = standardGlibc;
+            build.androidFakechroot = androidFakechroot;
+            build.packAuditLib = "${packAuditLib}/lib/pack-audit.so";
+            build.bashInteractive = basePkgs.bashInteractive;
           }
         ];
 

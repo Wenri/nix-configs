@@ -21,8 +21,8 @@ in {
     ++ packages.systemTools
     ++ packages.editors
     ++ packages.modernCli
-    ++ packages.devTools
-    ++ [pkgs.fakechroot];
+    ++ packages.devTools;
+    # Note: fakechroot is now provided as androidFakechroot in flake.nix
 
   # Backup etc files instead of failing to activate generation if a file already exists in /etc
   environment.etcBackupExtension = ".bak";
