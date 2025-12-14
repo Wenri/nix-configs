@@ -47,7 +47,11 @@ in
 
   config = {
 
-    build.activation.installPackages = ''
+    build.activation.installPackages = let
+      prefix = if config.build.absoluteStorePrefix != null
+        then config.build.absoluteStorePrefix
+        else "";
+    in ''
       if [[ -e "${config.user.home}/.nix-profile/manifest.json" ]]; then
         # manual removal and installation as two non-atomical steps is required
         # because of https://github.com/NixOS/nix/issues/6349
@@ -65,6 +69,45 @@ in
       else
         $DRY_RUN_CMD nix-env --install ${cfg.path}
       fi
+      
+      ${optionalString (prefix != "") ''
+        # Rewrite symlinks inside the user-environment to use absolute paths
+        # The user-environment is read-only, so we create a mutable copy
+        userenv=$(readlink -f "${config.user.home}/.nix-profile")
+        if [[ -d "$userenv" && "$userenv" == /nix/store/* ]]; then
+          noteEcho "Rewriting user-environment symlinks for outside-proot access"
+          tmpdir=$(mktemp -d)
+          
+          # Copy structure and rewrite symlinks
+          for item in "$userenv"/*; do
+            name=$(basename "$item")
+            if [[ -L "$item" ]]; then
+              target=$(readlink "$item")
+              if [[ "$target" == /nix/store/* ]]; then
+                ln -s "${prefix}$target" "$tmpdir/$name"
+              else
+                ln -s "$target" "$tmpdir/$name"
+              fi
+            elif [[ -d "$item" ]]; then
+              ln -s "${prefix}$item" "$tmpdir/$name"
+            fi
+          done
+          
+          # Create a new generation pointing to our modified environment
+          gen_num=$(ls /nix/var/nix/profiles/per-user/nix-on-droid/ | grep -E '^profile-[0-9]+-link$' | sed 's/profile-//' | sed 's/-link//' | sort -n | tail -1)
+          new_gen=$((gen_num + 1))
+          
+          # Move the temp dir to a fixed location and update profile
+          fixed_env="${config.user.home}/.local/share/nix-on-droid/user-environment"
+          mkdir -p "$(dirname "$fixed_env")"
+          rm -rf "$fixed_env"
+          mv "$tmpdir" "$fixed_env"
+          
+          # Update the profile to point to our fixed environment
+          rm -f "/nix/var/nix/profiles/per-user/nix-on-droid/profile"
+          ln -s "$fixed_env" "/nix/var/nix/profiles/per-user/nix-on-droid/profile"
+        fi
+      ''}
     '';
 
     environment = {
