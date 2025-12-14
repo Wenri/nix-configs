@@ -6,6 +6,10 @@ with lib;
 
 let
   cfg = config.environment;
+  
+  storePrefix = if config.build.absoluteStorePrefix != null
+    then config.build.absoluteStorePrefix
+    else "";
 in
 
 {
@@ -83,6 +87,18 @@ in
         meta = {
           description = "Environment of packages installed through Nix-on-Droid.";
         };
+        
+        # Rewrite symlinks to use absolute store prefix
+        postBuild = optionalString (storePrefix != "") ''
+          # Find and rewrite all symlinks pointing to /nix/store
+          find $out -type l | while read -r link; do
+            target=$(readlink "$link")
+            if [[ "$target" == /nix/store/* ]]; then
+              rm "$link"
+              ln -s "${storePrefix}$target" "$link"
+            fi
+          done
+        '';
       };
     };
 
