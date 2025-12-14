@@ -22,6 +22,13 @@ writeScript "login" ''
   export USER="${config.user.userName}"
   export HOME="${config.user.home}"
 
+  # Debug hook: source user script if it exists (for debugging/overrides)
+  # Create ~/.config/nix-on-droid/login-debug.sh to customize login behavior
+  DEBUG_SCRIPT="${config.user.home}/.config/nix-on-droid/login-debug.sh"
+  if [ -f "$DEBUG_SCRIPT" ]; then
+    . "$DEBUG_SCRIPT"
+  fi
+
   # Install pending login-inner if not in use
   if test -e ${installationDir}/usr/lib/.login-inner.new; then
     echo "Installing new login-inner..."
