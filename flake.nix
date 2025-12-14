@@ -24,9 +24,9 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # Nix-on-Droid for Android
+    # Nix-on-Droid for Android - using local fork with absolute symlink support
     nix-on-droid = {
-      url = "github:nix-community/nix-on-droid";
+      url = "path:./nix-on-droid-src";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.home-manager.follows = "home-manager";
     };
@@ -202,7 +202,6 @@
           outputs.overlays.modifications
           outputs.overlays.unstable-packages
           outputs.overlays.master-packages
-          outputs.overlays.absolute-symlinks
         ];
       };
       
