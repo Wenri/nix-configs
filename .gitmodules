@@ -1,3 +1,6 @@
 [submodule "secrets"]
 	path = secrets
 	url = https://gitlab.com/gt404/nix-secrets.git
+[submodule "fakechroot-src"]
+	path = fakechroot-src
+	url = https://github.com/Wenri/fakechroot.git
