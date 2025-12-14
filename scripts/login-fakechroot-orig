@@ -25,15 +25,23 @@ export HOME="/data/data/com.termux.nix/files/home"
 
 # Nix store paths (update these when nix-on-droid generation changes)
 # ANDROID_GLIBC: Our patched glibc with Termux patches (avoids blocked syscalls)
-ANDROID_GLIBC_STORE="lb0hd462xiicipri33q3idk43nzz0983-glibc-android-2.40-66"
+ANDROID_GLIBC_STORE="4c9dx2bn6wyjq5kz4x0smbfkvdr0c2qh-glibc-android-2.40-66"
 # STANDARD_GLIBC: The glibc from nixpkgs binary cache (uses blocked syscalls)
 STANDARD_GLIBC_STORE="89n0gcl1yjp37ycca45rn50h7lms5p6f-glibc-2.40-66"
 # Other packages
 BASH_STORE="9ifraby9hyh9mycwm3krfhi7q88hh6d5-bash-interactive-5.3p3"
 FAKECHROOT_STORE="519zc2mj7d6m50z81ywwcp98hh1lpmrm-fakechroot-unstable-2021-02-26"
+# Bash dependencies (from bash's RUNPATH)
+READLINE_STORE="hkcskrw9477b457nisc0np6jdyiblp45-readline-8.3p1"
+NCURSES_STORE="mk63jqhphcmx73sb4bd17aqf9kmk7hh5-ncurses-6.5"
 
 # Full paths
 LD_LINUX="$STORE/$ANDROID_GLIBC_STORE/lib/ld-linux-aarch64.so.1"
+ANDROID_GLIBC_LIB="$STORE/$ANDROID_GLIBC_STORE/lib"
+READLINE_LIB="$STORE/$READLINE_STORE/lib"
+NCURSES_LIB="$STORE/$NCURSES_STORE/lib"
+# Combined library path for ld.so (Android glibc + bash dependencies)
+LIBRARY_PATH="$ANDROID_GLIBC_LIB:$READLINE_LIB:$NCURSES_LIB"
 BASH_BIN="$STORE/$BASH_STORE/bin/bash"
 FAKECHROOT_LIB="$STORE/$FAKECHROOT_STORE/lib/fakechroot/libfakechroot.so"
 AUDIT_LIB="$SCRIPT_DIR/pack-audit.so"
@@ -84,16 +92,16 @@ export STANDARD_GLIBC="$STANDARD_GLIBC_STORE"
 export ANDROID_GLIBC="$ANDROID_GLIBC_STORE"
 
 # Debug mode: set PACK_AUDIT_DEBUG=1 to see path redirections
-# export PACK_AUDIT_DEBUG=1
+export PACK_AUDIT_DEBUG=1
 
 # Execute using Android glibc's ld.so
 # --argv0: Set argv[0] to bash instead of ld-linux.so
-# --inhibit-cache: Don't use cached library locations
+# --library-path: Set library search path (glibc + bash deps: readline, ncurses)
 # --audit: Load pack-audit.so for /nix/store path rewriting
 # --preload: Preload libfakechroot.so for syscall interception
 exec "$LD_LINUX" \
     --argv0 "$BASH_BIN" \
-    --inhibit-cache \
+    --library-path "$LIBRARY_PATH" \
     --audit "$AUDIT_LIB" \
     --preload "$FAKECHROOT_LIB" \
     "$BASH_BIN" "$LOGIN_INNER" "$@"
