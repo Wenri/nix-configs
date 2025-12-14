@@ -17,6 +17,7 @@
     outputs.nixOnDroidModules.sshd
     outputs.nixOnDroidModules.locale
     outputs.nixOnDroidModules.shizuku
+    outputs.nixOnDroidModules.absolute-symlinks
   ];
 
   # Enable Android/Termux integration tools
