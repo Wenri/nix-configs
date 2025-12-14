@@ -1,6 +1,3 @@
 [submodule "secrets"]
 	path = secrets
 	url = https://gitlab.com/gt404/nix-secrets.git
-[submodule "nix-on-droid-src"]
-	path = nix-on-droid-src
-	url = https://github.com/nix-community/nix-on-droid.git
