@@ -9,8 +9,8 @@ in {
   src = final.fetchFromGitHub {
     owner = "Wenri";
     repo = "fakechroot";
-    rev = "cfc132d2dbec1b5a87bd9a4b426e3ac62f06c14a";
-    hash = "sha256-qgXqmKGD2vxhGgKPaIBDsyEhYNWy4vFUbwh36tOuQKk=";
+    rev = "cfc132d8c9b6a2cd34a00292be5ce8c5d5fb25e4";
+    hash = "sha256-ILcm0ZGkS46uIBr+aoAv3a5y9AGN9Y9/2HU7CsTL/gU=";
   };
 
   # No additional patches needed - our changes are in the fork
