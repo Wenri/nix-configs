@@ -10,6 +10,10 @@
       {
         inherit drv;
         nativeBuildInputs = [final.rsync];
+        # Preserve passthru attributes like interpreter, meta, etc.
+        passthru = drv.passthru or {};
+        # Preserve all standard derivation outputs
+        outputs = drv.outputs or ["out"];
       } ''
       # Copy the entire derivation output
       rsync -a "$drv/" "$out/"
@@ -30,8 +34,8 @@ in {
     makeAbsoluteSymlinks = makeAbsoluteSymlinks;
   };
   
-  # Example: Override buildEnv to use absolute paths
-  # This affects nix-env, nix-build --out-link, etc.
-  buildEnv = args:
-    makeAbsoluteSymlinks (prev.buildEnv args);
+  # Note: Disabled buildEnv override as it breaks python.withPackages and similar
+  # Use makeAbsoluteSymlinks manually on specific packages if needed
+  # buildEnv = args:
+  #   makeAbsoluteSymlinks (prev.buildEnv args);
 }
