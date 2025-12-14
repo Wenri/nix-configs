@@ -256,6 +256,7 @@
         echo "=== Patching complete ==="
       '';
       # Build Android-patched fakechroot
+      # Use absolute path with prefix for RPATH so it works outside proot
       androidFakechroot = let
         fakechroot = basePkgs.fakechroot.overrideAttrs (oldAttrs: {
           version = "unstable-2024-12-14";
@@ -267,35 +268,40 @@
           };
           patches = [];
         });
+        installationDir = "/data/data/com.termux.nix/files/usr";
+        androidGlibcAbs = "${installationDir}${androidGlibc}/lib";
       in basePkgs.runCommand "fakechroot-android" {
         nativeBuildInputs = [ basePkgs.patchelf ];
       } ''
         cp -rL ${fakechroot} $out
         chmod -R u+w $out
         for lib in $out/lib/fakechroot/libfakechroot.so; do
-          [ -f "$lib" ] && patchelf --set-rpath "${androidGlibc}/lib" "$lib" || true
+          [ -f "$lib" ] && patchelf --set-rpath "${androidGlibcAbs}" "$lib" || true
         done
         for bin in $out/bin/fakechroot $out/bin/ldd.fakechroot; do
           if [ -f "$bin" ] && patchelf --print-interpreter "$bin" 2>/dev/null | grep -q ld-linux; then
-            patchelf --set-interpreter "${androidGlibc}/lib/ld-linux-aarch64.so.1" --set-rpath "${androidGlibc}/lib" "$bin" 2>/dev/null || true
+            patchelf --set-interpreter "${androidGlibcAbs}/ld-linux-aarch64.so.1" --set-rpath "${androidGlibcAbs}" "$bin" 2>/dev/null || true
           fi
         done
       '';
 
       # Build pack-audit.so library
+      # Use absolute path with prefix for RPATH so it works outside proot
+      installationDir = "/data/data/com.termux.nix/files/usr";
       packAuditLib = basePkgs.runCommand "pack-audit" {
         nativeBuildInputs = [ basePkgs.gcc basePkgs.patchelf ];
         src = ./scripts/pack-audit.c;
       } ''
         mkdir -p $out/lib
+        # Use absolute path with prefix for runtime outside proot
+        ANDROID_GLIBC_ABS="${installationDir}${androidGlibc}/lib"
         gcc -shared -fPIC -O2 -Wall \
-          -Wl,--dynamic-linker="${androidGlibc}/lib/ld-linux-aarch64.so.1" \
-          -Wl,-rpath,"${androidGlibc}/lib" \
+          -Wl,-rpath,"$ANDROID_GLIBC_ABS" \
           -o $out/lib/pack-audit.so \
           $src \
           -L"${androidGlibc}/lib" \
           -ldl
-        patchelf --set-rpath "${androidGlibc}/lib" $out/lib/pack-audit.so
+        patchelf --set-rpath "$ANDROID_GLIBC_ABS" $out/lib/pack-audit.so
       '';
     in
       nix-on-droid.lib.nixOnDroidConfiguration {
