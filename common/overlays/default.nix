@@ -31,4 +31,7 @@
       config.allowUnfree = true;
     };
   };
+
+  # Make store paths work outside proot by using absolute symlinks
+  absolute-symlinks = import ./absolute-symlinks.nix {inherit inputs;};
 }
