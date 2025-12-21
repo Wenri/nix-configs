@@ -62,14 +62,10 @@ writeScript "login" ''
   export FAKECHROOT_ELFLOADER_OPT_AUDIT="$AUDIT_LIB"
   export FAKECHROOT_ELFLOADER_OPT_PRELOAD="$FAKECHROOT_LIB"
 
-  # Paths to exclude from fakechroot translation
-  FAKECHROOT_EXCLUDE_PATH="/3rdmodem:/acct:/apex:/android:/bugreports:/cache:/config"
-  FAKECHROOT_EXCLUDE_PATH="$FAKECHROOT_EXCLUDE_PATH:/d:/data:/data_mirror:/debug_ramdisk:/dev"
-  FAKECHROOT_EXCLUDE_PATH="$FAKECHROOT_EXCLUDE_PATH:/linkerconfig:/log:/metadata:/mnt"
-  FAKECHROOT_EXCLUDE_PATH="$FAKECHROOT_EXCLUDE_PATH:/odm:/odm_dlkm:/oem:/proc:/product"
-  FAKECHROOT_EXCLUDE_PATH="$FAKECHROOT_EXCLUDE_PATH:/sdcard:/storage:/sys:/system:/system_ext"
-  FAKECHROOT_EXCLUDE_PATH="$FAKECHROOT_EXCLUDE_PATH:/vendor:/vendor_dlkm"
-  export FAKECHROOT_EXCLUDE_PATH
+  # Paths to include in fakechroot translation (all others are passed through)
+  # Only include paths that exist in ${installationDir} (the fakechroot base)
+  # /home is outside fakechroot base, so $HOME is used directly without translation
+  export FAKECHROOT_INCLUDE_PATH="/nix:/etc:/usr:/bin:/tmp:/root:/dev"
 
   # glibc redirection config for pack-audit.so
   export STANDARD_GLIBC="${baseNameOf standardGlibc}"

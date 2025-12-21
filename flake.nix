@@ -258,14 +258,10 @@
       # Build Android-patched fakechroot
       # Use absolute path with prefix for RPATH so it works outside proot
       androidFakechroot = let
+        # Use local fakechroot-src submodule for development
         fakechroot = basePkgs.fakechroot.overrideAttrs (oldAttrs: {
-          version = "unstable-2024-12-14";
-          src = basePkgs.fetchFromGitHub {
-            owner = "Wenri";
-            repo = "fakechroot";
-            rev = "cfc132d8c9b6a2cd34a00292be5ce8c5d5fb25e4";
-            hash = "sha256-ILcm0ZGkS46uIBr+aoAv3a5y9AGN9Y9/2HU7CsTL/gU=";
-          };
+          version = "unstable-local";
+          src = ./fakechroot-src;
           patches = [];
         });
         installationDir = "/data/data/com.termux.nix/files/usr";

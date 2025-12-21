@@ -20,6 +20,10 @@ in {
   # Home Manager release compatibility
   home.stateVersion = "24.05";
 
+  # Disable manpage generation - Python multiprocessing fails on Android
+  # due to seccomp blocking sem_open syscall
+  manual.manpages.enable = false;
+
   # Declarative SSH authorized_keys and termux-boot
   home.file = lib.mkMerge [
     {
