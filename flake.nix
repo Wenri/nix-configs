@@ -186,12 +186,16 @@
       username,
       ...
     }: let
+      # Installation directory for nix-on-droid (outside proot)
+      installationDir = "/data/data/com.termux.nix/files/usr";
+
       # Build Android-patched glibc using the Termux patches from overlays
       # Uses glibc 2.40 (from nixpkgs) with Termux's Android-specific patches
+      # Configured with Android prefix so paths are baked in correctly
       androidGlibc = let
         glibcOverlay = import ./common/overlays/glibc.nix basePkgs basePkgs;
       in glibcOverlay.glibc;
-      
+
       # Create base pkgs without glibc overlay (uses binary cache)
       basePkgs = import nixpkgs {
         inherit system;
@@ -207,16 +211,18 @@
       
       standardGlibc = basePkgs.stdenv.cc.libc;
       
-      # Function to patch a single package to use Android glibc
-      # Uses patchelf to rewrite interpreter and RPATH at build time
-      patchPackageForAndroidGlibc = pkg: basePkgs.runCommand "${pkg.pname or pkg.name or "package"}-android-glibc" ({
+      # Function to patch a package for Android/nix-on-droid:
+      # 1. Replace standard glibc with Android glibc in interpreter and RPATH
+      # 2. Prefix ALL /nix/store paths with Android installation directory
+      #    (needed because ld.so filters RUNPATH entries that don't exist,
+      #    and /nix/store doesn't exist on Android)
+      patchPackageForAndroidGlibc = pkg: basePkgs.runCommand "${pkg.pname or pkg.name or "package"}-android" ({
         nativeBuildInputs = [ basePkgs.patchelf basePkgs.file ];
         passthru = pkg.passthru or {};
       } // (if pkg ? meta.priority then {meta.priority = pkg.meta.priority;} else {})) ''
-        echo "=== Patching package for Android glibc ==="
+        echo "=== Patching package for Android ==="
         echo "Package: ${pkg.pname or pkg.name or "unknown"}"
-        echo "Standard glibc: ${standardGlibc}"
-        echo "Android glibc: ${androidGlibc}"
+        echo "Android prefix: ${installationDir}"
         
         # Copy the entire package
         cp -rL ${pkg} $out
@@ -231,18 +237,26 @@
           
           PATCHED=0
           
-          # Patch interpreter if it references standard glibc
+          # Patch interpreter to use Android-prefixed path
           INTERP=$(patchelf --print-interpreter "$file" 2>/dev/null || echo "")
-          if [ -n "$INTERP" ] && echo "$INTERP" | grep -q "${standardGlibc}"; then
+          if [ -n "$INTERP" ] && echo "$INTERP" | grep -q "^/nix/store"; then
+            # Use Android glibc's ld.so with full Android prefix
+            NEW_INTERP="${installationDir}${androidGlibc}/lib/ld-linux-aarch64.so.1"
             echo "Patching interpreter: $file"
-            patchelf --set-interpreter "${androidGlibc}/lib/ld-linux-aarch64.so.1" "$file" 2>/dev/null || true
+            echo "  Old: $INTERP"
+            echo "  New: $NEW_INTERP"
+            patchelf --set-interpreter "$NEW_INTERP" "$file" 2>/dev/null || true
             PATCHED=1
           fi
           
-          # Patch RPATH if it references standard glibc
+          # Patch RPATH: prefix all /nix/store paths with Android installation directory
+          # Also redirect standard glibc to Android glibc
           RPATH=$(patchelf --print-rpath "$file" 2>/dev/null || echo "")
-          if [ -n "$RPATH" ] && echo "$RPATH" | grep -q "${standardGlibc}"; then
-            NEW_RPATH=$(echo "$RPATH" | sed "s|${standardGlibc}/lib|${androidGlibc}/lib|g")
+          if [ -n "$RPATH" ] && echo "$RPATH" | grep -q "/nix/store"; then
+            # First, redirect standard glibc to Android glibc
+            NEW_RPATH=$(echo "$RPATH" | sed "s|${standardGlibc}|${androidGlibc}|g")
+            # Then, prefix all /nix/store paths with Android installation directory
+            NEW_RPATH=$(echo "$NEW_RPATH" | sed "s|/nix/store|${installationDir}/nix/store|g")
             echo "Patching RPATH: $file"
             echo "  Old: $RPATH"
             echo "  New: $NEW_RPATH"
@@ -281,9 +295,8 @@
         done
       '';
 
-      # Build pack-audit.so library
-      # Use absolute path with prefix for RPATH so it works outside proot
-      installationDir = "/data/data/com.termux.nix/files/usr";
+      # Build pack-audit.so library with hardcoded paths
+      # All configuration is baked in at compile time - no env vars needed at runtime
       packAuditLib = basePkgs.runCommand "pack-audit" {
         nativeBuildInputs = [ basePkgs.gcc basePkgs.patchelf ];
         src = ./scripts/pack-audit.c;
@@ -291,14 +304,25 @@
         mkdir -p $out/lib
         # Use absolute path with prefix for runtime outside proot
         ANDROID_GLIBC_ABS="${installationDir}${androidGlibc}/lib"
+        
+        # Compile with hardcoded paths - no environment variables needed at runtime
         gcc -shared -fPIC -O2 -Wall \
+          -DFAKECHROOT_BASE='"${installationDir}"' \
+          -DSTANDARD_GLIBC_HASH='"${baseNameOf standardGlibc}"' \
+          -DANDROID_GLIBC_HASH='"${baseNameOf androidGlibc}"' \
           -Wl,-rpath,"$ANDROID_GLIBC_ABS" \
           -o $out/lib/pack-audit.so \
           $src \
           -L"${androidGlibc}/lib" \
           -ldl
         patchelf --set-rpath "$ANDROID_GLIBC_ABS" $out/lib/pack-audit.so
+        
+        echo "pack-audit.so built with hardcoded paths:"
+        echo "  FAKECHROOT_BASE=${installationDir}"
+        echo "  STANDARD_GLIBC_HASH=${baseNameOf standardGlibc}"
+        echo "  ANDROID_GLIBC_HASH=${baseNameOf androidGlibc}"
       '';
+
     in
       nix-on-droid.lib.nixOnDroidConfiguration {
         modules = [
@@ -312,7 +336,7 @@
             build.standardGlibc = standardGlibc;
             build.androidFakechroot = androidFakechroot;
             build.packAuditLib = "${packAuditLib}/lib/pack-audit.so";
-            build.bashInteractive = basePkgs.bashInteractive;
+            build.bashInteractive = patchPackageForAndroidGlibc basePkgs.bashInteractive;
           }
         ];
 

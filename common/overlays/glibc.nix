@@ -183,6 +183,13 @@ in {
         "--disable-werror"
       ];
       
+      # Add Android prefix to trusted directories so ld.so searches there
+      makeFlags = (oldAttrs.makeFlags or []) ++ [
+        "user-defined-trusted-dirs=${nixOnDroidPrefix}/nix/store"
+        # Set slibdir to Android path so library paths are baked correctly
+        "slibdir=${nixOnDroidPrefix}${builtins.placeholder "out"}/lib"
+      ];
+      
       # Disable separateDebugInfo to avoid output cycles
       separateDebugInfo = false;
     })

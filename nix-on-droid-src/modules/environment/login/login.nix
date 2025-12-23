@@ -10,7 +10,6 @@ let
   androidGlibc = config.build.androidGlibc or null;
   androidFakechroot = config.build.androidFakechroot or null;
   packAuditLib = config.build.packAuditLib or null;
-  standardGlibc = config.build.standardGlibc or null;
   bashInteractive = config.build.bashInteractive or null;
 in
 
@@ -52,29 +51,24 @@ writeScript "login" ''
     fi
   done
 
-  # Set up fakechroot environment
-  export FAKECHROOT="true"
-  export FAKECHROOT_BASE="${installationDir}"
-
-  # ELF loader configuration - passed to ld.so for child processes
-  export FAKECHROOT_ELFLOADER="$LD_LINUX"
-  export FAKECHROOT_ELFLOADER_OPT_ARGV0="--argv0"
-  export FAKECHROOT_ELFLOADER_OPT_AUDIT="$AUDIT_LIB"
-  export FAKECHROOT_ELFLOADER_OPT_PRELOAD="$FAKECHROOT_LIB"
-
-  # Paths to include in fakechroot translation (all others are passed through)
-  # Only include paths that exist in ${installationDir} (the fakechroot base)
-  # /home is outside fakechroot base, so $HOME is used directly without translation
-  export FAKECHROOT_INCLUDE_PATH="/nix:/etc:/usr:/bin:/tmp:/root:/dev"
-
-  # glibc redirection config for pack-audit.so
-  export STANDARD_GLIBC="${baseNameOf standardGlibc}"
-  export ANDROID_GLIBC="${baseNameOf androidGlibc}"
-
   # Execute using Android glibc's ld.so
-  exec "$LD_LINUX" \
-    --argv0 "$BASH_BIN" \
-    --audit "$AUDIT_LIB" \
-    --preload "$FAKECHROOT_LIB" \
-    "$BASH_BIN" "$LOGIN_INNER" "$@"
+  # NOTE: We use /system/bin/env to explicitly pass environment variables because
+  # Android's /system/bin/sh doesn't properly pass exported variables to exec'd processes.
+  # pack-audit.so has all paths hardcoded at compile time, so we only need to pass
+  # environment variables that fakechroot needs for child process handling.
+  exec /system/bin/env \
+    USER="$USER" \
+    HOME="$HOME" \
+    FAKECHROOT="true" \
+    FAKECHROOT_BASE="${installationDir}" \
+    FAKECHROOT_ELFLOADER="$LD_LINUX" \
+    FAKECHROOT_ELFLOADER_OPT_ARGV0="--argv0" \
+    FAKECHROOT_ELFLOADER_OPT_AUDIT="$AUDIT_LIB" \
+    FAKECHROOT_ELFLOADER_OPT_PRELOAD="$FAKECHROOT_LIB" \
+    FAKECHROOT_INCLUDE_PATH="/nix:/etc:/usr:/bin:/tmp:/root:/dev" \
+    "$LD_LINUX" \
+      --argv0 "$BASH_BIN" \
+      --audit "$AUDIT_LIB" \
+      --preload "$FAKECHROOT_LIB" \
+      "$BASH_BIN" "$LOGIN_INNER" "$@"
 ''

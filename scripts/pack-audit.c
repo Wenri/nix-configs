@@ -10,7 +10,7 @@
 
    ELF binaries have hardcoded /nix/store paths in their RPATH/RUNPATH.
    This audit module intercepts library lookups and redirects them to
-   the real location specified by FAKECHROOT_BASE.
+   the real Android location.
 
    Additionally, this module redirects standard glibc libraries to the
    Android-patched glibc. This is essential because:
@@ -19,17 +19,20 @@
    3. Binary-cached packages reference standard glibc in RUNPATH
    4. We redirect those references to Android glibc at load time
 
-   Environment variables:
+   Compile-time configuration (passed via -D flags):
    - FAKECHROOT_BASE: Prefix for /nix/store -> real path translation
-   - STANDARD_GLIBC: Hash of standard nixpkgs glibc (e.g., "89n0gcl1yjp37ycca45rn50h7lms5p6f-glibc-2.40-66")
-   - ANDROID_GLIBC: Hash of Android-patched glibc (e.g., "lb0hd462xiicipri33q3idk43nzz0983-glibc-android-2.40-66")
+   - STANDARD_GLIBC_HASH: Hash of standard nixpkgs glibc
+   - ANDROID_GLIBC_HASH: Hash of Android-patched glibc
+
+   Runtime configuration (optional):
    - PACK_AUDIT_DEBUG: Set to "1" for debug output
 
-   Usage:
-   FAKECHROOT_BASE=/data/data/com.termux.nix/files/usr \
-   STANDARD_GLIBC=89n0gcl1yjp37ycca45rn50h7lms5p6f-glibc-2.40-66 \
-   ANDROID_GLIBC=lb0hd462xiicipri33q3idk43nzz0983-glibc-android-2.40-66 \
-   ld.so --audit /path/to/pack-audit.so --preload libfakechroot.so /path/to/program
+   Build example:
+   gcc -shared -fPIC -O2 \
+     -DFAKECHROOT_BASE='"/data/data/com.termux.nix/files/usr"' \
+     -DSTANDARD_GLIBC_HASH='"89n0gcl1yjp37ycca45rn50h7lms5p6f-glibc-2.40-66"' \
+     -DANDROID_GLIBC_HASH='"xxx-glibc-android-2.40-66"' \
+     -o pack-audit.so pack-audit.c -ldl
 */
 
 #define _GNU_SOURCE 1
@@ -39,25 +42,30 @@
 #include <string.h>
 #include <stdio.h>
 
-/* The pseudo root directory and store that we are relocating to.  */
-static const char *root_directory;
-static char *store;
-static size_t store_len;
+/* Compile-time configuration - these MUST be defined via -D flags */
+#ifndef FAKECHROOT_BASE
+#error "FAKECHROOT_BASE must be defined at compile time"
+#endif
 
-/* The original store, "/nix/store" by default.  */
+#ifndef STANDARD_GLIBC_HASH
+#error "STANDARD_GLIBC_HASH must be defined at compile time"
+#endif
+
+#ifndef ANDROID_GLIBC_HASH
+#error "ANDROID_GLIBC_HASH must be defined at compile time"
+#endif
+
+/* The original store path */
 static const char original_store[] = "/nix/store";
 
-/* Standard glibc path to replace (set via STANDARD_GLIBC env var) */
-static const char *standard_glibc = NULL;
-static size_t standard_glibc_len = 0;
+/* Hardcoded configuration from compile-time defines */
+static const char root_directory[] = FAKECHROOT_BASE;
+static const char store[] = FAKECHROOT_BASE "/nix/store";
+static const size_t store_len = sizeof(FAKECHROOT_BASE "/nix/store") - 1;
 
-/* Android glibc path to use instead (set via ANDROID_GLIBC env var) */
-static const char *android_glibc = NULL;
-static size_t android_glibc_len = 0;
-
-/* Full paths for glibc redirection (after applying store prefix) */
-static char *standard_glibc_path = NULL;
-static char *android_glibc_path = NULL;
+/* Full paths for glibc redirection */
+static const char standard_glibc_path[] = FAKECHROOT_BASE "/nix/store/" STANDARD_GLIBC_HASH;
+static const char android_glibc_path[] = FAKECHROOT_BASE "/nix/store/" ANDROID_GLIBC_HASH;
 
 /* Enable debug output via PACK_AUDIT_DEBUG=1 */
 static int debug_enabled = 0;
@@ -82,50 +90,14 @@ la_version (unsigned int v)
   debug_enabled = (debug_env != NULL && debug_env[0] == '1');
 
   if (debug_enabled)
-    fprintf (stderr, "pack-audit: la_version called with v=%u (LAV_CURRENT=%u)\n",
-             v, LAV_CURRENT);
-
-  root_directory = getenv ("FAKECHROOT_BASE");
-  if (root_directory == NULL)
     {
-      fprintf (stderr, "pack-audit: error: FAKECHROOT_BASE is not set\n");
-      /* Return version anyway to allow loading, but path translation won't work */
-      return v;
-    }
-
-  store = xmalloc (strlen (root_directory) + sizeof original_store);
-  strcpy (store, root_directory);
-  strcat (store, original_store);
-  store_len = strlen (store);
-
-  if (debug_enabled)
-    fprintf (stderr, "pack-audit: redirecting %s -> %s\n", original_store, store);
-
-  /* Set up glibc redirection */
-  standard_glibc = getenv ("STANDARD_GLIBC");
-  android_glibc = getenv ("ANDROID_GLIBC");
-
-  if (standard_glibc != NULL && android_glibc != NULL)
-    {
-      standard_glibc_len = strlen (standard_glibc);
-      android_glibc_len = strlen (android_glibc);
-
-      /* Build full paths: $store/$hash/lib */
-      /* Standard glibc: /data/data/.../nix/store/xxx-glibc-2.40-66 */
-      standard_glibc_path = xmalloc (store_len + 1 + standard_glibc_len + 1);
-      sprintf (standard_glibc_path, "%s/%s", store, standard_glibc);
-
-      /* Android glibc: /data/data/.../nix/store/yyy-glibc-android-2.40-66 */
-      android_glibc_path = xmalloc (store_len + 1 + android_glibc_len + 1);
-      sprintf (android_glibc_path, "%s/%s", store, android_glibc);
-
-      if (debug_enabled)
-        fprintf (stderr, "pack-audit: glibc redirect: %s -> %s\n",
-                 standard_glibc_path, android_glibc_path);
-    }
-  else if (debug_enabled)
-    {
-      fprintf (stderr, "pack-audit: glibc redirection disabled (STANDARD_GLIBC or ANDROID_GLIBC not set)\n");
+      fprintf (stderr, "pack-audit: la_version called with v=%u (LAV_CURRENT=%u)\n",
+               v, LAV_CURRENT);
+      fprintf (stderr, "pack-audit: compiled with hardcoded paths:\n");
+      fprintf (stderr, "pack-audit:   FAKECHROOT_BASE=%s\n", root_directory);
+      fprintf (stderr, "pack-audit:   store=%s\n", store);
+      fprintf (stderr, "pack-audit:   standard_glibc=%s\n", standard_glibc_path);
+      fprintf (stderr, "pack-audit:   android_glibc=%s\n", android_glibc_path);
     }
 
   return v;
@@ -138,15 +110,12 @@ la_objsearch (const char *name, uintptr_t *cookie, unsigned int flag)
 {
   char *result;
   char *temp;
-  size_t std_path_len;
+  static const size_t std_path_len = sizeof(standard_glibc_path) - 1;
+  static const size_t android_path_len = sizeof(android_glibc_path) - 1;
 
   /* Required by rtld-audit interface but unused */
   (void) cookie;
   (void) flag;
-
-  /* If FAKECHROOT_BASE wasn't set, pass through unchanged */
-  if (store == NULL)
-    return strdup (name);
 
   if (strncmp (name, original_store, sizeof original_store - 1) == 0)
     {
@@ -167,27 +136,55 @@ la_objsearch (const char *name, uintptr_t *cookie, unsigned int flag)
     }
 
   /* Now check if we need to redirect standard glibc to Android glibc */
-  if (result != NULL && standard_glibc_path != NULL && android_glibc_path != NULL)
+  if (result != NULL && strncmp (result, standard_glibc_path, std_path_len) == 0)
     {
-      std_path_len = strlen (standard_glibc_path);
-      if (strncmp (result, standard_glibc_path, std_path_len) == 0)
-        {
-          /* Path starts with standard glibc path, redirect to Android glibc */
-          const char *suffix = result + std_path_len;  /* e.g., "/lib/libc.so.6" */
-          size_t suffix_len = strlen (suffix);
-          size_t android_path_len = strlen (android_glibc_path);
+      /* Path starts with standard glibc path, redirect to Android glibc */
+      const char *suffix = result + std_path_len;  /* e.g., "/lib/libc.so.6" */
+      size_t suffix_len = strlen (suffix);
 
-          temp = xmalloc (android_path_len + suffix_len + 1);
-          memcpy (temp, android_glibc_path, android_path_len);
-          memcpy (temp + android_path_len, suffix, suffix_len + 1);
+      temp = xmalloc (android_path_len + suffix_len + 1);
+      memcpy (temp, android_glibc_path, android_path_len);
+      memcpy (temp + android_path_len, suffix, suffix_len + 1);
 
-          if (debug_enabled)
-            fprintf (stderr, "pack-audit: glibc redirect: %s -> %s\n", result, temp);
+      if (debug_enabled)
+        fprintf (stderr, "pack-audit: glibc redirect: %s -> %s\n", result, temp);
 
-          free (result);
-          result = temp;
-        }
+      free (result);
+      result = temp;
     }
 
   return result;
+}
+
+/* Stub implementations for other audit interface functions.
+   These are optional but some ld.so versions complain if they're missing.
+   We implement them as no-ops to avoid error messages. */
+
+void
+la_activity (uintptr_t *cookie, unsigned int flag)
+{
+  (void) cookie;
+  (void) flag;
+}
+
+unsigned int
+la_objopen (struct link_map *map, Lmid_t lmid, uintptr_t *cookie)
+{
+  (void) map;
+  (void) lmid;
+  (void) cookie;
+  return 0;  /* Return 0 = don't audit PLT for this object */
+}
+
+void
+la_preinit (uintptr_t *cookie)
+{
+  (void) cookie;
+}
+
+unsigned int
+la_objclose (uintptr_t *cookie)
+{
+  (void) cookie;
+  return 0;
 }
