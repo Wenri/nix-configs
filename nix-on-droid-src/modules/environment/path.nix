@@ -6,10 +6,20 @@ with lib;
 
 let
   cfg = config.environment;
+  buildCfg = config.build;
   
-  storePrefix = if config.build.absoluteStorePrefix != null
-    then config.build.absoluteStorePrefix
+  storePrefix = if buildCfg.absoluteStorePrefix != null
+    then buildCfg.absoluteStorePrefix
     else "";
+  
+  # Patch all packages for Android glibc if patchPackageForAndroidGlibc is set
+  patchPkg = pkg:
+    if buildCfg.patchPackageForAndroidGlibc != null
+    then buildCfg.patchPackageForAndroidGlibc pkg
+    else pkg;
+  
+  # Apply patching to all packages
+  patchedPackages = map patchPkg cfg.packages;
 in
 
 {
@@ -221,7 +231,8 @@ in
       path = pkgs.buildEnv {
         name = "nix-on-droid-path";
 
-        paths = cfg.packages;
+        # Use patched packages when patchPackageForAndroidGlibc is configured
+        paths = patchedPackages;
 
         inherit (cfg) extraOutputsToInstall;
 

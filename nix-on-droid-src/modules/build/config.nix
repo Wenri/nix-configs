@@ -65,6 +65,17 @@ with lib;
         default = null;
         description = "Bash interactive package for login shell.";
       };
+
+      patchPackageForAndroidGlibc = mkOption {
+        type = types.nullOr (types.functionTo types.package);
+        default = null;
+        description = ''
+          Function to patch a package for Android glibc compatibility.
+          Takes a package and returns a patched package with rewritten
+          interpreter and RPATH to use the Android glibc prefix.
+          When set, all environment.packages will be automatically patched.
+        '';
+      };
     };
 
   };

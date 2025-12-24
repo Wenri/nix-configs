@@ -216,6 +216,7 @@
       # 2. Prefix ALL /nix/store paths with Android installation directory
       #    (needed because ld.so filters RUNPATH entries that don't exist,
       #    and /nix/store doesn't exist on Android)
+      # 3. Preserve symlink structure (important for packages like cursor-cli)
       patchPackageForAndroidGlibc = pkg: basePkgs.runCommand "${pkg.pname or pkg.name or "package"}-android" ({
         nativeBuildInputs = [ basePkgs.patchelf basePkgs.file ];
         passthru = pkg.passthru or {};
@@ -224,9 +225,23 @@
         echo "Package: ${pkg.pname or pkg.name or "unknown"}"
         echo "Android prefix: ${installationDir}"
         
-        # Copy the entire package
-        cp -rL ${pkg} $out
+        # Copy the entire package, preserving symlinks (no -L flag!)
+        # This is important for packages like cursor-cli where bin/cmd -> ../share/app/cmd
+        cp -r ${pkg} $out
         chmod -R u+w $out
+        
+        # Rewrite symlinks that point to /nix/store to use the Android prefix
+        find $out -type l | while read -r link; do
+          target=$(readlink "$link")
+          if echo "$target" | grep -q "^/nix/store"; then
+            new_target="${installationDir}$target"
+            echo "Rewriting symlink: $link"
+            echo "  Old: $target"
+            echo "  New: $new_target"
+            rm "$link"
+            ln -s "$new_target" "$link"
+          fi
+        done
         
         # Find and patch all ELF files
         find $out -type f | while read -r file; do
@@ -337,6 +352,10 @@
             build.androidFakechroot = androidFakechroot;
             build.packAuditLib = "${packAuditLib}/lib/pack-audit.so";
             build.bashInteractive = patchPackageForAndroidGlibc basePkgs.bashInteractive;
+            
+            # Patch all environment.packages for Android glibc
+            # This patches interpreter and RPATH to use the Android glibc prefix
+            build.patchPackageForAndroidGlibc = patchPackageForAndroidGlibc;
           }
         ];
 

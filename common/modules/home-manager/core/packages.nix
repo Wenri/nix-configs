@@ -1,7 +1,6 @@
 {
   pkgs,
   lib,
-  patchPackageForAndroidGlibc ? null,
   ...
 }: {
   home.packages = with pkgs; [

@@ -124,9 +124,10 @@ in
           prefix="${config.build.absoluteStorePrefix}"
           
           # Rewrite symlinks in home directory (top level only)
+          # This includes both /nix/store/* and /nix/var/* symlinks (like .nix-profile)
           find "$HOME" -maxdepth 1 -type l 2>/dev/null | while read -r link; do
             target=$(readlink "$link")
-            if [[ "$target" == /nix/store/* ]]; then
+            if [[ "$target" == /nix/store/* ]] || [[ "$target" == /nix/var/* ]]; then
               $VERBOSE_ECHO "Rewriting: $link"
               $DRY_RUN_CMD rm "$link"
               $DRY_RUN_CMD ln -s "$prefix$target" "$link"

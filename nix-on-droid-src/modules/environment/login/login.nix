@@ -56,6 +56,10 @@ writeScript "login" ''
   # Android's /system/bin/sh doesn't properly pass exported variables to exec'd processes.
   # pack-audit.so has all paths hardcoded at compile time, so we only need to pass
   # environment variables that fakechroot needs for child process handling.
+  #
+  # FAKECHROOT_EXCLUDE_PATH: Paths that should NOT be translated (accessed directly).
+  # This includes Android system paths and the nix-on-droid installation directory itself.
+  # All other absolute paths will have FAKECHROOT_BASE prepended.
   exec /system/bin/env \
     USER="$USER" \
     HOME="$HOME" \
@@ -65,7 +69,7 @@ writeScript "login" ''
     FAKECHROOT_ELFLOADER_OPT_ARGV0="--argv0" \
     FAKECHROOT_ELFLOADER_OPT_AUDIT="$AUDIT_LIB" \
     FAKECHROOT_ELFLOADER_OPT_PRELOAD="$FAKECHROOT_LIB" \
-    FAKECHROOT_INCLUDE_PATH="/nix:/etc:/usr:/bin:/tmp:/root:/dev" \
+    FAKECHROOT_EXCLUDE_PATH="/data:/proc:/sys:/dev:/system:/apex:/vendor:/linkerconfig" \
     "$LD_LINUX" \
       --argv0 "$BASH_BIN" \
       --audit "$AUDIT_LIB" \

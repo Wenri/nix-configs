@@ -11,9 +11,17 @@
   ...
 }: let
   packages = import ../../packages.nix {inherit pkgs;};
+  
+  # Helper to optionally patch packages for Android glibc
+  patchPkg = pkg:
+    if patchPackageForAndroidGlibc != null
+    then patchPackageForAndroidGlibc pkg
+    else pkg;
 in {
   # Environment packages for nix-on-droid (system-level)
   # Uses shared package lists from common/packages.nix
+  # Note: These are automatically patched for Android glibc in path.nix
+  # when build.patchPackageForAndroidGlibc is set
   environment.packages =
     packages.coreUtils
     ++ packages.compression
@@ -36,10 +44,11 @@ in {
   '';
 
   # User configuration (uses username from flake)
+  # Shell needs explicit patching since it's not part of environment.packages
   user = {
     userName = username;
     group = username;
-    shell = "${pkgs.zsh}/bin/zsh";
+    shell = "${patchPkg pkgs.zsh}/bin/zsh";
   };
 
   # Set hostname in /etc/hosts
