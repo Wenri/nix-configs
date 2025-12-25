@@ -54,7 +54,9 @@
       "Bash(done)",
       "Bash(patchelf:*)",
       "Bash(LD_DEBUG=libs /data/data/com.termux.nix/files/usr/nix/store/4c9dx2bn6wyjq5kz4x0smbfkvdr0c2qh-glibc-android-2.40-66/lib/ld-linux-aarch64.so.1:*)",
-      "Bash(nm:*)"
+      "Bash(nm:*)",
+      "Bash(nix-shell -p gnupatch --run:*)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []
