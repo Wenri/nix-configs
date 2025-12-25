@@ -1,9 +1,10 @@
 # glibc overlay for Android (nix-on-droid)
-# Uses pre-patched glibc from submodules/glibc with Termux Android compatibility patches
+# Uses pre-patched glibc from submodules/glibc with nixpkgs + Termux Android patches
 # Based on: https://github.com/termux-pacman/glibc-packages/tree/main/gpkg/glibc
 #
-# IMPORTANT: Termux patches are now pre-applied in the glibc submodule.
-# See submodules/glibc/README.termux for patch details.
+# IMPORTANT: Both nixpkgs and Termux patches are pre-applied in the glibc submodule.
+# Patch order: glibc-2.40 -> nixpkgs patches -> Termux Android patches
+# See submodules/glibc git log for patch details.
 #
 # This overlay requires a glibcSrc parameter pointing to the patched submodule:
 #   (import ./glibc.nix { glibcSrc = ./submodules/glibc; }) final prev
@@ -27,80 +28,74 @@ in {
       pname = "glibc-android";
 
       # Use patched glibc source from submodule
-      # All Termux patches are pre-applied as git commits
+      # Both nixpkgs and Termux patches are pre-applied as git commits
       src = glibcSrc;
       version = "2.40-android";
 
-      # No patches needed - all patches are pre-applied in submodule
-      patches = (oldAttrs.patches or []);
+      # Skip nixpkgs patches - our source from submodule already has them pre-applied
+      patches = [];
 
       # Add jq for processing fakesyscall.json
       nativeBuildInputs = (oldAttrs.nativeBuildInputs or []) ++ [ final.jq ];
 
-      # Post-patch phase: build-time processing that generates files
+      # Post-patch phase: run nixpkgs postPatch first, then Android-specific processing
       postPatch = (oldAttrs.postPatch or "") + ''
         echo "=== Applying nix-on-droid Android build-time processing ==="
 
         # Step 1: Remove clone3.S files (Android doesn't support clone3)
         find . -name "clone3.S" -type f -delete
-        echo "✓ Removed clone3.S files"
+        echo "Removed clone3.S files"
 
         # Step 2: Remove x86_64 configure scripts
         rm -f sysdeps/unix/sysv/linux/x86_64/configure* || true
-        echo "✓ Removed x86_64 configure scripts"
+        echo "Removed x86_64 configure scripts"
 
         # Step 3: Generate android_ids.h (needs runtime path substitution)
-        if [ -f "${termuxScripts}/gen-android-ids.sh" ]; then
-          bash ${termuxScripts}/gen-android-ids.sh ${nixOnDroidPrefixClassical} \
-            nss/android_ids.h \
-            nss/android_system_user_ids.h || echo "Warning: gen-android-ids.sh failed (non-fatal)"
-          echo "✓ Generated android_ids.h"
-        fi
+        bash ${termuxScripts}/gen-android-ids.sh ${nixOnDroidPrefixClassical} \
+          nss/android_ids.h \
+          nss/android_system_user_ids.h || echo "Warning: gen-android-ids.sh failed"
+        echo "Generated android_ids.h"
 
         # Step 4: Process fakesyscall.json to generate disabled-syscall.h
-        if [ -f "${termuxScripts}/process-fakesyscalls.sh" ]; then
-          bash ${termuxScripts}/process-fakesyscalls.sh . ${termuxScripts} aarch64 || \
-            echo "Warning: fakesyscalls processing failed (non-fatal)"
-          echo "✓ Processed fakesyscalls"
-        fi
+        bash ${termuxScripts}/process-fakesyscalls.sh . ${termuxScripts} aarch64 || \
+          echo "Warning: fakesyscalls processing failed"
+        echo "Processed fakesyscalls"
 
         # Step 5: Replace /dev/* paths with /proc/self/fd/*
-        for replacement in /dev/stderr:/proc/self/fd/2 \
-                          /dev/stdin:/proc/self/fd/0 \
-                          /dev/stdout:/proc/self/fd/1; do
-          old_path="''${replacement%%:*}"
-          new_path="''${replacement##*:}"
-          find . -type f \( -name "*.c" -o -name "*.h" \) -exec grep -l "$old_path" {} + 2>/dev/null | \
-            xargs -r sed -i "s|$old_path|$new_path|g" || true
-        done
-        echo "✓ Replaced /dev/* paths with /proc/self/fd/*"
+        sed -i 's|/dev/stderr|/proc/self/fd/2|g' $(grep -rl "/dev/stderr" . --include="*.c" --include="*.h" 2>/dev/null) 2>/dev/null || true
+        sed -i 's|/dev/stdin|/proc/self/fd/0|g' $(grep -rl "/dev/stdin" . --include="*.c" --include="*.h" 2>/dev/null) 2>/dev/null || true
+        sed -i 's|/dev/stdout|/proc/self/fd/1|g' $(grep -rl "/dev/stdout" . --include="*.c" --include="*.h" 2>/dev/null) 2>/dev/null || true
+        echo "Replaced /dev/* paths with /proc/self/fd/*"
 
         echo "=== Android build-time processing complete ==="
       '';
       
-      # Fix broken symlinks and cross-output references
+      # Append Android-specific postInstall to nixpkgs' postInstall
       postInstall = (oldAttrs.postInstall or "") + ''
-        echo "=== Fixing broken getconf symlinks ==="
+        echo "=== Android glibc postInstall additions ==="
+
+        # Fix broken symlinks that may occur on Android
+        echo "Fixing broken getconf symlinks..."
         find $out -xtype l -name "*LP64*" -delete 2>/dev/null || true
         find $out -xtype l -name "*XBS5*" -delete 2>/dev/null || true
-        echo "✓ Removed broken LP64/XBS5 symlinks"
-        
-        # Fix cross-output symlinks in libexec/getconf that create cycles
-        # These symlinks point from out/libexec/getconf/* to bin/bin/getconf
-        # Replace them with copies to break the cycle
-        echo "=== Fixing getconf cross-output references ==="
+
+        # Fix cross-output symlinks in libexec/getconf
         if [ -d "$out/libexec/getconf" ]; then
           for link in $out/libexec/getconf/*; do
             if [ -L "$link" ]; then
-              target=$(readlink -f "$link")
-              if [ -f "$target" ]; then
+              target=$(readlink -f "$link" 2>/dev/null || true)
+              if [ -n "$target" ] && [ -f "$target" ]; then
                 rm "$link"
                 cp "$target" "$link"
-                echo "  ✓ Converted symlink to copy: $(basename $link)"
               fi
             fi
           done
         fi
+
+        # Remove empty directories
+        find "$out" -type d -empty -delete 2>/dev/null || true
+
+        echo "=== Android glibc postInstall complete ==="
       '';
       
       # Configure flags for Android
