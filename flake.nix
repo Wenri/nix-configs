@@ -312,33 +312,9 @@
         done
       '';
 
-      # Build pack-audit.so library with hardcoded paths
-      # All configuration is baked in at compile time - no env vars needed at runtime
-      packAuditLib = basePkgs.runCommand "pack-audit" {
-        nativeBuildInputs = [ basePkgs.gcc basePkgs.patchelf ];
-        src = ./scripts/pack-audit.c;
-      } ''
-        mkdir -p $out/lib
-        # Use absolute path with prefix for runtime outside proot
-        ANDROID_GLIBC_ABS="${installationDir}${androidGlibc}/lib"
-        
-        # Compile with hardcoded paths - no environment variables needed at runtime
-        gcc -shared -fPIC -O2 -Wall \
-          -DFAKECHROOT_BASE='"${installationDir}"' \
-          -DSTANDARD_GLIBC_HASH='"${baseNameOf standardGlibc}"' \
-          -DANDROID_GLIBC_HASH='"${baseNameOf androidGlibc}"' \
-          -Wl,-rpath,"$ANDROID_GLIBC_ABS" \
-          -o $out/lib/pack-audit.so \
-          $src \
-          -L"${androidGlibc}/lib" \
-          -ldl
-        patchelf --set-rpath "$ANDROID_GLIBC_ABS" $out/lib/pack-audit.so
-        
-        echo "pack-audit.so built with hardcoded paths:"
-        echo "  FAKECHROOT_BASE=${installationDir}"
-        echo "  STANDARD_GLIBC_HASH=${baseNameOf standardGlibc}"
-        echo "  ANDROID_GLIBC_HASH=${baseNameOf androidGlibc}"
-      '';
+      # Note: pack-audit.so no longer needed
+      # Path translation (/nix/store -> Android prefix) is now built into ld.so
+      # See elf/dl-android-paths.h in the glibc submodule
 
     in
       nix-on-droid.lib.nixOnDroidConfiguration {
@@ -347,12 +323,11 @@
           {
             # Add Android glibc and patched packages
             environment.packages = [ androidGlibc androidFakechroot ];
-            
+
             # Configure fakechroot login
             build.androidGlibc = androidGlibc;
             build.standardGlibc = standardGlibc;
             build.androidFakechroot = androidFakechroot;
-            build.packAuditLib = "${packAuditLib}/lib/pack-audit.so";
             build.bashInteractive = patchPackageForAndroidGlibc basePkgs.bashInteractive;
             
             # Patch all environment.packages for Android glibc
