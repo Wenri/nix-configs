@@ -70,16 +70,60 @@ in {
         echo "=== Android build-time processing complete ==="
       '';
       
-      # Append Android-specific postInstall to nixpkgs' postInstall
-      postInstall = (oldAttrs.postInstall or "") + ''
-        echo "=== Android glibc postInstall additions ==="
-
-        # Fix broken symlinks that may occur on Android
+      # Replace postInstall - nixpkgs version has glob issues on Android
+      # The problematic line: echo ... > ../glibc-2*/localedata/SUPPORTED
+      postInstall = ''
+        echo "=== Android glibc postInstall ==="
+        
+        moveToOutput bin/getent $getent
+        
+        # Fix the glob issue - find the actual source directory
+        GLIBC_SRC=$(find .. -maxdepth 1 -type d -name 'glibc-*' | head -1)
+        if [ -n "$GLIBC_SRC" ] && [ -d "$GLIBC_SRC/localedata" ]; then
+          echo SUPPORTED-LOCALES=C.UTF-8/UTF-8 > "$GLIBC_SRC/localedata/SUPPORTED"
+        fi
+        
+        # Build locales
+        make -j''${NIX_BUILD_CORES:-1} localedata/install-locale-files || true
+        
+        test -f $out/etc/ld.so.cache && rm $out/etc/ld.so.cache
+        
+        if test -n "$linuxHeaders"; then
+            (cd $dev/include && \
+             ln -sv $(ls -d $linuxHeaders/include/* | grep -v scsi\$) .)
+        fi
+        
+        # Fix for NIXOS-54 (ldd not working on x86_64)
+        if test -n "$is64bit"; then
+            ln -s lib $out/lib64
+        fi
+        
+        rm -rf $out/var $bin/bin/sln
+        
+        # Backwards-compatibility symlinks
+        ln -sf $out/lib/libpthread.so.0 $out/lib/libpthread.so
+        ln -sf $out/lib/librt.so.1 $out/lib/librt.so
+        ln -sf $out/lib/libdl.so.2 $out/lib/libdl.so
+        test -f $out/lib/libutil.so.1 && ln -sf $out/lib/libutil.so.1 $out/lib/libutil.so
+        touch $out/lib/libpthread.a
+        
+        # Static libraries
+        mkdir -p $static/lib
+        mv $out/lib/*.a $static/lib
+        mv $static/lib/lib*_nonshared.a $out/lib
+        test -f $out/lib/libutil.so.1 || mv $static/lib/libutil.a $out/lib
+        sed "/^GROUP/s|$out/lib/lib|$static/lib/lib|g" \
+          -i "$static"/lib/*.a
+        
+        # Work around Nix hard link bug
+        cp $bin/bin/getconf $bin/bin/getconf_
+        mv $bin/bin/getconf_ $bin/bin/getconf
+        
+        # Android-specific fixes
         echo "Fixing broken getconf symlinks..."
         find $out -xtype l -name "*LP64*" -delete 2>/dev/null || true
         find $out -xtype l -name "*XBS5*" -delete 2>/dev/null || true
-
-        # Fix cross-output symlinks in libexec/getconf
+        
         if [ -d "$out/libexec/getconf" ]; then
           for link in $out/libexec/getconf/*; do
             if [ -L "$link" ]; then
@@ -91,10 +135,9 @@ in {
             fi
           done
         fi
-
-        # Remove empty directories
+        
         find "$out" -type d -empty -delete 2>/dev/null || true
-
+        
         echo "=== Android glibc postInstall complete ==="
       '';
       
