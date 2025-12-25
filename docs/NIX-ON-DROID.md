@@ -143,10 +143,19 @@ Launch Nix-on-Droid and wait for initial bootstrap (~2-5 minutes).
 # Install git if not available
 nix-shell -p git
 
-# Clone repository
-git clone https://github.com/Wenri/nix-configs ~/.config/nix-on-droid
+# Clone repository with submodules
+git clone --recurse-submodules https://github.com/Wenri/nix-configs ~/.config/nix-on-droid
 cd ~/.config/nix-on-droid
+
+# Or if already cloned, initialize submodules:
+git submodule update --init --recursive
 ```
+
+**Note:** This repository uses git submodules for:
+- `submodules/fakechroot` - Android-patched fakechroot
+- `submodules/glibc` - GNU C Library (release/2.40/master)
+- `submodules/nix-on-droid` - nix-on-droid source
+- `submodules/secrets` - Secrets repository
 
 ### Step 4: Apply Configuration
 
@@ -589,7 +598,7 @@ packAuditLib = basePkgs.runCommand "pack-audit" { ... } ''
 
 #### Build Options (nix-on-droid modules)
 
-New build options in `nix-on-droid-src/modules/build/config.nix`:
+New build options in `submodules/nix-on-droid/modules/build/config.nix`:
 
 | Option | Type | Description |
 |--------|------|-------------|

@@ -24,9 +24,9 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # Nix-on-Droid for Android - using local fork with absolute symlink support
+    # Nix-on-Droid for Android - using submodule
     nix-on-droid = {
-      url = "path:./nix-on-droid-src";
+      url = "path:./submodules/nix-on-droid";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.home-manager.follows = "home-manager";
     };

@@ -10,7 +10,7 @@
     username,
     ...
     }: let
-      tailscaleAuthKeyFile = ../../secrets/tailscale-auth.key;
+      tailscaleAuthKeyFile = ../../submodules/secrets/tailscale-auth.key;
     in {
     # You can import other NixOS modules here
     imports = [

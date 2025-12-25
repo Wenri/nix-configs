@@ -202,6 +202,16 @@ This is a personal configuration repository with unified infrastructure. All 6 h
 - **Same overlays** - NUR extensions, vscode-marketplace, unstable packages
 - **Same modules** - Exportable NixOS and home-manager modules
 
+**To clone this repository:**
+```bash
+# Clone with submodules
+git clone --recurse-submodules https://github.com/Wenri/nix-configs ~/.config/nix-on-droid
+
+# Or if already cloned, initialize submodules:
+cd ~/.config/nix-on-droid
+git submodule update --init --recursive
+```
+
 **To use a configuration:**
 ```bash
 # For WSL
@@ -340,8 +350,12 @@ nix-configs/
 │   └── nix-on-droid/
 │       ├── configuration.nix  # nix-on-droid system + home-manager integration
 │       └── home.nix           # zsh, git, fzf, claude-code, dev tools
-└── secrets/           # Secrets (not in git)
-    └── tailscale-auth.key
+└── submodules/        # Git submodules
+    ├── fakechroot/    # Android-patched fakechroot
+    ├── glibc/         # GNU C Library (release/2.40/master)
+    ├── nix-on-droid/  # nix-on-droid source
+    └── secrets/       # Secrets repository
+        └── tailscale-auth.key
 ```
 
 ### Features
