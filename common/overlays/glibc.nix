@@ -1,7 +1,11 @@
 # glibc overlay for Android (nix-on-droid)
 # Applies Termux patches for Android kernel compatibility
 # Based on: https://github.com/termux-pacman/glibc-packages/tree/main/gpkg/glibc
-final: prev: let
+#
+# This overlay can be called in two ways:
+# 1. Standard overlay: (import ./glibc.nix {}) final prev
+# 2. With custom source: (import ./glibc.nix { glibcSrc = ./submodules/glibc; }) final prev
+{ glibcSrc ? null }: final: prev: let
   # Only apply this overlay for aarch64-linux (Android)
   isAndroid = (final.stdenv.hostPlatform.system or final.system) == "aarch64-linux";
 
@@ -58,6 +62,12 @@ in {
       # Force a new derivation name to track Android-specific builds
       pname = "glibc-android";
       
+      # Use custom source if provided (e.g., from submodules/glibc)
+      # Otherwise use nixpkgs glibc source
+    } // (if glibcSrc != null then {
+      src = glibcSrc;
+      version = "2.40-android";
+    } else {}) // {
       # Apply all Termux patches
       patches = (oldAttrs.patches or []) ++ (map (p: termuxPatches + "/${p}") allPatches);
       

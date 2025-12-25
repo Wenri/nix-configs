@@ -612,7 +612,7 @@ The original proot login script is preserved at `scripts/login-proot` for refere
 
 #### Fakechroot Modifications
 
-The fakechroot source in `fakechroot-src/` has been modified to properly handle login shells:
+The fakechroot source in `submodules/fakechroot/` has been modified to properly handle login shells:
 
 **Problem:** When using `ld.so --argv0` to set the program name (e.g., `-zsh` for login shells), fakechroot was incorrectly:
 1. Using the executable's path instead of the original `argv[0]` for `--argv0`
@@ -625,7 +625,7 @@ The fakechroot source in `fakechroot-src/` has been modified to properly handle 
 This ensures login shells (invoked with `-zsh` or `-bash`) correctly recognize themselves as login shells without parsing `-z` as an invalid option.
 
 **Technical Details:**
-- Modified files: `fakechroot-src/src/execve.c`, `fakechroot-src/src/posix_spawn.c`
+- Modified files: `submodules/fakechroot/src/execve.c`, `submodules/fakechroot/src/posix_spawn.c`
 - The fix preserves the original `argv[0]` semantics while allowing `ld.so` to set a different program name
 - Critical for shells that check `argv[0][0] == '-'` to determine login shell status
 

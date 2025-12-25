@@ -190,10 +190,12 @@
       installationDir = "/data/data/com.termux.nix/files/usr";
 
       # Build Android-patched glibc using the Termux patches from overlays
-      # Uses glibc 2.40 (from nixpkgs) with Termux's Android-specific patches
+      # Uses glibc 2.40 from submodules/glibc with Termux's Android-specific patches
       # Configured with Android prefix so paths are baked in correctly
       androidGlibc = let
-        glibcOverlay = import ./common/overlays/glibc.nix basePkgs basePkgs;
+        glibcOverlay = import ./common/overlays/glibc.nix {
+          glibcSrc = ./submodules/glibc;
+        } basePkgs basePkgs;
       in glibcOverlay.glibc;
 
       # Create base pkgs without glibc overlay (uses binary cache)
@@ -287,10 +289,10 @@
       # Build Android-patched fakechroot
       # Use absolute path with prefix for RPATH so it works outside proot
       androidFakechroot = let
-        # Use local fakechroot-src submodule for development
+        # Use local submodules/fakechroot for development
         fakechroot = basePkgs.fakechroot.overrideAttrs (oldAttrs: {
           version = "unstable-local";
-          src = ./fakechroot-src;
+          src = ./submodules/fakechroot;
           patches = [];
         });
         installationDir = "/data/data/com.termux.nix/files/usr";
@@ -427,7 +429,9 @@
       # Expose androidGlibc and androidFakechroot for aarch64-linux
       androidPackages = if system == "aarch64-linux" then let
         basePkgs = mkPkgs system;
-        glibcOverlay = import ./common/overlays/glibc.nix basePkgs basePkgs;
+        glibcOverlay = import ./common/overlays/glibc.nix {
+          glibcSrc = ./submodules/glibc;
+        } basePkgs basePkgs;
         androidGlibc = glibcOverlay.glibc;
       in {
         inherit androidGlibc;
@@ -484,7 +488,9 @@
     lib = {
       aarch64-linux = let
         basePkgs = mkPkgs "aarch64-linux";
-        glibcOverlay = import ./common/overlays/glibc.nix basePkgs basePkgs;
+        glibcOverlay = import ./common/overlays/glibc.nix {
+          glibcSrc = ./submodules/glibc;
+        } basePkgs basePkgs;
         androidGlibc = glibcOverlay.glibc;
         standardGlibc = basePkgs.glibc;
       in {
