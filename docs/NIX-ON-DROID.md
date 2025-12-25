@@ -610,6 +610,25 @@ The original proot login script is preserved at `scripts/login-proot` for refere
 | Setup | Simpler | Requires RPATH configuration |
 | Binary patching | Not needed | Needs absolute paths |
 
+#### Fakechroot Modifications
+
+The fakechroot source in `fakechroot-src/` has been modified to properly handle login shells:
+
+**Problem:** When using `ld.so --argv0` to set the program name (e.g., `-zsh` for login shells), fakechroot was incorrectly:
+1. Using the executable's path instead of the original `argv[0]` for `--argv0`
+2. Copying the original `argv[0]` as a regular argument, causing shells to see `-zsh` as both the program name and an option
+
+**Fix:** Modified `execve.c` and `posix_spawn.c` to:
+1. Use the original `argv[0]` (not the executable path) for `ld.so --argv0`
+2. Skip `argv[0]` when copying arguments if `--argv0` is used
+
+This ensures login shells (invoked with `-zsh` or `-bash`) correctly recognize themselves as login shells without parsing `-z` as an invalid option.
+
+**Technical Details:**
+- Modified files: `fakechroot-src/src/execve.c`, `fakechroot-src/src/posix_spawn.c`
+- The fix preserves the original `argv[0]` semantics while allowing `ld.so` to set a different program name
+- Critical for shells that check `argv[0][0] == '-'` to determine login shell status
+
 ### Android glibc Patching
 
 See [GLIBC_REPLACEMENT.md](./GLIBC_REPLACEMENT.md) for detailed information on:
