@@ -636,3 +636,8 @@ The fakechroot login script uses the Android-patched glibc with `rtld-audit` (pa
 - **Library Discovery:** Required libraries (readline, ncursesw) are automatically discovered and added to `LD_LIBRARY_PATH`
 - **Android System Tools:** The script uses `/system/bin/find` and other Android binaries for file operations since it runs locally
 - **Performance:** Fakechroot provides better performance than proot by avoiding syscall emulation overhead
+- **Login Shell Support:** The fakechroot source has been modified to properly handle login shells:
+  - Uses original `argv[0]` (e.g., `-zsh`) for `ld.so --argv0` instead of executable path
+  - Skips `argv[0]` when copying arguments if `--argv0` is used
+  - Ensures shells correctly detect login status without parsing `-z` as invalid option
+  - See `docs/NIX-ON-DROID.md` for detailed fakechroot modifications documentation

@@ -61,9 +61,12 @@ hosts = {
 
 **Nix-on-Droid (Android)**
 - nix-community/nix-on-droid for Android/Termux
+- Custom Android-patched glibc 2.40 with Termux patches
+- Fakechroot login system (modified for proper login shell support)
 - Master home-manager with advanced template pattern
 - Full development environment (zsh, git, neovim, claude-code)
 - `self.submodules = true` for git submodule support
+- See `docs/NIX-ON-DROID.md` for detailed configuration guide
 
 ### Shared Features
 
