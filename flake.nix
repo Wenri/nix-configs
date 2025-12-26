@@ -212,7 +212,29 @@
       };
       
       standardGlibc = basePkgs.stdenv.cc.libc;
-      
+      standardGccLib = basePkgs.stdenv.cc.cc.lib;
+
+      # Patched gcc-lib with symlinks rewritten for Android
+      # gcc-lib contains symlinks to gcc-libgcc that point to /nix/store/...
+      # We need to rewrite these to /data/data/.../nix/store/...
+      androidGccLib = basePkgs.runCommand "gcc-lib-android" {} ''
+        cp -r ${standardGccLib} $out
+        chmod -R u+w $out
+
+        # Rewrite symlinks that point to /nix/store to use the Android prefix
+        find $out -type l | while read -r link; do
+          target=$(readlink "$link")
+          if echo "$target" | grep -q "^/nix/store"; then
+            new_target="${installationDir}$target"
+            echo "Rewriting symlink: $link"
+            echo "  Old: $target"
+            echo "  New: $new_target"
+            rm "$link"
+            ln -s "$new_target" "$link"
+          fi
+        done
+      '';
+
       # Function to patch a package for Android/nix-on-droid:
       # 1. Replace standard glibc with Android glibc in interpreter and RPATH
       # 2. Prefix ALL /nix/store paths with Android installation directory
@@ -267,11 +289,13 @@
           fi
           
           # Patch RPATH: prefix all /nix/store paths with Android installation directory
-          # Also redirect standard glibc to Android glibc
+          # Also redirect standard glibc to Android glibc, and gcc-lib to patched version
           RPATH=$(patchelf --print-rpath "$file" 2>/dev/null || echo "")
           if [ -n "$RPATH" ] && echo "$RPATH" | grep -q "/nix/store"; then
             # First, redirect standard glibc to Android glibc
             NEW_RPATH=$(echo "$RPATH" | sed "s|${standardGlibc}|${androidGlibc}|g")
+            # Replace standard gcc-lib with patched version (has rewritten symlinks)
+            NEW_RPATH=$(echo "$NEW_RPATH" | sed "s|${standardGccLib}|${androidGccLib}|g")
             # Then, prefix all /nix/store paths with Android installation directory
             NEW_RPATH=$(echo "$NEW_RPATH" | sed "s|/nix/store|${installationDir}/nix/store|g")
             echo "Patching RPATH: $file"
@@ -322,7 +346,8 @@
           ./hosts/${hostname}/configuration.nix
           {
             # Add Android glibc and patched packages
-            environment.packages = [ androidGlibc androidFakechroot ];
+            # gcc-lib is needed for libgcc_s.so.1 (nodejs, C++ apps use it via RPATH)
+            environment.packages = [ androidGlibc androidFakechroot androidGccLib ];
 
             # Configure fakechroot login
             build.androidGlibc = androidGlibc;
