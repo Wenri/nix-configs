@@ -36,14 +36,13 @@ in
     nativeBuildInputs = (oldAttrs.nativeBuildInputs or []) ++ [patchelf];
 
     # Pass all Android paths as compile-time constants
-    # These are hardcoded into the binary - no env var fallback
     NIX_CFLAGS_COMPILE = builtins.concatStringsSep " " [
       (oldAttrs.NIX_CFLAGS_COMPILE or "")
-      ''-DFAKECHROOT_ANDROID_ELFLOADER="\"${androidLdso}\""''
-      ''-DFAKECHROOT_ANDROID_LIBRARY_PATH="\"${androidGlibcAbs}\""''
-      ''-DFAKECHROOT_ANDROID_PRELOAD="\"${installationDir}${placeholder "out"}/lib/fakechroot/libfakechroot.so\""''
-      ''-DFAKECHROOT_ANDROID_BASE="\"${installationDir}\""''
-      ''-DFAKECHROOT_ANDROID_EXCLUDE_PATH="\"${excludePath}\""''
+      ''-DANDROID_ELFLOADER="\"${androidLdso}\""''
+      ''-DANDROID_LIBRARY_PATH="\"${androidGlibcAbs}\""''
+      ''-DANDROID_PRELOAD="\"${installationDir}${placeholder "out"}/lib/fakechroot/libfakechroot.so\""''
+      ''-DANDROID_BASE="\"${installationDir}\""''
+      ''-DANDROID_EXCLUDE_PATH="\"${excludePath}\""''
     ];
 
     # Patch RPATH and interpreter for Android glibc
