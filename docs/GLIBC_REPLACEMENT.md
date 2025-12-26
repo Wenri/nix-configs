@@ -1,6 +1,6 @@
 # glibc Replacement Strategy for nix-on-droid
 
-> **Last Updated:** December 2024
+> **Last Updated:** December 26, 2024
 > **glibc Version:** 2.40 (from nixpkgs-unstable)
 > **Target Platform:** aarch64-linux (Android/Termux)
 
@@ -83,26 +83,27 @@ Our solution uses a **two-stage approach**:
 │  • Fake syscalls return -ENOSYS                                 │
 │  • Android-specific passwd/group handling                       │
 │  • System V shared memory emulation                             │
+│  • Built-in path translation in ld.so (RPATH processing)       │
+│  • Built-in glibc redirection (standard → android)             │
 └─────────────────────────────────────────────────────────────────┘
                                │
                                ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│           Stage 2: Runtime glibc Redirection                    │
+│        Stage 2: Runtime (ld.so built-in translation)           │
 ├─────────────────────────────────────────────────────────────────┤
-│  Using rtld-audit (pack-audit.so) at runtime:                   │
+│  The Android glibc's ld.so has built-in path processing:       │
 │                                                                 │
-│  1. Path Translation:                                           │
-│     /nix/store/... → $FAKECHROOT_BASE/nix/store/...            │
+│  1. RPATH Translation (in decompose_rpath):                    │
+│     /nix/store/xxx/lib → /data/data/.../usr/nix/store/xxx/lib  │
 │                                                                 │
-│  2. glibc Redirection (NEW!):                                   │
-│     Standard glibc hash → Android glibc hash                    │
+│  2. glibc Redirection:                                          │
+│     .../xxx-glibc-2.40/lib → .../xxx-glibc-android-2.40/lib    │
 │                                                                 │
-│  Example:                                                       │
-│    Binary requests: .../89n0gcl1...-glibc-2.40-66/lib/libc.so.6│
-│    Audit redirects: .../lb0hd462...-glibc-android-2.40-66/...  │
+│  3. ld.so.preload:                                              │
+│     Automatically loads libfakechroot.so for path virtualization│
 │                                                                 │
-│  Result: Binary cache packages use Android glibc without        │
-│          rebuild or patchelf!                                   │
+│  Result: Binary cache packages work with Android glibc          │
+│          without rebuild, patchelf, or rtld-audit!              │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -111,10 +112,10 @@ Our solution uses a **two-stage approach**:
 | Component | Source | Build Time | Size |
 |-----------|--------|------------|------|
 | Android glibc | **Built from source** | ~20 minutes | ~50 MB |
-| pack-audit.so | Built (trivial) | Seconds | ~70 KB |
+| Android fakechroot | **Built from source** | ~1 minute | ~200 KB |
 | All other packages | **Binary cache** | Downloaded | Varies |
 
-**Key Advantage:** No patchelf needed! The rtld-audit module redirects glibc at runtime.
+**Key Advantage:** No patchelf needed! The ld.so has built-in path translation and glibc redirection.
 
 ---
 
@@ -123,8 +124,12 @@ Our solution uses a **two-stage approach**:
 ### File Structure
 
 ```
+submodules/glibc/elf/
+└── dl-android-paths.h                  # ld.so path translation (built-in to glibc)
+
 common/overlays/
-├── glibc.nix                           # Main glibc overlay definition
+├── glibc.nix                           # Android glibc overlay (uses glibcSrc from submodule)
+├── fakechroot.nix                      # Android fakechroot overlay
 ├── default.nix                         # Overlay exports (doesn't include glibc by default)
 └── patches/
     └── glibc-termux/
@@ -190,32 +195,41 @@ The glibc overlay is integrated into `flake.nix`:
 ```nix
 # In mkNixOnDroidConfiguration
 mkNixOnDroidConfiguration = { hostname, system, username, ... }: let
-  # Build Android-patched glibc using Termux patches
-  androidGlibc = let
-    glibcOverlay = import ./common/overlays/glibc.nix basePkgs basePkgs;
-  in glibcOverlay.glibc;
-  
-  # Create base pkgs without glibc overlay (uses binary cache)
+  # Base pkgs without glibc overlay (uses binary cache)
   basePkgs = import nixpkgs {
     inherit system;
     config.allowUnfree = true;
     overlays = [ /* standard overlays, NOT glibc */ ];
   };
-  
-  standardGlibc = basePkgs.stdenv.cc.libc;
-  
-  # Function to patch a single package to use Android glibc
-  patchPackageForAndroidGlibc = pkg: basePkgs.runCommand "..." { ... } ''
-    # Copy package, find ELF files, rewrite interpreter and RPATH
-  '';
+
+  # Build Android-patched glibc using pre-patched source from submodule
+  # The submodule contains glibc 2.40 with nixpkgs + Termux patches pre-applied
+  androidGlibc = let
+    glibcOverlay = import ./common/overlays/glibc.nix {
+      glibcSrc = ./submodules/glibc;  # Pre-patched glibc source
+    };
+  in (glibcOverlay basePkgs basePkgs).glibc;
+
+  # Build Android fakechroot with paths baked in at compile time
+  androidFakechroot = import ./common/overlays/fakechroot.nix {
+    inherit (basePkgs) stdenv patchelf fakechroot;
+    inherit androidGlibc;
+    installationDir = "/data/data/com.termux.nix/files/usr";
+    src = ./submodules/fakechroot;  # Modified fakechroot source
+  };
 in
   nix-on-droid.lib.nixOnDroidConfiguration {
     extraSpecialArgs = {
-      inherit androidGlibc patchPackageForAndroidGlibc;
+      inherit androidGlibc androidFakechroot;
     };
     # ...
   };
 ```
+
+**Key points:**
+- `glibcSrc` points to the pre-patched glibc submodule (no patches applied at build time)
+- `ANDROID_GLIBC_LIB` is passed via CFLAGS for runtime glibc redirection
+- Fakechroot has paths baked in at compile time (no environment variables needed)
 
 ### The patchelf Function
 
@@ -391,35 +405,71 @@ static inline int fake_syslog(...) { return -ENOSYS; }
 
 **`set-ld-variables.patch`** - LD_* environment variable handling for Android
 
+### ld.so Built-in Path Translation
+
+The Android glibc's ld.so has built-in path processing in `submodules/glibc/elf/dl-android-paths.h`. The `_dl_android_process_path()` function performs two operations:
+
+**1. Nix Store Path Translation:**
+```c
+/nix/store/xxx-package/lib → /data/data/com.termux.nix/files/usr/nix/store/xxx-package/lib
+```
+
+**2. Standard glibc Redirection:**
+```c
+// Detects paths like: xxx-glibc-2.40-66/lib (NOT xxx-glibc-android-2.40-66)
+// Redirects to: ANDROID_GLIBC_LIB (compiled in via -DANDROID_GLIBC_LIB)
+```
+
+**Where it's called:**
+- In `decompose_rpath()` in `dl-load.c` during RPATH/RUNPATH processing
+- Each RPATH entry is processed before library search
+
+**Memory management:**
+- Returns malloc'd string (caller must free)
+- Returns NULL if no processing needed
+- Single function replaces previous two-function approach
+
+**Compile-time configuration (in glibc.nix):**
+```nix
+env.NIX_CFLAGS_COMPILE = "-DANDROID_GLIBC_LIB=\"${nixOnDroidPrefix}${placeholder \"out\"}/lib\"";
+```
+
 ### Build Process Details
 
-The glibc overlay in `common/overlays/glibc.nix` performs:
+The glibc source is **pre-patched** in the `submodules/glibc` git submodule. The overlay in `common/overlays/glibc.nix` performs:
 
-1. **Patch Application** - 28 patch files in specific order
-2. **File Installation** - Copy source files to appropriate directories
-3. **Code Generation** - Run helper scripts to generate headers
+1. **Use Pre-Patched Source** - glibc submodule has nixpkgs + Termux patches as git commits
+2. **Skip nixpkgs Patches** - `patches = []` since already applied
+3. **Build-Time Processing** - Run gen-android-ids.sh, process-fakesyscalls.sh
 4. **Path Substitution** - Replace /dev/* with /proc/self/fd/*
 5. **Configure Flags** - Add Android-specific configure options
-6. **Post-Install Fixes** - Remove broken symlinks, fix cross-output references
+6. **Compile-Time Constants** - Pass `-DANDROID_GLIBC_LIB` for runtime redirection
+7. **Post-Install Fixes** - Remove broken symlinks, fix cross-output references
 
 ```nix
 glibc = prev.glibc.overrideAttrs (oldAttrs: {
   pname = "glibc-android";
-  
-  patches = (oldAttrs.patches or []) ++ (map (p: termuxPatches + "/${p}") allPatches);
-  
+  src = glibcSrc;  # Pre-patched submodule
+  version = "2.40-android";
+
+  # Skip nixpkgs patches - already pre-applied in submodule
+  patches = [];
+
   nativeBuildInputs = (oldAttrs.nativeBuildInputs or []) ++ [ final.jq ];
-  
+
   postPatch = (oldAttrs.postPatch or "") + ''
-    # Remove clone3.S, install source files, generate headers, etc.
+    # Remove clone3.S, run gen-android-ids.sh, process-fakesyscalls.sh
   '';
-  
+
   configureFlags = oldFlags ++ [
     "--disable-nscd"
     "--disable-profile"
     "--disable-werror"
   ];
-  
+
+  # Pass Android glibc path for runtime redirection
+  env.NIX_CFLAGS_COMPILE = "-DANDROID_GLIBC_LIB=\"...\""
+
   separateDebugInfo = false;  # Avoid output cycles
 });
 ```
@@ -440,13 +490,13 @@ error while loading shared libraries: libreadline.so.8: cannot open shared objec
 **Cause:** The dynamic linker can't find required libraries because:
 1. Libraries are in separate nix packages (not in the binary's package)
 2. The binary's RPATH points to `/nix/store/...` which doesn't exist on Android
-3. The `rtld-audit` module redirects `/nix/store` → `$FAKECHROOT_BASE/nix/store`
+3. Path translation is needed to find the real location
 
-**Solution:** The `pack-audit.so` rtld-audit module handles this automatically:
-- Redirects `/nix/store/...` to `$FAKECHROOT_BASE/nix/store/...`
+**Solution:** The Android glibc's ld.so has built-in path translation in `dl-android-paths.h`:
+- Automatically translates `/nix/store/...` → `/data/data/.../usr/nix/store/...` during RPATH processing
 - Also redirects standard glibc to Android glibc (see below)
 
-No `LD_LIBRARY_PATH` is needed!
+No `LD_LIBRARY_PATH` or rtld-audit module needed!
 
 #### glibc Redirection (Standard → Android)
 
@@ -462,22 +512,22 @@ Bad system call (core dumped)
 ```
 Standard glibc uses syscalls (clone3, rseq) that are blocked by Android seccomp.
 
-**Solution:** The `pack-audit.so` audit module can redirect standard glibc to Android glibc:
+**Solution:** The Android glibc's ld.so has built-in glibc redirection. During RPATH processing in `decompose_rpath()`, the `_dl_android_process_path()` function in `dl-android-paths.h`:
 
-```bash
-# Set these environment variables before running ld.so
-export STANDARD_GLIBC="89n0gcl1yjp37ycca45rn50h7lms5p6f-glibc-2.40-66"
-export ANDROID_GLIBC="lb0hd462xiicipri33q3idk43nzz0983-glibc-android-2.40-66"
-```
+1. Detects paths containing `-glibc-` but NOT `-glibc-android`
+2. Extracts the library suffix (e.g., `/libpthread.so.0`)
+3. Redirects to the Android glibc lib directory (baked in at compile time via `-DANDROID_GLIBC_LIB`)
 
-The audit module will redirect:
+Example redirection:
 ```
-$FAKECHROOT_BASE/nix/store/89n0gcl1yjp37ycca45rn50h7lms5p6f-glibc-2.40-66/lib/libc.so.6
-                                    ↓
-$FAKECHROOT_BASE/nix/store/lb0hd462xiicipri33q3idk43nzz0983-glibc-android-2.40-66/lib/libc.so.6
+/data/.../nix/store/xxx-glibc-2.40-66/lib/libc.so.6
+                            ↓
+/data/.../nix/store/yyy-glibc-android-2.40-66/lib/libc.so.6
 ```
 
 This applies to ALL libraries from standard glibc: `libc.so.6`, `libpthread.so.0`, `libm.so.6`, `libdl.so.2`, etc.
+
+**No environment variables needed!** The Android glibc path is compiled into ld.so at build time.
 
 #### "Bad system call" Error
 
@@ -489,9 +539,10 @@ Bad system call (core dumped)
 
 **Cause:** Binary is using standard glibc that tries blocked syscalls
 
-**Solution:**
-1. Use `patchPackageForAndroidGlibc` to patch the package
-2. Or run under proot which handles syscall emulation
+**Solution:** If you're running under the fakechroot login environment with Android glibc:
+1. Ensure the binary is invoked through ld.so (standard for dynamically-linked binaries)
+2. Verify ld.so.preload is loading libfakechroot.so
+3. Check that Android glibc's path translation is working (glibc should have been built with `-DANDROID_GLIBC_LIB`)
 
 #### Binary Hangs During Thread Creation
 
