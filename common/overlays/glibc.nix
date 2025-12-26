@@ -158,7 +158,16 @@ in {
         # Set slibdir to Android path so library paths are baked correctly
         "slibdir=${nixOnDroidPrefix}${builtins.placeholder "out"}/lib"
       ];
-      
+
+      # Pass android glibc lib path to ld.so for standard glibc redirection
+      # This enables ld.so to redirect binaries built against standard glibc
+      # to use our android-patched glibc at runtime
+      # Note: Use env.NIX_CFLAGS_COMPILE for newer nixpkgs compatibility
+      env = (oldAttrs.env or {}) // {
+        NIX_CFLAGS_COMPILE = (oldAttrs.env.NIX_CFLAGS_COMPILE or "") +
+          '' -DANDROID_GLIBC_LIB="\"${nixOnDroidPrefix}${builtins.placeholder "out"}/lib\""'';
+      };
+
       # Disable separateDebugInfo to avoid output cycles
       separateDebugInfo = false;
     })

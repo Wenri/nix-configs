@@ -6,6 +6,11 @@
 #   installationDir - Base installation directory (e.g., /data/data/com.termux.nix/files/usr)
 #   excludePath     - Colon-separated paths to exclude from translation
 #
+# Note: --library-path and --preload are no longer passed to ld.so because:
+#   - ld.so.preload handles libfakechroot preloading
+#   - ld.so has built-in glibc path redirection (standard -> android glibc)
+#   - ld.so has built-in /nix/store path translation
+#
 # Example usage:
 #   androidFakechroot = import ./fakechroot.nix {
 #     inherit (pkgs) stdenv fetchFromGitHub patchelf fakechroot;
@@ -35,12 +40,11 @@ in
 
     nativeBuildInputs = (oldAttrs.nativeBuildInputs or []) ++ [patchelf];
 
-    # Pass all Android paths as compile-time constants
+    # Pass Android paths as compile-time constants
+    # Note: LIBRARY_PATH and PRELOAD removed - ld.so handles these now
     NIX_CFLAGS_COMPILE = builtins.concatStringsSep " " [
       (oldAttrs.NIX_CFLAGS_COMPILE or "")
       ''-DANDROID_ELFLOADER="\"${androidLdso}\""''
-      ''-DANDROID_LIBRARY_PATH="\"${androidGlibcAbs}\""''
-      ''-DANDROID_PRELOAD="\"${installationDir}${placeholder "out"}/lib/fakechroot/libfakechroot.so\""''
       ''-DANDROID_BASE="\"${installationDir}\""''
       ''-DANDROID_EXCLUDE_PATH="\"${excludePath}\""''
     ];
