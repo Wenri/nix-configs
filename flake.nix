@@ -310,44 +310,14 @@
         
         echo "=== Patching complete ==="
       '';
-      # Build Android-patched fakechroot with hardcoded Android paths
-      # ELFLOADER and LIBRARY_PATH are compiled in; PRELOAD uses env var
-      # since its path depends on the output hash
-      androidFakechroot = let
-        installationDir = "/data/data/com.termux.nix/files/usr";
-        androidGlibcAbs = "${installationDir}${androidGlibc}/lib";
-        androidLdso = "${androidGlibcAbs}/ld-linux-aarch64.so.1";
-      in basePkgs.fakechroot.overrideAttrs (oldAttrs: {
-        pname = "fakechroot-android";
-        version = "unstable-local";
+
+      # Build Android-patched fakechroot using the separate module
+      # All paths are hardcoded at compile time - no env vars needed
+      androidFakechroot = import ./common/overlays/fakechroot.nix {
+        inherit (basePkgs) stdenv patchelf fakechroot;
+        inherit androidGlibc installationDir;
         src = ./submodules/fakechroot;
-        patches = [];
-
-        nativeBuildInputs = (oldAttrs.nativeBuildInputs or []) ++ [ basePkgs.patchelf ];
-
-        # Pass Android paths as compile-time constants
-        # ELFLOADER and LIBRARY_PATH are hardcoded; PRELOAD falls back to env var
-        NIX_CFLAGS_COMPILE = (oldAttrs.NIX_CFLAGS_COMPILE or "") + " " +
-          ''-DFAKECHROOT_ANDROID_ELFLOADER="\"${androidLdso}\""'' + " " +
-          ''-DFAKECHROOT_ANDROID_LIBRARY_PATH="\"${androidGlibcAbs}\""'';
-
-        # Patch RPATH and interpreter in postFixup
-        postFixup = (oldAttrs.postFixup or "") + ''
-          echo "=== Patching for Android glibc ==="
-          for lib in $out/lib/fakechroot/libfakechroot.so; do
-            if [ -f "$lib" ]; then
-              patchelf --set-rpath "${androidGlibcAbs}" "$lib" || true
-              echo "  Patched RPATH: $lib"
-            fi
-          done
-          for bin in $out/bin/fakechroot $out/bin/ldd.fakechroot; do
-            if [ -f "$bin" ] && patchelf --print-interpreter "$bin" 2>/dev/null | grep -q ld-linux; then
-              patchelf --set-interpreter "${androidLdso}" --set-rpath "${androidGlibcAbs}" "$bin" 2>/dev/null || true
-              echo "  Patched: $bin"
-            fi
-          done
-        '';
-      });
+      };
 
       # Note: pack-audit.so no longer needed
       # Path translation (/nix/store -> Android prefix) is now built into ld.so
@@ -442,6 +412,7 @@
       # Expose androidGlibc and androidFakechroot for aarch64-linux
       androidPackages = if system == "aarch64-linux" then let
         basePkgs = mkPkgs system;
+        installationDir = "/data/data/com.termux.nix/files/usr";
         glibcOverlay = import ./common/overlays/glibc.nix {
           glibcSrc = ./submodules/glibc;
         } basePkgs basePkgs;
@@ -449,48 +420,12 @@
       in {
         inherit androidGlibc;
         
-        # Fakechroot patched for Android glibc
-        androidFakechroot = let
-          fakechroot = basePkgs.fakechroot.overrideAttrs (oldAttrs: {
-            version = "unstable-2024-12-14";
-            src = basePkgs.fetchFromGitHub {
-              owner = "Wenri";
-              repo = "fakechroot";
-              rev = "cfc132d8c9b6a2cd34a00292be5ce8c5d5fb25e4";
-              hash = "sha256-ILcm0ZGkS46uIBr+aoAv3a5y9AGN9Y9/2HU7CsTL/gU=";
-            };
-            patches = [];
-          });
-        in basePkgs.runCommand "fakechroot-android" {
-          nativeBuildInputs = [ basePkgs.patchelf ];
-        } ''
-          echo "=== Building Android-patched fakechroot ==="
-          cp -rL ${fakechroot} $out
-          chmod -R u+w $out
-          
-          # Patch libfakechroot.so RUNPATH
-          for lib in $out/lib/fakechroot/libfakechroot.so; do
-            if [ -f "$lib" ]; then
-              echo "  Patching RUNPATH: $lib"
-              patchelf --set-rpath "${androidGlibc}/lib" "$lib" || true
-            fi
-          done
-          
-          # Patch executables
-          for bin in $out/bin/fakechroot $out/bin/ldd.fakechroot; do
-            if [ -f "$bin" ] && [ -x "$bin" ]; then
-              if patchelf --print-interpreter "$bin" 2>/dev/null | grep -q ld-linux; then
-                echo "  Patching: $bin"
-                patchelf \
-                  --set-interpreter "${androidGlibc}/lib/ld-linux-aarch64.so.1" \
-                  --set-rpath "${androidGlibc}/lib" \
-                  "$bin" 2>/dev/null || true
-              fi
-            fi
-          done
-          
-          echo "=== Done ==="
-        '';
+        # Fakechroot with compile-time hardcoded paths (uses separate module)
+        androidFakechroot = import ./common/overlays/fakechroot.nix {
+          inherit (basePkgs) stdenv patchelf fakechroot;
+          inherit androidGlibc installationDir;
+          src = ./submodules/fakechroot;
+        };
       } else {};
     in
       (lib.mapAttrs (hostname: _:
@@ -501,6 +436,7 @@
     lib = {
       aarch64-linux = let
         basePkgs = mkPkgs "aarch64-linux";
+        installationDir = "/data/data/com.termux.nix/files/usr";
         glibcOverlay = import ./common/overlays/glibc.nix {
           glibcSrc = ./submodules/glibc;
         } basePkgs basePkgs;
@@ -509,32 +445,12 @@
       in {
         inherit androidGlibc;
         
-        # Android-patched fakechroot with elfloader audit/preload support
-        androidFakechroot = let
-          fakechroot = basePkgs.fakechroot.overrideAttrs (oldAttrs: {
-            version = "unstable-2024-12-14";
-            src = basePkgs.fetchFromGitHub {
-              owner = "Wenri";
-              repo = "fakechroot";
-              rev = "cfc132d8c9b6a2cd34a00292be5ce8c5d5fb25e4";
-              hash = "sha256-ILcm0ZGkS46uIBr+aoAv3a5y9AGN9Y9/2HU7CsTL/gU=";
-            };
-            patches = [];
-          });
-        in basePkgs.runCommand "fakechroot-android" {
-          nativeBuildInputs = [ basePkgs.patchelf ];
-        } ''
-          cp -rL ${fakechroot} $out
-          chmod -R u+w $out
-          for lib in $out/lib/fakechroot/libfakechroot.so; do
-            [ -f "$lib" ] && patchelf --set-rpath "${androidGlibc}/lib" "$lib" || true
-          done
-          for bin in $out/bin/fakechroot $out/bin/ldd.fakechroot; do
-            if [ -f "$bin" ] && patchelf --print-interpreter "$bin" 2>/dev/null | grep -q ld-linux; then
-              patchelf --set-interpreter "${androidGlibc}/lib/ld-linux-aarch64.so.1" --set-rpath "${androidGlibc}/lib" "$bin" 2>/dev/null || true
-            fi
-          done
-        '';
+        # Android-patched fakechroot with compile-time hardcoded paths (uses separate module)
+        androidFakechroot = import ./common/overlays/fakechroot.nix {
+          inherit (basePkgs) stdenv patchelf fakechroot;
+          inherit androidGlibc installationDir;
+          src = ./submodules/fakechroot;
+        };
         
         # Function to patch a package to use Android glibc
         patchPackageForAndroidGlibc = pkg: basePkgs.runCommand "${pkg.pname or pkg.name or "package"}-android-glibc" ({

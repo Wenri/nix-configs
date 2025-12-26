@@ -10,10 +10,13 @@
     # This allows using binary cache for all other packages while using custom glibc at runtime.
     # Patches preserved in ./glibc.nix and ./patches/glibc-termux/.
 
+    # NOTE: fakechroot for Android is now built with compile-time hardcoded paths in flake.nix.
+    # The androidFakechroot package has all FAKECHROOT_ANDROID_* macros defined at build time.
+    # See submodules/fakechroot/src/android-config.h for the required compile-time definitions.
+
     fcitx5-rime-lua = prev.fcitx5-rime.overrideAttrs (_: {
       buildInputs = [prev.fcitx5 final.librime-lua];
     });
-    fakechroot = prev.fakechroot.overrideAttrs (import ./fakechroot.nix final);
   };
 
   # When applied, the unstable nixpkgs set (declared in the flake inputs) will

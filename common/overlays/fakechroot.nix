@@ -1,50 +1,67 @@
-# Fakechroot from Wenri's fork with elfloader audit/preload support
-# Built against Android glibc for nix-on-droid compatibility
-final: oldAttrs: let
-  # Get Android glibc from flake outputs (must be passed via specialArgs or pkgs)
-  androidGlibcLib = "/data/data/com.termux.nix/files/usr/nix/store/4c9dx2bn6wyjq5kz4x0smbfkvdr0c2qh-glibc-android-2.40-66/lib";
-  isAndroid = (final.stdenv.hostPlatform.system or final.system) == "aarch64-linux";
-in {
-  version = "unstable-2024-12-14";
-  src = final.fetchFromGitHub {
-    owner = "Wenri";
-    repo = "fakechroot";
-    rev = "cfc132d8c9b6a2cd34a00292be5ce8c5d5fb25e4";
-    hash = "sha256-ILcm0ZGkS46uIBr+aoAv3a5y9AGN9Y9/2HU7CsTL/gU=";
-  };
+# Android-patched fakechroot with compile-time hardcoded configuration
+# All paths are baked in at build time - no environment variable fallback
+#
+# Required parameters:
+#   androidGlibc    - Android-patched glibc package
+#   installationDir - Base installation directory (e.g., /data/data/com.termux.nix/files/usr)
+#   excludePath     - Colon-separated paths to exclude from translation
+#
+# Example usage:
+#   androidFakechroot = import ./fakechroot.nix {
+#     inherit (pkgs) stdenv fetchFromGitHub patchelf fakechroot;
+#     androidGlibc = myAndroidGlibc;
+#     installationDir = "/data/data/com.termux.nix/files/usr";
+#     excludePath = "/data:/proc:/sys:/dev:/system:/apex:/vendor:/linkerconfig";
+#     src = ./submodules/fakechroot;  # Local source
+#   };
+{
+  stdenv,
+  patchelf,
+  fakechroot,
+  androidGlibc,
+  installationDir,
+  excludePath ? "/data:/proc:/sys:/dev:/system:/apex:/vendor:/linkerconfig",
+  src,
+}: let
+  # Compute absolute paths with Android prefix
+  androidGlibcAbs = "${installationDir}${androidGlibc}/lib";
+  androidLdso = "${androidGlibcAbs}/ld-linux-aarch64.so.1";
+in
+  fakechroot.overrideAttrs (oldAttrs: {
+    pname = "fakechroot-android";
+    version = "unstable-local";
+    inherit src;
+    patches = [];
 
-  # No additional patches needed - our changes are in the fork
-  patches = [];
+    nativeBuildInputs = (oldAttrs.nativeBuildInputs or []) ++ [patchelf];
 
-  # Add patchelf for RUNPATH patching on Android
-  nativeBuildInputs = (oldAttrs.nativeBuildInputs or []) ++ 
-    (if isAndroid then [ final.patchelf ] else []);
+    # Pass all Android paths as compile-time constants
+    # These are hardcoded into the binary - no env var fallback
+    NIX_CFLAGS_COMPILE = builtins.concatStringsSep " " [
+      (oldAttrs.NIX_CFLAGS_COMPILE or "")
+      ''-DFAKECHROOT_ANDROID_ELFLOADER="\"${androidLdso}\""''
+      ''-DFAKECHROOT_ANDROID_LIBRARY_PATH="\"${androidGlibcAbs}\""''
+      ''-DFAKECHROOT_ANDROID_PRELOAD="\"${installationDir}${placeholder "out"}/lib/fakechroot/libfakechroot.so\""''
+      ''-DFAKECHROOT_ANDROID_BASE="\"${installationDir}\""''
+      ''-DFAKECHROOT_ANDROID_EXCLUDE_PATH="\"${excludePath}\""''
+    ];
 
-  # Patch RUNPATH to use Android glibc on aarch64-linux
-  postFixup = (oldAttrs.postFixup or "") + (if isAndroid then ''
-    echo "=== Patching fakechroot for Android glibc ==="
-    
-    # Patch libfakechroot.so
-    for lib in $out/lib/fakechroot/libfakechroot.so; do
-      if [ -f "$lib" ]; then
-        echo "  Patching RUNPATH: $lib"
-        ${final.patchelf}/bin/patchelf --set-rpath "${androidGlibcLib}" "$lib" || true
-      fi
-    done
-    
-    # Patch the fakechroot binary if it exists
-    for bin in $out/bin/fakechroot $out/bin/ldd.fakechroot; do
-      if [ -f "$bin" ] && [ -x "$bin" ]; then
-        if ${final.patchelf}/bin/patchelf --print-interpreter "$bin" 2>/dev/null | grep -q ld-linux; then
-          echo "  Patching interpreter and RUNPATH: $bin"
-          ${final.patchelf}/bin/patchelf \
-            --set-interpreter "${androidGlibcLib}/ld-linux-aarch64.so.1" \
-            --set-rpath "${androidGlibcLib}" \
-            "$bin" 2>/dev/null || true
-        fi
-      fi
-    done
-    
-    echo "=== Fakechroot Android patching complete ==="
-  '' else "");
-}
+    # Patch RPATH and interpreter for Android glibc
+    postFixup =
+      (oldAttrs.postFixup or "")
+      + ''
+        echo "=== Patching fakechroot for Android glibc ==="
+        for lib in $out/lib/fakechroot/libfakechroot.so; do
+          if [ -f "$lib" ]; then
+            patchelf --set-rpath "${androidGlibcAbs}" "$lib" || true
+            echo "  Patched RPATH: $lib"
+          fi
+        done
+        for bin in $out/bin/fakechroot $out/bin/ldd.fakechroot; do
+          if [ -f "$bin" ] && patchelf --print-interpreter "$bin" 2>/dev/null | grep -q ld-linux; then
+            patchelf --set-interpreter "${androidLdso}" --set-rpath "${androidGlibcAbs}" "$bin" 2>/dev/null || true
+            echo "  Patched: $bin"
+          fi
+        done
+      '';
+  })
