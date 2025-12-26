@@ -42,11 +42,12 @@ in
 
     # Pass Android paths as compile-time constants
     # Note: LIBRARY_PATH and PRELOAD removed - ld.so handles these now
+    # Use regular strings with \" escape (not ''..'' which doesn't escape)
     NIX_CFLAGS_COMPILE = builtins.concatStringsSep " " [
       (oldAttrs.NIX_CFLAGS_COMPILE or "")
-      ''-DANDROID_ELFLOADER="\"${androidLdso}\""''
-      ''-DANDROID_BASE="\"${installationDir}\""''
-      ''-DANDROID_EXCLUDE_PATH="\"${excludePath}\""''
+      "-DANDROID_ELFLOADER=\"${androidLdso}\""
+      "-DANDROID_BASE=\"${installationDir}\""
+      "-DANDROID_EXCLUDE_PATH=\"${excludePath}\""
     ];
 
     # Patch RPATH and interpreter for Android glibc

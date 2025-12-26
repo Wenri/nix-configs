@@ -165,7 +165,7 @@ in {
       # Note: Use env.NIX_CFLAGS_COMPILE for newer nixpkgs compatibility
       env = (oldAttrs.env or {}) // {
         NIX_CFLAGS_COMPILE = (oldAttrs.env.NIX_CFLAGS_COMPILE or "") +
-          '' -DANDROID_GLIBC_LIB="\"${nixOnDroidPrefix}${builtins.placeholder "out"}/lib\""'';
+          " -DANDROID_GLIBC_LIB=\"${nixOnDroidPrefix}${builtins.placeholder "out"}/lib\"";
       };
 
       # Disable separateDebugInfo to avoid output cycles
