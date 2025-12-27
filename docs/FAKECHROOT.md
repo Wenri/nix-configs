@@ -156,7 +156,31 @@ The fakechroot source in `submodules/fakechroot/` has been modified from upstrea
 
 This ensures login shells correctly detect their status without parsing `-z` as an invalid option.
 
-### 2. readlink Buffer Overflow Fix
+### 2. Hashbang Script Path Fix
+
+**Problem:** When executing hashbang scripts (e.g., `#!/bin/bash`), fakechroot was passing `argv[0]` (the command name like "claude") instead of the actual script path to the interpreter.
+
+**Symptom:**
+```bash
+$ FAKECHROOT_DEBUG=1 claude --version
+# Shows infinite loop: bash is invoked, searches PATH, finds claude, loops
+```
+
+**Cause:** The hashbang handling code was doing:
+```c
+newargv[n++] = argv0;  // WRONG: passes "claude" instead of script path
+```
+
+**Fix:** Pass the expanded script path instead:
+```c
+newargv[n++] = filename;  // Correct: passes "/path/to/.claude-wrapped"
+```
+
+**Files modified:**
+- `submodules/fakechroot/src/execve.c`
+- `submodules/fakechroot/src/posix_spawn.c`
+
+### 3. Readlink Buffer Overflow Fix
 
 **Problem:** Buffer overflow in readlink wrapper functions. When reading symlinks to nix store paths (76+ characters like `/nix/store/pyh11hxaclcdq4qhl7zn2c1jq0b0s2mp-glibc-android-2.40-android/lib`), fakechroot was copying the full path into smaller caller buffers (e.g., 64 bytes) without checking size, causing heap metadata corruption.
 
@@ -189,7 +213,7 @@ else {
 - `submodules/fakechroot/src/__readlinkat_chk.c`
 - `submodules/fakechroot/src/readlinkat.c`
 
-### 3. va_start/va_end Fix
+### 4. va_start/va_end Fix
 
 **Problem:** In `libfakechroot.c`, the `fakechroot_debug()` function called `va_start()` then returned early without `va_end()`, causing undefined behavior.
 
@@ -220,7 +244,7 @@ LOCAL int fakechroot_debug (const char *fmt, ...) {
 **File modified:**
 - `submodules/fakechroot/src/libfakechroot.c`
 
-### 4. Static Storage for Exclude List
+### 5. Static Storage for Exclude List
 
 **Problem:** Using `malloc()` in library constructor on Android was unreliable.
 
