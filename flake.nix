@@ -343,8 +343,6 @@
             build.patchPackageForAndroidGlibc = patchPackageForAndroidGlibc;
 
             # Create ld.so.preload for automatic libfakechroot loading
-            # This tells ld.so to always preload libfakechroot.so
-            # Path must use Android prefix since ld.so runs before fakechroot
             environment.etc."ld.so.preload".text = ''
               ${installationDir}${androidFakechroot}/lib/fakechroot/libfakechroot.so
             '';

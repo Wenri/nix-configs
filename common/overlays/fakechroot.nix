@@ -50,17 +50,12 @@ in
       "-DANDROID_EXCLUDE_PATH=\"${excludePath}\""
     ];
 
-    # Patch RPATH and interpreter for Android glibc
+    # Patch interpreter for Android glibc binaries only
+    # Note: libfakechroot.so doesn't need RPATH - ld.so redirects all glibc paths anyway
     postFixup =
       (oldAttrs.postFixup or "")
       + ''
         echo "=== Patching fakechroot for Android glibc ==="
-        for lib in $out/lib/fakechroot/libfakechroot.so; do
-          if [ -f "$lib" ]; then
-            patchelf --set-rpath "${androidGlibcAbs}" "$lib" || true
-            echo "  Patched RPATH: $lib"
-          fi
-        done
         for bin in $out/bin/fakechroot $out/bin/ldd.fakechroot; do
           if [ -f "$bin" ] && patchelf --print-interpreter "$bin" 2>/dev/null | grep -q ld-linux; then
             patchelf --set-interpreter "${androidLdso}" --set-rpath "${androidGlibcAbs}" "$bin" 2>/dev/null || true

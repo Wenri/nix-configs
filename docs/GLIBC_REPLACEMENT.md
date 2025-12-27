@@ -1,6 +1,6 @@
 # glibc Replacement Strategy for nix-on-droid
 
-> **Last Updated:** December 26, 2024
+> **Last Updated:** December 27, 2024
 > **glibc Version:** 2.40 (from nixpkgs-unstable)
 > **Target Platform:** aarch64-linux (Android/Termux)
 
@@ -563,6 +563,26 @@ bash: ./binary: cannot execute binary file: Exec format error
 **Cause:** Wrong architecture (x86_64 binary on aarch64)
 
 **Solution:** Ensure you're building for `aarch64-linux`
+
+#### "malloc(): corrupted top size" Error
+
+**Symptom:**
+```bash
+$ nix-on-droid switch --flake .
+...
+Rewriting user-environment symlinks for outside-proot access
+malloc(): corrupted top size
+```
+
+**Cause:** Buffer overflow in fakechroot's readlink wrapper functions. When reading symlinks to nix store paths (which can be 76+ characters like `/nix/store/pyh11hxaclcdq4qhl7zn2c1jq0b0s2mp-glibc-android-2.40-android/lib`), fakechroot was copying the full path into smaller caller buffers (e.g., 64 bytes) without checking the size, causing heap metadata corruption.
+
+**Solution:** This was fixed in the fakechroot source (`submodules/fakechroot/src/`):
+- `__readlink_chk.c` - Added buffer size check in else branch
+- `__readlinkat_chk.c` - Same fix
+- `readlinkat.c` - Same fix
+- `libfakechroot.c` - Fixed va_start/va_end bug and replaced malloc with static storage in constructor
+
+If you see this error, ensure you're using the latest fakechroot source from the submodule.
 
 ### Debugging Commands
 
