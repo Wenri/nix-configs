@@ -250,8 +250,8 @@ The unified flake follows a modernized architecture:
 - Shared packages from `common/packages.nix` (not home-manager)
 - `self.submodules = true` for git submodule support
 - See `docs/NIX-ON-DROID.md` for detailed configuration guide
-- See `docs/GLIBC_REPLACEMENT.md` for Android glibc technical details
-- See `docs/TERMUX-PATCHES.md` for patch documentation
+- See `docs/ANDROID-GLIBC.md` for Android glibc and Termux patches
+- See `docs/FAKECHROOT.md` for libfakechroot modifications
 
 **WSL (wslnix):**
 - NixOS-WSL integration for Windows development
@@ -429,9 +429,9 @@ nixos-anywhere --flake '.#freenix' \
 
 ```
 docs/
-├── GLIBC_REPLACEMENT.md   # Android glibc patching strategy and technical details
-├── NIX-ON-DROID.md        # nix-on-droid installation, configuration, and usage
-└── TERMUX-PATCHES.md      # Detailed documentation of all Termux glibc patches
+├── NIX-ON-DROID.md        # Overview: installation, configuration, architecture, usage
+├── ANDROID-GLIBC.md       # Android glibc: Termux patches, ld.so path translation, build
+└── FAKECHROOT.md          # libfakechroot: modifications, integration, troubleshooting
 
 CLAUDE.md                  # This file - AI assistant guidance (root level)
 README.md                  # Project README
@@ -441,9 +441,9 @@ README.md                  # Project README
 
 | Document | Topics Covered |
 |----------|---------------|
-| **GLIBC_REPLACEMENT.md** | Android seccomp restrictions, patchelf strategy, building androidGlibc, troubleshooting |
-| **NIX-ON-DROID.md** | Installation, module structure, services (SSH, Shizuku), home-manager integration |
-| **TERMUX-PATCHES.md** | All 28 patches explained, source files, helper scripts, updating patches |
+| **NIX-ON-DROID.md** | Architecture overview, installation, module structure, services (SSH, Shizuku) |
+| **ANDROID-GLIBC.md** | Android seccomp, Termux patches, ld.so built-in path translation, building glibc |
+| **FAKECHROOT.md** | libfakechroot as LD_PRELOAD library, argv[0] fix, readlink buffer overflow fix |
 
 ## Android-Specific (nix-on-droid)
 

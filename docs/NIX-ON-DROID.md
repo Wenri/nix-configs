@@ -1,6 +1,6 @@
 # Nix-on-Droid Configuration Guide
 
-> **Last Updated:** December 2024
+> **Last Updated:** December 27, 2024
 > **Platform:** Android/Termux (aarch64-linux)
 > **Nix Version:** nixpkgs-unstable
 
@@ -14,8 +14,7 @@
 6. [Services](#services)
 7. [Home Manager Integration](#home-manager-integration)
 8. [Troubleshooting](#troubleshooting)
-9. [Advanced Topics](#advanced-topics)
-10. [Related Documentation](#related-documentation)
+9. [Related Documentation](#related-documentation)
 
 ---
 
@@ -28,7 +27,7 @@ This repository provides a comprehensive nix-on-droid configuration that enables
 | Feature | Description |
 |---------|-------------|
 | **Android-patched glibc** | Custom glibc 2.40 with Termux patches for Android kernel compatibility |
-| **Binary cache support** | Uses patchelf to rewrite binaries instead of rebuilding everything |
+| **Binary cache support** | ld.so built-in path translation instead of rebuilding packages |
 | **Home-manager integration** | Full home-manager support with shared modules from `common/` |
 | **Unified infrastructure** | Same tools, packages, and configuration as desktop/server hosts |
 | **Modular design** | Separate modules for SSH, locale, Shizuku, and Android integration |
@@ -57,6 +56,38 @@ This repository provides a comprehensive nix-on-droid configuration that enables
 
 ## Architecture
 
+### How It Works
+
+nix-on-droid uses a **layered approach** to run Nix packages on Android:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        Application                               │
+│                            │                                     │
+│                            ▼                                     │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │  libfakechroot.so (LD_PRELOAD via ld.so.preload)          │  │
+│  │  • Path translation: /nix/store → /data/.../nix/store     │  │
+│  │  • Chroot virtualization                                   │  │
+│  │  See: FAKECHROOT.md                                        │  │
+│  └───────────────────────────────────────────────────────────┘  │
+│                            │                                     │
+│                            ▼                                     │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │  Android glibc (ld.so with built-in features)              │  │
+│  │  • Termux patches for blocked syscalls                     │  │
+│  │  • RPATH translation in decompose_rpath()                  │  │
+│  │  • Standard glibc → Android glibc redirection              │  │
+│  │  See: ANDROID-GLIBC.md                                     │  │
+│  └───────────────────────────────────────────────────────────┘  │
+│                            │                                     │
+│                            ▼                                     │
+│                    Android Kernel (seccomp)                      │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Key insight:** Most packages come from the Nix binary cache unchanged. The Android glibc's ld.so automatically redirects library paths at runtime, so no patchelf or rebuilding is needed!
+
 ### Flake Structure
 
 ```
@@ -65,7 +96,8 @@ flake.nix
 │   ├── default                    # Standard nix-on-droid config
 │   └── nix-on-droid              # Named config
 ├── packages.aarch64-linux
-│   └── androidGlibc              # Android-patched glibc 2.40
+│   ├── androidGlibc              # Android-patched glibc 2.40
+│   └── androidFakechroot         # Android-patched fakechroot
 └── lib.aarch64-linux
     ├── androidGlibc              # Exported glibc package
     └── patchPackageForAndroidGlibc  # Function to patch any package
@@ -85,31 +117,12 @@ common/modules/nix-on-droid/
 hosts/nix-on-droid/
 ├── configuration.nix             # System configuration
 └── home.nix                      # Home-manager configuration
-```
 
-### Configuration Flow
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                         flake.nix                               │
-│  mkNixOnDroidConfiguration { hostname, system, username }       │
-│                              │                                  │
-│  ┌───────────────────────────┼───────────────────────────────┐ │
-│  │                           ▼                               │ │
-│  │  hosts/nix-on-droid/configuration.nix                    │ │
-│  │    imports:                                               │ │
-│  │      - outputs.nixOnDroidModules.base                    │ │
-│  │      - outputs.nixOnDroidModules.android-integration     │ │
-│  │      - outputs.nixOnDroidModules.sshd                    │ │
-│  │      - outputs.nixOnDroidModules.locale                  │ │
-│  │      - outputs.nixOnDroidModules.shizuku                 │ │
-│  │                           │                               │ │
-│  │                           ▼                               │ │
-│  │  home-manager.config = ./home.nix                        │ │
-│  │    imports:                                               │ │
-│  │      - outputs.homeModules.core.default                  │ │
-│  └───────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────┘
+submodules/
+├── fakechroot/                   # Android-patched fakechroot source
+├── glibc/                        # Pre-patched glibc source (release/2.40)
+├── nix-on-droid/                 # nix-on-droid source (fork)
+└── secrets/                      # Secrets repository
 ```
 
 ---
@@ -151,12 +164,6 @@ cd ~/.config/nix-on-droid
 git submodule update --init --recursive
 ```
 
-**Note:** This repository uses git submodules for:
-- `submodules/fakechroot` - Android-patched fakechroot
-- `submodules/glibc` - GNU C Library (release/2.40/master)
-- `submodules/nix-on-droid` - nix-on-droid source
-- `submodules/secrets` - Secrets repository
-
 ### Step 4: Apply Configuration
 
 ```bash
@@ -171,7 +178,6 @@ nix-on-droid switch --flake .
 ### Step 5: Restart Shell
 
 ```bash
-# Log out and back in, or:
 exec zsh
 ```
 
@@ -235,22 +241,6 @@ in {
     sshd-start = "~/.termux/boot/start-sshd";
     sshd-stop = "pkill -f 'sshd -f'";
   };
-}
-```
-
-### Package Lists
-
-Packages are defined in `common/packages.nix` and imported by modules:
-
-```nix
-{ pkgs }: {
-  coreUtils = with pkgs; [ procps killall diffutils findutils ... ];
-  compression = with pkgs; [ bzip2 gzip xz zip unzip zstd p7zip ];
-  networkTools = with pkgs; [ curl wget openssh iproute2 ... ];
-  systemTools = with pkgs; [ glibc.bin hostname man htop lsof ... ];
-  editors = with pkgs; [ neovim ];
-  modernCli = with pkgs; [ ripgrep fd bat eza fzf yq ];
-  devTools = with pkgs; [ jq gnumake binutils gcc ];
 }
 ```
 
@@ -333,25 +323,12 @@ sshd-stop
 
 # Connect from another device
 ssh -p 8022 user@device-ip
-
-# Auto-start on boot (via Termux:Boot)
-# Requires ~/.termux/boot/start-sshd script
 ```
 
 ### Shizuku Integration
 
-[Shizuku](https://shizuku.rikka.app/) provides a way to run commands with ADB permissions. The `rish` shell is configured via `common/modules/nix-on-droid/shizuku.nix`:
+[Shizuku](https://shizuku.rikka.app/) provides a way to run commands with ADB permissions:
 
-```nix
-{
-  programs.shizuku = {
-    enable = true;
-    # Provides 'rish' command when Shizuku is running
-  };
-}
-```
-
-**Usage:**
 ```bash
 # Start Shizuku app first, then:
 rish
@@ -362,8 +339,7 @@ rish -c "pm list packages"
 
 ### Termux Integration
 
-Android environment variables and Termux tools are handled by `common/modules/nix-on-droid/android-integration.nix`:
-
+Android environment variables and Termux tools are handled by `android-integration.nix`:
 - Provides access to `termux-*` commands
 - Sets up Android environment variables
 - Handles clipboard integration
@@ -373,8 +349,6 @@ Android environment variables and Termux tools are handled by `common/modules/ni
 ## Home Manager Integration
 
 ### Shared Modules
-
-The nix-on-droid configuration imports shared home-manager modules:
 
 | Module | Path | Description |
 |--------|------|-------------|
@@ -392,25 +366,6 @@ The nix-on-droid configuration imports shared home-manager modules:
   imports = [
     outputs.homeModules.core.default  # Imports all core modules
   ];
-  
-  # Or import individual modules:
-  # imports = [
-  #   outputs.homeModules.core.git
-  #   outputs.homeModules.core.zsh
-  # ];
-}
-```
-
-### Adding Desktop Modules
-
-Desktop modules are NOT imported by default (no GUI on Android), but you can import specific ones if needed:
-
-```nix
-{ outputs, ... }: {
-  imports = [
-    outputs.homeModules.core.default
-    # outputs.homeModules.desktop.emacs  # If you want Emacs config
-  ];
 }
 ```
 
@@ -420,89 +375,12 @@ Desktop modules are NOT imported by default (no GUI on Android), but you can imp
 
 ### Common Issues
 
-#### "Bad system call" Error
-
-**Symptom:**
-```bash
-$ ./some-binary
-Bad system call (core dumped)
-```
-
-**Cause:** Binary uses syscalls blocked by Android seccomp
-
-**Solutions:**
-1. Most packages work under proot (default nix-on-droid environment)
-2. For specific packages, use `patchPackageForAndroidGlibc`:
-   ```nix
-   { patchPackageForAndroidGlibc, pkgs, ... }: {
-     environment.packages = [
-       (patchPackageForAndroidGlibc pkgs.problematic-package)
-     ];
-   }
-   ```
-
-#### Build Fails with "out of space"
-
-**Symptom:** Build fails with disk space errors
-
-**Solutions:**
-```bash
-# Free up space
-nix-collect-garbage -d
-
-# Check available space
-df -h /data
-
-# Move Nix store (advanced)
-# See: https://github.com/nix-community/nix-on-droid/wiki/FAQ
-```
-
-#### Home-manager Activation Errors
-
-**Symptom:** `error: collision between ... and ...`
-
-**Solutions:**
-```bash
-# Check for conflicting files
-ls -la ~/.config/
-
-# Remove old backups
-find ~ -name "*.hm-bak" -delete
-
-# Force rebuild
-nix-on-droid switch --flake . --recreate-lock-file
-```
-
-#### SSH Connection Refused
-
-**Symptom:** Can't connect via SSH
-
-**Checklist:**
-1. Is SSH server running? `pgrep -f sshd`
-2. Is the port correct? Default is 8022
-3. Is the device on the same network?
-4. Are authorized_keys correct? Check `~/.ssh/authorized_keys`
-
-```bash
-# Manually start SSH
-sshd-start
-
-# Check listening ports
-netstat -tlnp | grep 8022
-```
-
-#### Android Environment Variables Missing
-
-**Symptom:** `$ANDROID_ROOT` or `$TERMUX_*` not set in SSH sessions
-
-**Solution:** This is handled by `envExtra` in home.nix:
-```nix
-programs.zsh.envExtra = ''
-  if [ -z "$ANDROID_ROOT" ] && [ -f "/.../termux.env" ]; then
-    eval "$(grep -v -E '^export (PATH|HOME|...)=' "/.../termux.env")"
-  fi
-'';
-```
+| Issue | Solution |
+|-------|----------|
+| "Bad system call" | Android glibc not being used - check ld.so.preload |
+| Build fails "out of space" | Run `nix-collect-garbage -d` |
+| SSH connection refused | Check `pgrep -f sshd`, verify port 8022 |
+| malloc corruption | Update fakechroot from submodule |
 
 ### Debugging Commands
 
@@ -524,179 +402,21 @@ nix flake check
 nix flake show
 ```
 
----
+### Debug Hook
 
-## Advanced Topics
-
-### Fakechroot Login (Integrated)
-
-nix-on-droid now uses **fakechroot** instead of proot for the `/bin/login` script. This is automatically configured during `nix-on-droid switch` and provides better performance.
-
-#### How It Works
-
-The login script uses:
-1. **Android-patched glibc** - Custom glibc 2.40 with Termux patches
-2. **pack-audit.so** - rtld-audit library that rewrites `/nix/store/...` paths to absolute paths
-3. **libfakechroot.so** - Intercepts filesystem syscalls for path translation
-4. **FAKECHROOT_ELFLOADER_*** - Environment variables to propagate audit/preload to child processes
-
-#### Key Components
-
-| Component | Location | Purpose |
-|-----------|----------|---------|
-| Login script | `/bin/login` | Generated by nix-on-droid, uses fakechroot |
-| pack-audit.so | Nix store | Rewrites `/nix/store` → full absolute path |
-| libfakechroot.so | Nix store | Filesystem path translation |
-| Android glibc | Nix store | glibc with Android kernel compatibility |
-| login-debug.sh | `~/.config/nix-on-droid/` | User-modifiable debug hook |
-
-#### RPATH Configuration
-
-All libraries use **absolute paths** in RPATH so they work outside proot:
-```
-/data/data/com.termux.nix/files/usr/nix/store/...-glibc-android-.../lib
-```
-
-This allows the login to work from both inside proot and directly from Termux.
-
-#### Debug Hook
-
-To debug login issues without rebuilding, edit `~/.config/nix-on-droid/login-debug.sh`:
+For login issues, edit `~/.config/nix-on-droid/login-debug.sh`:
 
 ```bash
 #!/system/bin/sh
-# Sourced at the very beginning of /bin/login
+# Sourced at the beginning of /bin/login
 
-# Enable verbose pack-audit output
-export PACK_AUDIT_DEBUG=1
+# Enable verbose output
+export FAKECHROOT_DEBUG=1
 
-# Print debug info
 echo "DEBUG: login starting" >&2
-
-# Abort login early if needed
-# exit 0
 ```
 
-Changes take effect immediately on next login.
-
-#### Flake Configuration
-
-The fakechroot components are built in `flake.nix`:
-
-```nix
-# Android-patched fakechroot with absolute RPATH
-androidFakechroot = ...;
-
-# pack-audit.so with absolute RPATH
-packAuditLib = basePkgs.runCommand "pack-audit" { ... } ''
-  gcc -shared -fPIC -O2 -Wall \
-    -Wl,-rpath,"${installationDir}${androidGlibc}/lib" \
-    -o $out/lib/pack-audit.so \
-    $src ...
-'';
-```
-
-#### Build Options (nix-on-droid modules)
-
-New build options in `submodules/nix-on-droid/modules/build/config.nix`:
-
-| Option | Type | Description |
-|--------|------|-------------|
-| `build.androidGlibc` | package | Android-patched glibc |
-| `build.standardGlibc` | package | Standard glibc for path redirection |
-| `build.androidFakechroot` | package | Android-patched fakechroot |
-| `build.packAuditLib` | path | Path to pack-audit.so |
-| `build.bashInteractive` | package | Bash for login shell |
-
-#### Comparing with proot
-
-The original proot login script is preserved at `scripts/login-proot` for reference.
-
-| Feature | proot | fakechroot |
-|---------|-------|------------|
-| Performance | Slower (syscall emulation) | Faster (library interception) |
-| Compatibility | More compatible | Requires Android glibc |
-| Setup | Simpler | Requires RPATH configuration |
-| Binary patching | Not needed | Needs absolute paths |
-
-#### Fakechroot Modifications
-
-The fakechroot source in `submodules/fakechroot/` has been modified to properly handle login shells:
-
-**Problem:** When using `ld.so --argv0` to set the program name (e.g., `-zsh` for login shells), fakechroot was incorrectly:
-1. Using the executable's path instead of the original `argv[0]` for `--argv0`
-2. Copying the original `argv[0]` as a regular argument, causing shells to see `-zsh` as both the program name and an option
-
-**Fix:** Modified `execve.c` and `posix_spawn.c` to:
-1. Use the original `argv[0]` (not the executable path) for `ld.so --argv0`
-2. Skip `argv[0]` when copying arguments if `--argv0` is used
-
-This ensures login shells (invoked with `-zsh` or `-bash`) correctly recognize themselves as login shells without parsing `-z` as an invalid option.
-
-**Technical Details:**
-- Modified files: `submodules/fakechroot/src/execve.c`, `submodules/fakechroot/src/posix_spawn.c`
-- The fix preserves the original `argv[0]` semantics while allowing `ld.so` to set a different program name
-- Critical for shells that check `argv[0][0] == '-'` to determine login shell status
-
-### Android glibc Patching
-
-See [GLIBC_REPLACEMENT.md](./GLIBC_REPLACEMENT.md) for detailed information on:
-- How the Android glibc patches work
-- Using `patchPackageForAndroidGlibc`
-- Building custom patched packages
-
-### Custom Packages
-
-Add packages to `common/pkgs/`:
-
-```bash
-mkdir -p common/pkgs/my-package
-cat > common/pkgs/my-package/default.nix << 'EOF'
-{ pkgs }: pkgs.stdenv.mkDerivation {
-  pname = "my-package";
-  version = "1.0";
-  # ...
-}
-EOF
-```
-
-Then use: `nix build .#my-package`
-
-### Multiple Configurations
-
-You can have multiple nix-on-droid configurations:
-
-```nix
-# In flake.nix
-nixOnDroidConfigurations = {
-  default = mkNixOnDroidConfiguration { ... };
-  minimal = mkNixOnDroidConfiguration { ... };  # Add another
-};
-```
-
-Switch between them:
-```bash
-nix-on-droid switch --flake .#minimal
-```
-
-### Termux:Boot Auto-Start
-
-To start services on device boot:
-
-1. Install Termux:Boot from F-Droid
-2. Create `~/.termux/boot/` directory
-3. Add executable scripts
-
-The SSH auto-start script is created by the `sshd` module.
-
-### Cross-Compilation
-
-Building for aarch64-linux on x86_64:
-
-```bash
-# On x86_64 system with binfmt configured
-nix build .#androidGlibc --system aarch64-linux
-```
+Changes take effect on next login.
 
 ---
 
@@ -704,10 +424,9 @@ nix build .#androidGlibc --system aarch64-linux
 
 | Document | Description |
 |----------|-------------|
-| [GLIBC_REPLACEMENT.md](./GLIBC_REPLACEMENT.md) | Android glibc technical details |
-| [TERMUX-PATCHES.md](./TERMUX-PATCHES.md) | Termux patch documentation |
+| [ANDROID-GLIBC.md](./ANDROID-GLIBC.md) | Android glibc patches, build process, ld.so path translation |
+| [FAKECHROOT.md](./FAKECHROOT.md) | libfakechroot modifications, integration with glibc |
 | [../CLAUDE.md](../CLAUDE.md) | Repository overview for AI assistants |
-| [../README.md](../README.md) | Main project README |
 
 ### External Resources
 
