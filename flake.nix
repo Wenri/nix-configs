@@ -271,7 +271,10 @@
               # This ensures wrapper scripts call their own patched binaries
               sed -i "s|$ORIG_STORE_PATH|$out|g" "$file"
               # Step 2: Prefix remaining /nix/store paths with Android prefix
-              sed -i "s|/nix/store|${installationDir}/nix/store|g" "$file"
+              # BUT skip if already prefixed (locally-built packages already have Android paths)
+              if ! grep -qF "${installationDir}/nix/store" "$file" 2>/dev/null; then
+                sed -i "s|/nix/store|${installationDir}/nix/store|g" "$file"
+              fi
             fi
           fi
         done || true

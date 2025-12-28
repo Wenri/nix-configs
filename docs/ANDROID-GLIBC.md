@@ -418,6 +418,28 @@ malloc(): corrupted top size
 
 If you see this error, ensure you're using the latest fakechroot source from the submodule.
 
+### Doubled Paths in Wrapper Scripts
+
+**Symptom:**
+```bash
+$ claude
+/data/data/com.termux.nix/files/usr/data/data/com.termux.nix/files/usr/nix/store/...
+# Notice the path is doubled!
+```
+
+**Cause:** The `patchPackageForAndroidGlibc` function in `flake.nix` uses `sed` to replace `/nix/store` with the Android prefix. When a package is built locally (not from binary cache), its scripts already contain the full Android-prefixed paths. The sed replacement was matching `/nix/store` within those already-prefixed paths, causing double-prefixing.
+
+**Solution:** The patching script now skips the prefix replacement if the file already contains Android-prefixed paths:
+
+```nix
+# Skip if already prefixed (locally-built packages already have Android paths)
+if ! grep -qF "${installationDir}/nix/store" "$file" 2>/dev/null; then
+  sed -i "s|/nix/store|${installationDir}/nix/store|g" "$file"
+fi
+```
+
+If you see this error, ensure you have the latest `flake.nix` with this check.
+
 ### Debugging Commands
 
 ```bash
