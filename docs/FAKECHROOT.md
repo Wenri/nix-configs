@@ -408,6 +408,70 @@ malloc(): corrupted top size
 
 **Solution:** Ensure you're using the modified fakechroot with argv[0] fix
 
+### posix_spawn Fails with SIGSYS (Exit Code 159)
+
+**Symptom:**
+```bash
+# Python subprocess fails
+$ python3 -c "import subprocess; subprocess.run(['bash', '-c', 'echo hi'])"
+# Exit code 159 (SIGSYS - bad system call)
+
+# But os.system works
+$ python3 -c "import os; os.system('bash -c \"echo hi\"')"
+hi
+```
+
+**Cause:** libfakechroot.so is linked against **standard glibc** instead of **Android glibc**. When fakechroot calls `nextcall(posix_spawn)`, it uses standard glibc's implementation which internally uses `clone3` syscall - blocked by Android's seccomp.
+
+**Diagnosis:**
+```bash
+# Check fakechroot's RUNPATH
+readelf -d /path/to/libfakechroot.so | grep RUNPATH
+
+# Bad (standard glibc):
+# RUNPATH: [/nix/store/xxx-glibc-2.40-66/lib]
+
+# Good (Android glibc):
+# RUNPATH: [/data/data/.../nix/store/xxx-glibc-android-2.40-android/lib]
+```
+
+**Root Cause:** The fakechroot Nix build uses `stdenv.mkDerivation` which defaults to standard glibc. When `libfakechroot.so` calls `nextcall(posix_spawn)`, it uses standard glibc's implementation which internally uses `clone3` syscall - blocked by Android's seccomp.
+
+**Fix (Implemented):** Patch `libfakechroot.so`'s RUNPATH in postFixup to prepend Android glibc:
+```nix
+# In common/overlays/fakechroot.nix postFixup:
+LIBFAKE="$out/lib/fakechroot/libfakechroot.so"
+NEW_RPATH="${androidGlibcAbs}:$OLD_RPATH"
+patchelf --set-rpath "$NEW_RPATH" "$LIBFAKE"
+```
+
+This ensures glibc functions (like `posix_spawn`) are resolved from Android glibc first, which uses `clone` instead of `clone3`.
+
+**Verification:**
+```bash
+# Check RUNPATH includes Android glibc first
+readelf -d /path/to/libfakechroot.so | grep RUNPATH
+# Should show: /data/data/.../glibc-android-.../lib:/nix/store/...-glibc-2.40-.../lib
+```
+
+**Workaround (Python - no longer needed):**
+```python
+# Force fork+exec instead of posix_spawn
+import subprocess
+subprocess.run(['cmd'], preexec_fn=lambda: None)  # preexec_fn forces fork mode
+```
+
+### Bus Error When Patching Live libfakechroot.so
+
+**Symptom:** After patching `/etc/ld.so.preload` library, all processes crash with bus error
+
+**Cause:** libfakechroot.so is memory-mapped by all running processes. Modifying it corrupts their memory.
+
+**Solution:** Never patch the live preload library. Instead:
+1. Build a new version
+2. Update ld.so.preload to point to new version
+3. Start new shell/processes to use new library
+
 ---
 
 ## References

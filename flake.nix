@@ -268,12 +268,20 @@
         done
         
         # Find and patch script files (hashbangs and /nix/store paths in content)
+        # IMPORTANT: First replace self-references (to original package) with $out,
+        # then prefix remaining /nix/store paths with Android installation directory
+        ORIG_STORE_PATH="${pkg}"  # Original package store path
+
         find $out -type f | while read -r file; do
           # Check if it's a text file with a hashbang
           if head -c 2 "$file" 2>/dev/null | grep -q "^#!"; then
-            # It's a script - patch /nix/store paths in the content
+            # It's a script - patch paths in the content
             if grep -q "/nix/store" "$file" 2>/dev/null; then
               echo "Patching script paths: $file"
+              # Step 1: Replace self-references (original package path) with $out
+              # This ensures wrapper scripts call their own patched binaries
+              sed -i "s|$ORIG_STORE_PATH|$out|g" "$file"
+              # Step 2: Prefix remaining /nix/store paths with Android prefix
               sed -i "s|/nix/store|${installationDir}/nix/store|g" "$file"
             fi
           fi
