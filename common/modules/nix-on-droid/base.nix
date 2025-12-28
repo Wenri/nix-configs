@@ -39,8 +39,11 @@ in {
   system.stateVersion = "24.05";
 
   # Set up nix for flakes
+  # Disable build-hook: the default is broken (ld.so __build-remote doesn't work)
+  # because __build-remote is a nix subcommand, not a program path
   nix.extraOptions = ''
     experimental-features = nix-command flakes
+    build-hook =
   '';
 
   # User configuration (uses username from flake)

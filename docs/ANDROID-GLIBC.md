@@ -1,6 +1,6 @@
 # Android glibc for nix-on-droid
 
-> **Last Updated:** December 27, 2024
+> **Last Updated:** December 28, 2025
 > **glibc Version:** 2.40 (from nixpkgs-unstable)
 > **Target Platform:** aarch64-linux (Android/Termux)
 

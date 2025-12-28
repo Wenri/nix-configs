@@ -267,6 +267,18 @@
           fi
         done
         
+        # Find and patch script files (hashbangs and /nix/store paths in content)
+        find $out -type f | while read -r file; do
+          # Check if it's a text file with a hashbang
+          if head -c 2 "$file" 2>/dev/null | grep -q "^#!"; then
+            # It's a script - patch /nix/store paths in the content
+            if grep -q "/nix/store" "$file" 2>/dev/null; then
+              echo "Patching script paths: $file"
+              sed -i "s|/nix/store|${installationDir}/nix/store|g" "$file"
+            fi
+          fi
+        done
+
         # Find and patch all ELF files
         find $out -type f | while read -r file; do
           # Skip if not ELF

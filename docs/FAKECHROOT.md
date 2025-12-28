@@ -1,6 +1,6 @@
 # libfakechroot for nix-on-droid
 
-> **Last Updated:** December 27, 2024
+> **Last Updated:** December 28, 2025
 > **Source:** `submodules/fakechroot/` (forked from dex4er/fakechroot)
 > **Target Platform:** aarch64-linux (Android/Termux)
 
@@ -180,7 +180,45 @@ newargv[n++] = filename;  // Correct: passes "/path/to/.claude-wrapped"
 - `submodules/fakechroot/src/execve.c`
 - `submodules/fakechroot/src/posix_spawn.c`
 
-### 3. Readlink Buffer Overflow Fix
+### 3. Improved argv[0] for ps/top Display
+
+**Problem:** When fakechroot invoked `ld.so` to run binaries, it was setting `argv[0]` to `ANDROID_ELFLOADER` (the ld.so path). This caused all processes to show as "ld-linux-aarch64.so.1" in `ps` and `top` output.
+
+**Before:**
+```bash
+$ ps
+  PID TTY          TIME CMD
+12345 ?        00:00:00 ld-linux-aarch64.so.1
+```
+
+**Fix:** Use the original command name as `ld.so`'s `argv[0]`:
+
+```c
+// Before (uninformative):
+newargv[0] = ANDROID_ELFLOADER;  // "/path/to/ld-linux-aarch64.so.1"
+
+// After (informative):
+newargv[0] = argv0;              // "sleep", "claude", etc.
+```
+
+**After:**
+```bash
+$ ps
+  PID TTY          TIME CMD
+12345 ?        00:00:00 sleep
+```
+
+**argv layout:**
+```
+[argv0, --argv0, argv0, program/interpreter, args...]
+ └─ for ps   └─ for $0
+```
+
+**Files modified:**
+- `submodules/fakechroot/src/execve.c` (both hashbang and non-hashbang sections)
+- `submodules/fakechroot/src/posix_spawn.c` (both hashbang and non-hashbang sections)
+
+### 4. Readlink Buffer Overflow Fix
 
 **Problem:** Buffer overflow in readlink wrapper functions. When reading symlinks to nix store paths (76+ characters like `/nix/store/pyh11hxaclcdq4qhl7zn2c1jq0b0s2mp-glibc-android-2.40-android/lib`), fakechroot was copying the full path into smaller caller buffers (e.g., 64 bytes) without checking size, causing heap metadata corruption.
 
@@ -213,7 +251,7 @@ else {
 - `submodules/fakechroot/src/__readlinkat_chk.c`
 - `submodules/fakechroot/src/readlinkat.c`
 
-### 4. va_start/va_end Fix
+### 5. va_start/va_end Fix
 
 **Problem:** In `libfakechroot.c`, the `fakechroot_debug()` function called `va_start()` then returned early without `va_end()`, causing undefined behavior.
 
@@ -244,7 +282,7 @@ LOCAL int fakechroot_debug (const char *fmt, ...) {
 **File modified:**
 - `submodules/fakechroot/src/libfakechroot.c`
 
-### 5. Static Storage for Exclude List
+### 6. Static Storage for Exclude List
 
 **Problem:** Using `malloc()` in library constructor on Android was unreliable.
 

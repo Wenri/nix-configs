@@ -1,6 +1,6 @@
 # Nix-on-Droid Configuration Guide
 
-> **Last Updated:** December 27, 2024
+> **Last Updated:** December 28, 2025
 > **Platform:** Android/Termux (aarch64-linux)
 > **Nix Version:** nixpkgs-unstable
 
@@ -87,6 +87,8 @@ nix-on-droid uses a **layered approach** to run Nix packages on Android:
 ```
 
 **Key insight:** Most packages come from the Nix binary cache unchanged. The Android glibc's ld.so automatically redirects library paths at runtime, so no patchelf or rebuilding is needed!
+
+**Activation script patching:** The activation script that runs during `nix-on-droid switch` uses `build.patchPackageForAndroidGlibc` to ensure all its tools (bash, coreutils, nix, etc.) are patched for Android glibc. This is necessary because the activation runs outside the fakechroot environment.
 
 ### Flake Structure
 
@@ -381,6 +383,9 @@ Android environment variables and Termux tools are handled by `android-integrati
 | Build fails "out of space" | Run `nix-collect-garbage -d` |
 | SSH connection refused | Check `pgrep -f sshd`, verify port 8022 |
 | malloc corruption | Update fakechroot from submodule |
+| "nix-env: command not found" in activation | Activation packages not patched - check `build.patchPackageForAndroidGlibc` |
+| "__build-remote: error loading" | Disable build-hook with `build-hook =` in nix.extraOptions |
+| Package conflict (strip) | Remove duplicate binutils if gcc-wrapper is present |
 
 ### Debugging Commands
 

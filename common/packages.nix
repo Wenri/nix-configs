@@ -76,10 +76,10 @@
   ];
 
   # Development tools (shared)
+  # Note: binutils removed - gcc-wrapper already provides strip, ar, nm, etc.
   devTools = with pkgs; [
     jq
     gnumake
-    binutils
     gcc
     stdenv.cc
   ];
