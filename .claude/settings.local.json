@@ -39,7 +39,8 @@
       "WebFetch(domain:raw.githubusercontent.com)",
       "WebSearch",
       "Read(/data/data/com.termux.nix/files/usr/nix/store/**)",
-      "Read(/data/**)"
+      "Read(/data/**)",
+      "Bash(claude:*)"
     ],
     "deny": []
   }

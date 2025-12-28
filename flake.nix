@@ -226,13 +226,10 @@
           target=$(readlink "$link")
           if echo "$target" | grep -q "^/nix/store"; then
             new_target="${installationDir}$target"
-            echo "Rewriting symlink: $link"
-            echo "  Old: $target"
-            echo "  New: $new_target"
             rm "$link"
             ln -s "$new_target" "$link"
           fi
-        done
+        done || true
       '';
 
       # Function to patch a package for Android/nix-on-droid:
@@ -245,10 +242,6 @@
         nativeBuildInputs = [ basePkgs.patchelf basePkgs.file ];
         passthru = pkg.passthru or {};
       } // (if pkg ? meta.priority then {meta.priority = pkg.meta.priority;} else {})) ''
-        echo "=== Patching package for Android ==="
-        echo "Package: ${pkg.pname or pkg.name or "unknown"}"
-        echo "Android prefix: ${installationDir}"
-        
         # Copy the entire package, preserving symlinks (no -L flag!)
         # This is important for packages like cursor-cli where bin/cmd -> ../share/app/cmd
         cp -r ${pkg} $out
@@ -259,13 +252,10 @@
           target=$(readlink "$link")
           if echo "$target" | grep -q "^/nix/store"; then
             new_target="${installationDir}$target"
-            echo "Rewriting symlink: $link"
-            echo "  Old: $target"
-            echo "  New: $new_target"
             rm "$link"
             ln -s "$new_target" "$link"
           fi
-        done
+        done || true
         
         # Find and patch script files (hashbangs and /nix/store paths in content)
         # IMPORTANT: First replace self-references (to original package) with $out,
@@ -277,7 +267,6 @@
           if head -c 2 "$file" 2>/dev/null | grep -q "^#!"; then
             # It's a script - patch paths in the content
             if grep -q "/nix/store" "$file" 2>/dev/null; then
-              echo "Patching script paths: $file"
               # Step 1: Replace self-references (original package path) with $out
               # This ensures wrapper scripts call their own patched binaries
               sed -i "s|$ORIG_STORE_PATH|$out|g" "$file"
@@ -285,7 +274,7 @@
               sed -i "s|/nix/store|${installationDir}/nix/store|g" "$file"
             fi
           fi
-        done
+        done || true
 
         # Find and patch all ELF files
         find $out -type f | while read -r file; do
@@ -293,21 +282,15 @@
           if ! file "$file" 2>/dev/null | grep -q "ELF.*dynamic"; then
             continue
           fi
-          
-          PATCHED=0
-          
+
           # Patch interpreter to use Android-prefixed path
           INTERP=$(patchelf --print-interpreter "$file" 2>/dev/null || echo "")
           if [ -n "$INTERP" ] && echo "$INTERP" | grep -q "^/nix/store"; then
             # Use Android glibc's ld.so with full Android prefix
             NEW_INTERP="${installationDir}${androidGlibc}/lib/ld-linux-aarch64.so.1"
-            echo "Patching interpreter: $file"
-            echo "  Old: $INTERP"
-            echo "  New: $NEW_INTERP"
             patchelf --set-interpreter "$NEW_INTERP" "$file" 2>/dev/null || true
-            PATCHED=1
           fi
-          
+
           # Patch RPATH: prefix all /nix/store paths with Android installation directory
           # Also redirect standard glibc to Android glibc, and gcc-lib to patched version
           RPATH=$(patchelf --print-rpath "$file" 2>/dev/null || echo "")
@@ -318,17 +301,9 @@
             NEW_RPATH=$(echo "$NEW_RPATH" | sed "s|${standardGccLib}|${androidGccLib}|g")
             # Then, prefix all /nix/store paths with Android installation directory
             NEW_RPATH=$(echo "$NEW_RPATH" | sed "s|/nix/store|${installationDir}/nix/store|g")
-            echo "Patching RPATH: $file"
-            echo "  Old: $RPATH"
-            echo "  New: $NEW_RPATH"
             patchelf --set-rpath "$NEW_RPATH" "$file" 2>/dev/null || true
-            PATCHED=1
           fi
-          
-          [ "$PATCHED" = "1" ] && echo "  ✓ Patched: $file"
-        done
-        
-        echo "=== Patching complete ==="
+        done || true
       '';
 
       # Build Android-patched fakechroot using the separate module
