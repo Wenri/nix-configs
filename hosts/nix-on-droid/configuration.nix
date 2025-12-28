@@ -19,9 +19,6 @@
     outputs.nixOnDroidModules.shizuku
   ];
 
-  # Use absolute store paths for symlinks (works outside proot/fakechroot)
-  build.absoluteStorePrefix = "/data/data/com.termux.nix/files/usr";
-
   # Enable Android/Termux integration tools
   android.termuxTools = true;
 

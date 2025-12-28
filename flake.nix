@@ -208,7 +208,7 @@
       };
 
       # Aliases for backward compatibility
-      inherit (android) installationDir standardGlibc;
+      inherit (android) installationDir;
       androidGlibc = android.glibc;
       androidGccLib = android.gccLib;
       androidFakechroot = android.fakechroot;
@@ -224,7 +224,6 @@
 
             # Configure fakechroot login
             build.androidGlibc = androidGlibc;
-            build.standardGlibc = standardGlibc;
             build.androidFakechroot = androidFakechroot;
             build.bashInteractive = patchPackageForAndroidGlibc basePkgs.bashInteractive;
 

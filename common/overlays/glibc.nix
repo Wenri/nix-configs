@@ -174,21 +174,4 @@ in {
   else
     prev.glibc;
 
-  # Helper function to replace glibc in a package using patchelf
-  # This allows using binary-cached packages with our Android glibc
-  patchGlibcFor = androidGlibc: pkg: pkg.overrideAttrs (oldAttrs: {
-    postFixup = (oldAttrs.postFixup or "") + ''
-      echo "=== Patching glibc references for Android ==="
-      for f in $(find $out -type f -executable 2>/dev/null); do
-        if ${final.patchelf}/bin/patchelf --print-interpreter "$f" 2>/dev/null | grep -q ld-linux; then
-          echo "  Patching: $f"
-          ${final.patchelf}/bin/patchelf \
-            --set-interpreter ${androidGlibc}/lib/ld-linux-aarch64.so.1 \
-            --set-rpath ${androidGlibc}/lib:$(${final.patchelf}/bin/patchelf --print-rpath "$f" 2>/dev/null || echo "") \
-            "$f" 2>/dev/null || true
-        fi
-      done
-      echo "=== Done patching ==="
-    '';
-  });
 }

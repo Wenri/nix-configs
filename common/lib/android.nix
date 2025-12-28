@@ -162,8 +162,8 @@ in {
   androidGccLib = gccLib;
   androidFakechroot = fakechroot;
 
-  # Standard glibc reference (needed for some configs)
-  inherit standardGlibc standardGccLib;
+  # Standard gcc-lib reference (needed for some configs)
+  inherit standardGccLib;
 
   # Functions
   inherit patchPackage;
