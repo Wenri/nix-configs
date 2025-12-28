@@ -1,5 +1,5 @@
 # Nix-on-droid configuration for Android
-# Uses modular configuration from common/modules/nix-on-droid/
+# Uses modular configuration from common/modules/android/
 {
   config,
   lib,
@@ -12,11 +12,11 @@
 }: {
   # Import shared modules
   imports = [
-    outputs.nixOnDroidModules.base
-    outputs.nixOnDroidModules.android-integration
-    outputs.nixOnDroidModules.sshd
-    outputs.nixOnDroidModules.locale
-    outputs.nixOnDroidModules.shizuku
+    outputs.androidModules.base
+    outputs.androidModules.android-integration
+    outputs.androidModules.sshd
+    outputs.androidModules.locale
+    outputs.androidModules.shizuku
   ];
 
   # Enable Android/Termux integration tools

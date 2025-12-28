@@ -260,8 +260,8 @@
     # Reusable home-manager modules
     homeModules = import ./common/modules/home-manager;
 
-    # Reusable nix-on-droid modules
-    nixOnDroidModules = import ./common/modules/nix-on-droid;
+    # Reusable Android/nix-on-droid modules
+    androidModules = import ./common/modules/android;
 
     # NixOS system configurations - generated from hosts (excluding android type)
     nixosConfigurations = lib.mapAttrs (hostname: cfg:

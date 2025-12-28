@@ -1,4 +1,4 @@
-# Nix-on-droid modules exported via flake
+# Android/nix-on-droid modules exported via flake
 {
   base = import ./base.nix;
   android-integration = import ./android-integration.nix;

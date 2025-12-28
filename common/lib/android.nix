@@ -144,7 +144,7 @@
 
   # Build Android-patched fakechroot
   # All paths are hardcoded at compile time - no env vars needed
-  fakechroot = import ../overlays/fakechroot.nix {
+  fakechroot = import ../pkgs/android-fakechroot.nix {
     inherit (pkgs) stdenv patchelf fakechroot;
     androidGlibc = glibc;
     inherit installationDir;
