@@ -1,11 +1,24 @@
 # Custom packages, that can be defined similarly to ones from nixpkgs
 # You can build them using 'nix build .#example'
-{ pkgs, android ? null }:
-{
+{ pkgs, glibcSrc ? null, fakechrootSrc ? null }:
+let
+  installationDir = "/data/data/com.termux.nix/files/usr";
+
+  # Build Android glibc if source provided
+  androidGlibc = if glibcSrc != null then
+    (import ../overlays/glibc.nix { inherit glibcSrc; } pkgs pkgs).glibc
+  else null;
+
+  # Build Android fakechroot if both sources provided
+  androidFakechroot = if androidGlibc != null && fakechrootSrc != null then
+    import ./android-fakechroot.nix {
+      inherit (pkgs) stdenv patchelf fakechroot;
+      inherit androidGlibc installationDir;
+      src = fakechrootSrc;
+    }
+  else null;
+in {
   # example = pkgs.callPackage ./example { };
 }
-// (if android != null then {
-  # Android packages (available on all systems, built for aarch64-linux)
-  androidGlibc = android.glibc;
-  androidFakechroot = android.fakechroot;
-} else {})
+// (if androidGlibc != null then { inherit androidGlibc; } else {})
+// (if androidFakechroot != null then { inherit androidFakechroot; } else {})

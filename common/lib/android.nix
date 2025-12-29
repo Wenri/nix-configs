@@ -1,12 +1,11 @@
 # Android/nix-on-droid utilities
 #
-# This module provides all the infrastructure needed for running Nix packages
-# on Android via nix-on-droid:
-#
-# - Android-patched glibc (with Termux patches for seccomp compatibility)
+# This module provides infrastructure for running Nix packages on Android:
 # - Package patching function (rewrites interpreter/RPATH for Android)
 # - Patched gcc-lib (with rewritten symlinks)
-# - Fakechroot builder
+# - nix-on-droid module with all build settings
+#
+# Android packages (glibc, fakechroot) are built by common/pkgs/default.nix
 #
 # Usage:
 #   let
@@ -27,14 +26,12 @@
   # Installation directory for nix-on-droid (outside proot)
   installationDir = "/data/data/com.termux.nix/files/usr";
 
-  # Build Android-patched glibc using the Termux patches
-  # Uses glibc 2.40 from submodules/glibc with Android-specific patches
-  glibc = let
-    glibcOverlay = import ../overlays/glibc.nix {
-      inherit glibcSrc;
-    } pkgs pkgs;
-  in
-    glibcOverlay.glibc;
+  # Get Android packages from common/pkgs
+  androidPkgs = import ../pkgs {
+    inherit pkgs glibcSrc fakechrootSrc;
+  };
+  glibc = androidPkgs.androidGlibc;
+  fakechroot = androidPkgs.androidFakechroot;
 
   # Standard glibc and gcc-lib from the base pkgs
   standardGlibc = pkgs.stdenv.cc.libc;
@@ -142,14 +139,6 @@
       done || true
     '';
 
-  # Build Android-patched fakechroot
-  # All paths are hardcoded at compile time - no env vars needed
-  fakechroot = import ../pkgs/android-fakechroot.nix {
-    inherit (pkgs) stdenv patchelf fakechroot;
-    androidGlibc = glibc;
-    inherit installationDir;
-    src = fakechrootSrc;
-  };
 in {
   # The pkgs set used for building (with overlays)
   inherit pkgs;

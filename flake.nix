@@ -170,7 +170,11 @@
     # Packages output
     packages = forAllSystems (system: let
       hostsForSystem = lib.filterAttrs (_: cfg: cfg.system == system) nixosHosts;
-      customPkgs = import ./common/pkgs { pkgs = mkPkgs system; inherit android; };
+      customPkgs = import ./common/pkgs {
+        pkgs = mkPkgs system;
+        glibcSrc = ./submodules/glibc;
+        fakechrootSrc = ./submodules/fakechroot;
+      };
     in
       (lib.mapAttrs (hostname: _:
         self.nixosConfigurations.${hostname}.config.system.build.toplevel
