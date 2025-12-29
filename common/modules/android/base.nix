@@ -7,16 +7,12 @@
   outputs,
   hostname,
   username,
-  patchPackageForAndroidGlibc ? null,
   ...
 }: let
   packages = import ../../packages.nix {inherit pkgs;};
-  
-  # Helper to optionally patch packages for Android glibc
-  patchPkg = pkg:
-    if patchPackageForAndroidGlibc != null
-    then patchPackageForAndroidGlibc pkg
-    else pkg;
+
+  # Get patchPackage from config (set by android-integration module)
+  patchPkg = config.build.patchPackageForAndroidGlibc or (pkg: pkg);
 in {
   # Environment packages for nix-on-droid (system-level)
   # Uses shared package lists from common/packages.nix

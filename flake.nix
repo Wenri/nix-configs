@@ -70,21 +70,17 @@
     nixosHosts = lib.filterAttrs (_: cfg: cfg.type != "android") hosts;
     androidHosts = lib.filterAttrs (_: cfg: cfg.type == "android") hosts;
 
-    # Android utilities (built once, reused)
-    android = import ./common/lib/android.nix {
-      pkgs = import nixpkgs {
-        system = "aarch64-linux";
-        config.allowUnfree = true;
-        overlays = [
-          nix-on-droid.overlays.default
-          outputs.overlays.additions
-          outputs.overlays.modifications
-          outputs.overlays.unstable-packages
-          outputs.overlays.master-packages
-        ];
-      };
-      glibcSrc = ./submodules/glibc;
-      fakechrootSrc = ./submodules/fakechroot;
+    # Android pkgs with overlays (for nix-on-droid)
+    androidPkgs = import nixpkgs {
+      system = "aarch64-linux";
+      config.allowUnfree = true;
+      overlays = [
+        nix-on-droid.overlays.default
+        outputs.overlays.additions
+        outputs.overlays.modifications
+        outputs.overlays.unstable-packages
+        outputs.overlays.master-packages
+      ];
     };
 
     # NixOS system builder
@@ -120,16 +116,10 @@
     # Android system builder
     mkAndroidSystem = { hostname, username, ... }:
       nix-on-droid.lib.nixOnDroidConfiguration {
-        pkgs = android.pkgs;
+        pkgs = androidPkgs;
         home-manager-path = home-manager.outPath;
-        extraSpecialArgs = {
-          inherit inputs outputs hostname username;
-          inherit (android) androidGlibc patchPackageForAndroidGlibc;
-        };
-        modules = [
-          ./hosts/${hostname}/configuration.nix
-          android.nixOnDroidModule
-        ];
+        extraSpecialArgs = { inherit inputs outputs hostname username; };
+        modules = [ ./hosts/${hostname}/configuration.nix ];
       };
 
     # Home-manager standalone builder
