@@ -21,9 +21,9 @@
 
     # AI assistants and tools
     claude-code
-    cursor-cli
+    # cursor-cli  # TODO: Disabled - autoPatchelfHook broken after nix update
     gemini-cli
-    github-copilot-cli
+    # github-copilot-cli  # TODO: Disabled - autoPatchelfHook broken after nix update
   ];
 
   # Fuzzy finder with shell integration
