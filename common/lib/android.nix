@@ -151,6 +151,9 @@
     src = fakechrootSrc;
   };
 in {
+  # The pkgs set used for building (with overlays)
+  inherit pkgs;
+
   # Constants
   inherit installationDir;
 
