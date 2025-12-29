@@ -170,16 +170,12 @@
     # Packages output
     packages = forAllSystems (system: let
       hostsForSystem = lib.filterAttrs (_: cfg: cfg.system == system) nixosHosts;
-      customPkgs = import ./common/pkgs (mkPkgs system);
+      customPkgs = import ./common/pkgs { pkgs = mkPkgs system; inherit android; };
     in
       (lib.mapAttrs (hostname: _:
         self.nixosConfigurations.${hostname}.config.system.build.toplevel
       ) hostsForSystem)
       // customPkgs
-      // (lib.optionalAttrs (system == "aarch64-linux") {
-        androidGlibc = android.glibc;
-        androidFakechroot = android.fakechroot;
-      })
     );
 
     formatter = forAllSystems (system: (mkPkgs system).alejandra);
