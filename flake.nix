@@ -128,16 +128,7 @@
         };
         modules = [
           ./hosts/${hostname}/configuration.nix
-          {
-            environment.packages = with android; [ glibc fakechroot gccLib ];
-            build.androidGlibc = android.glibc;
-            build.androidFakechroot = android.fakechroot;
-            build.bashInteractive = android.patchPackage android.pkgs.bashInteractive;
-            build.patchPackageForAndroidGlibc = android.patchPackage;
-            environment.etc."ld.so.preload".text = ''
-              ${android.installationDir}${android.fakechroot}/lib/fakechroot/libfakechroot.so
-            '';
-          }
+          android.nixOnDroidModule
         ];
       };
 

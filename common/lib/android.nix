@@ -173,4 +173,16 @@ in {
 
   # Alias for backward compatibility
   patchPackageForAndroidGlibc = patchPackage;
+
+  # Ready-to-use nix-on-droid module with all android build settings
+  nixOnDroidModule = {
+    environment.packages = [ glibc fakechroot gccLib ];
+    build.androidGlibc = glibc;
+    build.androidFakechroot = fakechroot;
+    build.bashInteractive = patchPackage pkgs.bashInteractive;
+    build.patchPackageForAndroidGlibc = patchPackage;
+    environment.etc."ld.so.preload".text = ''
+      ${installationDir}${fakechroot}/lib/fakechroot/libfakechroot.so
+    '';
+  };
 }
