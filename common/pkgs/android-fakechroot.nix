@@ -40,6 +40,11 @@ in
 
     nativeBuildInputs = (oldAttrs.nativeBuildInputs or []) ++ [patchelf];
 
+    # Skip prove detection - the configure tests cause infinite loops/memory leaks on Android
+    configureFlags = (oldAttrs.configureFlags or []) ++ [
+      "ac_cv_path_PROVE=no"
+    ];
+
     # Pass Android paths as compile-time constants
     # Note: LIBRARY_PATH and PRELOAD removed - ld.so handles these now
     # Use regular strings with \" escape (not ''..'' which doesn't escape)
