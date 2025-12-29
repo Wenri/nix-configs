@@ -18,14 +18,15 @@
       buildInputs = [prev.fcitx5 final.librime-lua];
     });
 
-    # Fix autoPatchelfHook for Android: Python symlinks don't resolve correctly
-    # during nix builds because fakechroot path translation doesn't work for all syscalls.
-    # Skip autoPatchelf phase - we patch binaries ourselves with patchPackageForAndroidGlibc.
-    cursor-cli = prev.cursor-cli.overrideAttrs (oldAttrs: {
+    # autoPatchelfHook fails on Android/nix-on-droid due to Python prefix detection issue:
+    # When Python runs via shebang, the wrapper's --inherit-argv0 sets argv[0] to script path,
+    # causing Python to use base prefix instead of env prefix (missing pyelftools).
+    # Workaround: skip autoPatchelf and use patchPackageForAndroidGlibc instead.
+    cursor-cli = prev.cursor-cli.overrideAttrs (_: {
       dontAutoPatchelf = true;
     });
 
-    github-copilot-cli = prev.github-copilot-cli.overrideAttrs (oldAttrs: {
+    github-copilot-cli = prev.github-copilot-cli.overrideAttrs (_: {
       dontAutoPatchelf = true;
     });
   };
