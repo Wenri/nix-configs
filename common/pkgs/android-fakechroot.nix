@@ -4,7 +4,7 @@
 # Required parameters:
 #   androidGlibc    - Android-patched glibc package
 #   installationDir - Base installation directory (e.g., /data/data/com.termux.nix/files/usr)
-#   excludePath     - Colon-separated paths to exclude from translation
+#   src             - Path to fakechroot source
 #
 # Note: --library-path and --preload are no longer passed to ld.so because:
 #   - ld.so.preload handles libfakechroot preloading
@@ -12,12 +12,11 @@
 #   - ld.so has built-in /nix/store path translation
 #
 # Example usage:
-#   androidFakechroot = import ./fakechroot.nix {
-#     inherit (pkgs) stdenv fetchFromGitHub patchelf fakechroot;
+#   androidFakechroot = import ./android-fakechroot.nix {
+#     inherit (pkgs) stdenv patchelf fakechroot;
 #     androidGlibc = myAndroidGlibc;
 #     installationDir = "/data/data/com.termux.nix/files/usr";
-#     excludePath = "/data:/proc:/sys:/dev:/system:/apex:/vendor:/linkerconfig";
-#     src = ./submodules/fakechroot;  # Local source
+#     src = ./submodules/fakechroot;
 #   };
 {
   stdenv,
@@ -25,9 +24,10 @@
   fakechroot,
   androidGlibc,
   installationDir,
-  excludePath ? "/data:/proc:/sys:/dev:/system:/apex:/vendor:/linkerconfig",
   src,
 }: let
+  # Android system paths excluded from chroot translation
+  excludePath = "/3rdmodem:/acct:/apex:/android:/bugreports:/cache:/config:/d:/data:/data_mirror:/debug_ramdisk:/dev:/linkerconfig:/log:/metadata:/mnt:/odm:/odm_dlkm:/oem:/proc:/product:/sdcard:/storage:/sys:/system:/system_ext:/vendor:/vendor_dlkm";
   # Compute absolute paths with Android prefix
   androidGlibcAbs = "${installationDir}${androidGlibc}/lib";
   androidLdso = "${androidGlibcAbs}/ld-linux-aarch64.so.1";
