@@ -17,6 +17,17 @@
     fcitx5-rime-lua = prev.fcitx5-rime.overrideAttrs (_: {
       buildInputs = [prev.fcitx5 final.librime-lua];
     });
+
+    # Fix autoPatchelfHook for Android: Python symlinks don't resolve correctly
+    # during nix builds because fakechroot path translation doesn't work for all syscalls.
+    # Skip autoPatchelf phase - we patch binaries ourselves with patchPackageForAndroidGlibc.
+    cursor-cli = prev.cursor-cli.overrideAttrs (oldAttrs: {
+      dontAutoPatchelf = true;
+    });
+
+    github-copilot-cli = prev.github-copilot-cli.overrideAttrs (oldAttrs: {
+      dontAutoPatchelf = true;
+    });
   };
 
   # When applied, the unstable nixpkgs set (declared in the flake inputs) will

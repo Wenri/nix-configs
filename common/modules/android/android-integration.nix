@@ -90,16 +90,29 @@
         fi
 
         INTERP=$(patchelf --print-interpreter "$file" 2>/dev/null || echo "")
-        if [ -n "$INTERP" ] && echo "$INTERP" | grep -q "^/nix/store"; then
+        # Patch any interpreter that isn't already pointing to our Android glibc
+        # This handles both /nix/store/... interpreters and standard /lib/ld-linux-*.so.1
+        if [ -n "$INTERP" ] && ! echo "$INTERP" | grep -qF "${installationDir}${glibc}"; then
           NEW_INTERP="${installationDir}${glibc}/lib/ld-linux-aarch64.so.1"
           patchelf --set-interpreter "$NEW_INTERP" "$file" 2>/dev/null || true
         fi
 
         RPATH=$(patchelf --print-rpath "$file" 2>/dev/null || echo "")
         if [ -n "$RPATH" ] && echo "$RPATH" | grep -q "/nix/store"; then
+          # Existing RPATH with nix store paths - transform them
           NEW_RPATH=$(echo "$RPATH" | sed "s|${standardGlibc}|${glibc}|g")
           NEW_RPATH=$(echo "$NEW_RPATH" | sed "s|${standardGccLib}|${gccLib}|g")
           NEW_RPATH=$(echo "$NEW_RPATH" | sed "s|/nix/store|${installationDir}/nix/store|g")
+          patchelf --set-rpath "$NEW_RPATH" "$file" 2>/dev/null || true
+        elif [ -z "$RPATH" ] || ! echo "$RPATH" | grep -qF "${installationDir}"; then
+          # Empty RPATH or non-Android RPATH - add essential Android library paths
+          # This handles binaries that skipped autoPatchelf (e.g., cursor-cli, github-copilot-cli)
+          ANDROID_LIBS="${installationDir}${glibc}/lib:${installationDir}${gccLib}/lib"
+          if [ -n "$RPATH" ]; then
+            NEW_RPATH="$ANDROID_LIBS:$RPATH"
+          else
+            NEW_RPATH="$ANDROID_LIBS"
+          fi
           patchelf --set-rpath "$NEW_RPATH" "$file" 2>/dev/null || true
         fi
       done || true
