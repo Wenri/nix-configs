@@ -104,6 +104,10 @@
         fi
       done || true
     '';
+
+  # Patched glibc.bin for iconv, locale, etc. (oh-my-zsh needs iconv)
+  glibcBin = patchPackage pkgs.glibc.bin;
+
 in {
   options.android = {
     termuxTools = lib.mkEnableOption "Termux integration tools (am, termux-*, xdg-open)";
@@ -111,7 +115,8 @@ in {
 
   config = {
     # Android glibc build settings (always enabled)
-    environment.packages = [ glibc fakechroot gccLib ];
+    # glibcBin provides iconv, locale, etc. needed by oh-my-zsh
+    environment.packages = [ glibc glibcBin fakechroot gccLib ];
     build.androidGlibc = glibc;
     build.androidFakechroot = fakechroot;
     build.bashInteractive = patchPackage pkgs.bashInteractive;
