@@ -53,15 +53,22 @@
         config.allowUnfree = true;
       };
 
-    # All NixOS hosts (non-Android)
+    # Single source of truth for ALL hosts
     hosts = {
-      wslnix      = { system = "x86_64-linux";  username = "wenri"; type = "wsl"; };
-      nixos-gnome = { system = "x86_64-linux";  username = "wenri"; type = "desktop"; };
-      nixos-plasma6 = { system = "x86_64-linux"; username = "wenri"; type = "desktop"; };
-      irif        = { system = "x86_64-linux";  username = "wenri"; type = "desktop"; };
-      matrix      = { system = "x86_64-linux";  username = "wenri"; type = "server"; };
-      freenix     = { system = "aarch64-linux"; username = "wenri"; type = "server"; };
+      # NixOS hosts
+      wslnix        = { system = "x86_64-linux";  username = "wenri"; type = "wsl"; };
+      nixos-gnome   = { system = "x86_64-linux";  username = "wenri"; type = "desktop"; };
+      nixos-plasma6 = { system = "x86_64-linux";  username = "wenri"; type = "desktop"; };
+      irif          = { system = "x86_64-linux";  username = "wenri"; type = "desktop"; };
+      matrix        = { system = "x86_64-linux";  username = "wenri"; type = "server"; };
+      freenix       = { system = "aarch64-linux"; username = "wenri"; type = "server"; };
+      # Android host
+      nix-on-droid  = { system = "aarch64-linux"; username = "wenri"; type = "android"; };
     };
+
+    # Filter by type
+    nixosHosts = lib.filterAttrs (_: cfg: cfg.type != "android") hosts;
+    androidHosts = lib.filterAttrs (_: cfg: cfg.type == "android") hosts;
 
     # Android utilities (built once, reused)
     android = import ./common/lib/android.nix {
@@ -80,6 +87,7 @@
       fakechrootSrc = ./submodules/fakechroot;
     };
 
+    # NixOS system builder
     mkNixosSystem = { hostname, system, username, type }:
       lib.nixosSystem {
         inherit system;
@@ -109,6 +117,31 @@
         );
       };
 
+    # Android system builder
+    mkAndroidSystem = { hostname, username, ... }:
+      nix-on-droid.lib.nixOnDroidConfiguration {
+        pkgs = android.pkgs;
+        home-manager-path = home-manager.outPath;
+        extraSpecialArgs = {
+          inherit inputs outputs hostname username;
+          inherit (android) androidGlibc patchPackageForAndroidGlibc;
+        };
+        modules = [
+          ./hosts/${hostname}/configuration.nix
+          {
+            environment.packages = with android; [ glibc fakechroot gccLib ];
+            build.androidGlibc = android.glibc;
+            build.androidFakechroot = android.fakechroot;
+            build.bashInteractive = android.patchPackage android.pkgs.bashInteractive;
+            build.patchPackageForAndroidGlibc = android.patchPackage;
+            environment.etc."ld.so.preload".text = ''
+              ${android.installationDir}${android.fakechroot}/lib/fakechroot/libfakechroot.so
+            '';
+          }
+        ];
+      };
+
+    # Home-manager standalone builder
     mkHomeConfiguration = { username, hostname, system, ... }:
       inputs.home-manager.lib.homeManagerConfiguration {
         pkgs = mkPkgs system;
@@ -122,43 +155,30 @@
     homeModules = import ./common/modules/home-manager;
     androidModules = import ./common/modules/android;
 
+    # NixOS configurations (all non-android hosts)
     nixosConfigurations = lib.mapAttrs (hostname: cfg:
       mkNixosSystem { inherit hostname; inherit (cfg) system username type; }
-    ) hosts;
+    ) nixosHosts;
 
-    nixOnDroidConfigurations.default = nix-on-droid.lib.nixOnDroidConfiguration {
-      pkgs = android.pkgs or (mkPkgs "aarch64-linux");
-      home-manager-path = home-manager.outPath;
-      extraSpecialArgs = {
-        inherit inputs outputs;
-        hostname = "nix-on-droid";
-        username = "wenri";
-        inherit (android) androidGlibc patchPackageForAndroidGlibc;
-      };
-      modules = [
-        ./hosts/nix-on-droid/configuration.nix
-        {
-          environment.packages = with android; [ glibc fakechroot gccLib ];
-          build.androidGlibc = android.glibc;
-          build.androidFakechroot = android.fakechroot;
-          build.bashInteractive = android.patchPackage android.pkgs.bashInteractive;
-          build.patchPackageForAndroidGlibc = android.patchPackage;
-          environment.etc."ld.so.preload".text = ''
-            ${android.installationDir}${android.fakechroot}/lib/fakechroot/libfakechroot.so
-          '';
-        }
-      ];
+    # Android configurations (all android hosts)
+    nixOnDroidConfigurations = lib.mapAttrs (hostname: cfg:
+      mkAndroidSystem { inherit hostname; inherit (cfg) system username; }
+    ) androidHosts // {
+      # nix-on-droid expects "default"
+      default = mkAndroidSystem { hostname = "nix-on-droid"; username = "wenri"; };
     };
 
+    # Standalone home-manager (for NixOS hosts, backward compat)
     homeConfigurations = lib.mapAttrs' (hostname: cfg:
       lib.nameValuePair "${cfg.username}@${hostname}" (mkHomeConfiguration {
         inherit hostname;
         inherit (cfg) username system;
       })
-    ) hosts;
+    ) nixosHosts;
 
+    # Packages output
     packages = forAllSystems (system: let
-      hostsForSystem = lib.filterAttrs (_: cfg: cfg.system == system) hosts;
+      hostsForSystem = lib.filterAttrs (_: cfg: cfg.system == system) nixosHosts;
       customPkgs = import ./common/pkgs (mkPkgs system);
     in
       (lib.mapAttrs (hostname: _:
