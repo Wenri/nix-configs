@@ -40,7 +40,8 @@
       "WebSearch",
       "Read(/data/data/com.termux.nix/files/usr/nix/store/**)",
       "Read(/data/**)",
-      "Bash(claude:*)"
+      "Bash(claude:*)",
+      "Bash(glab auth status:*)"
     ],
     "deny": []
   }
