@@ -1,17 +1,18 @@
 [submodule "submodules/fakechroot"]
 	path = submodules/fakechroot
 	url = https://github.com/Wenri/fakechroot.git
+	branch = main
 [submodule "submodules/glibc"]
 	path = submodules/glibc
 	url = https://github.com/Wenri/glibc.git
-	branch = release/2.40/master
+	branch = main
 [submodule "submodules/secrets"]
 	path = submodules/secrets
 	url = https://gitlab.com/gt404/nix-secrets.git
 [submodule "submodules/nix-on-droid"]
 	path = submodules/nix-on-droid
 	url = https://github.com/Wenri/nix-on-droid.git
-	branch = android-glibc-fakechroot
+	branch = main
 [submodule ".claude"]
 	path = .claude
 	url = https://gitlab.com/gt404/claude-code-settings.git

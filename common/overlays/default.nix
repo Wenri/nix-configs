@@ -29,6 +29,12 @@
     github-copilot-cli = prev.github-copilot-cli.overrideAttrs (_: {
       dontAutoPatchelf = true;
     });
+
+    # Go binaries work fine with standard glibc on Android - skip Android glibc patching
+    # The Android glibc patching causes SIGSEGV crashes in Go binaries
+    gh = prev.gh.overrideAttrs (old: {
+      passthru = (old.passthru or {}) // { skipAndroidGlibcPatch = true; };
+    });
   };
 
   # When applied, the unstable nixpkgs set (declared in the flake inputs) will
