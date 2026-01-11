@@ -4,9 +4,17 @@
 let
   installationDir = "/data/data/com.termux.nix/files/usr";
 
+  # Use existing Android glibc from store if available, otherwise build
+  # This is needed because bootstrap tools crash on Android (unpatched glibc)
+  # and rebuilding glibc requires patched bootstrap tools
+  existingGlibcPath = builtins.storePath /nix/store/6mjpqffiqrgqc80d3f54j5hxcj2dl0aj-glibc-android-2.40-android;
+
   # Build Android glibc if source provided
   androidGlibc = if glibcSrc != null then
-    (import ../overlays/glibc.nix { inherit glibcSrc; } pkgs pkgs).glibc
+    # Try using existing glibc if it exists, otherwise build from source
+    if builtins.pathExists existingGlibcPath
+    then existingGlibcPath
+    else (import ../overlays/glibc.nix { inherit glibcSrc; } pkgs pkgs).glibc
   else null;
 
   # Build Android fakechroot if both sources provided
