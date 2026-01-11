@@ -6,5 +6,6 @@ export PROOT_TMP_DIR=/data/data/com.termux.nix/files/usr/tmp
 
 exec /data/data/com.termux.nix/files/usr/bin/proot-static \
   -b /data/data/com.termux.nix/files/usr/nix:/nix \
+  -b /data/data/com.termux.nix/files/usr/etc:/etc \
   -b /data/data/com.termux.nix/files/usr/dev/shm:/dev/shm \
   "$@"

@@ -35,11 +35,13 @@ in {
   system.stateVersion = "24.05";
 
   # Set up nix for flakes
-  # Disable build-hook: the default is broken (ld.so __build-remote doesn't work)
-  # because __build-remote is a nix subcommand, not a program path
+  # Disable build-hook and builders: the default build-hook is broken on Android
+  # because nix tries to run "ld.so __build-remote" but __build-remote is a nix
+  # subcommand, not a standalone program
   nix.extraOptions = ''
     experimental-features = nix-command flakes
     build-hook =
+    builders =
   '';
 
   # User configuration (uses username from flake)

@@ -384,8 +384,35 @@ Android environment variables and Termux tools are handled by `android-integrati
 | SSH connection refused | Check `pgrep -f sshd`, verify port 8022 |
 | malloc corruption | Update fakechroot from submodule |
 | "nix-env: command not found" in activation | Activation packages not patched - check `build.patchPackageForAndroidGlibc` |
-| "__build-remote: error loading" | Disable build-hook with `build-hook =` in nix.extraOptions |
+| "__build-remote: error loading shared libraries" | See build-hook fix below |
 | Package conflict (strip) | Remove duplicate binutils if gcc-wrapper is present |
+
+### Build-Hook Error Fix
+
+If you see this error during `nix-on-droid switch`:
+```
+__build-remote: error while loading shared libraries: __build-remote: cannot open shared object file
+```
+
+**Cause:** Nix dynamically determines its `build-hook` based on the interpreter (ld.so). On Android, it incorrectly generates:
+```
+build-hook = /nix/store/.../glibc-android.../ld-linux-aarch64.so.1 __build-remote
+```
+
+This fails because `__build-remote` is a nix subcommand, not a standalone program. When ld.so is invoked directly, it tries to load `__build-remote` as a shared library.
+
+**Fix:** Add to `nix.extraOptions` in your configuration:
+```nix
+nix.extraOptions = ''
+  build-hook =
+  builders =
+'';
+```
+
+**Workaround for current build:** If the config change isn't applied yet, use:
+```bash
+nix-on-droid switch --flake . --option build-hook "" --option builders ""
+```
 
 ### Debugging Commands
 
