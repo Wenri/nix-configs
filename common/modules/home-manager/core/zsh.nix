@@ -7,8 +7,26 @@
 
     shellAliases = {
       ll = "ls -l";
-      # Config-specific update aliases should be set in individual configs
     };
+
+    # Auto-sync GitLab credentials before nix commands
+    initContent = ''
+      # Wrapper to sync GitLab auth before nix commands that may need it
+      nixos-rebuild() {
+        glab-netrc-sync 2>/dev/null || true
+        command nixos-rebuild "$@"
+      }
+
+      nix() {
+        # Only sync for commands that might fetch from GitLab
+        case "$1" in
+          build|develop|flake|run|shell|eval)
+            glab-netrc-sync 2>/dev/null || true
+            ;;
+        esac
+        command nix "$@"
+      }
+    '';
 
     history = {
       size = 10000;
