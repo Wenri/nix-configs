@@ -38,6 +38,8 @@ in {
       experimental-features = "nix-command flakes";
       flake-registry = "";
       nix-path = config.nix.nixPath;
+      # Use netrc for GitLab authentication (synced from glab via glab-netrc-sync)
+      netrc-file = "/home/wenri/.netrc";
     };
     channel.enable = false;
     registry = lib.mapAttrs (_: flake: {inherit flake;}) flakeInputs;
