@@ -1,4 +1,4 @@
-# glibc overlay for Android (nix-on-droid)
+# Android glibc package builder
 # Uses pre-patched glibc from submodules/glibc with nixpkgs + Termux Android patches
 # Based on: https://github.com/termux-pacman/glibc-packages/tree/main/gpkg/glibc
 #
@@ -6,14 +6,14 @@
 # Patch order: glibc-2.40 -> nixpkgs patches -> Termux Android patches
 # See submodules/glibc git log for patch details.
 #
-# This overlay requires a glibcSrc parameter pointing to the patched submodule:
-#   (import ./glibc.nix { glibcSrc = ./submodules/glibc; }) final prev
+# Usage:
+#   (import ./android-glibc.nix { glibcSrc = ./submodules/glibc; }) pkgs pkgs
 { glibcSrc }: final: prev: let
-  # Only apply this overlay for aarch64-linux (Android)
+  # Only apply for aarch64-linux (Android)
   isAndroid = (final.stdenv.hostPlatform.system or final.system) == "aarch64-linux";
 
   # Path to build-time scripts (gen-android-ids.sh, process-fakesyscalls.sh, fakesyscall.json)
-  termuxScripts = ./patches/glibc-termux;
+  termuxScripts = ./glibc-termux;
 
   # nix-on-droid paths from centralized config
   androidPaths = import ../android-paths.nix;

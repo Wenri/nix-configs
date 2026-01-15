@@ -15,7 +15,7 @@ let
     # Try using existing glibc if it exists, otherwise build from source
     if builtins.pathExists existingGlibcStorePath
     then builtins.storePath existingGlibcStorePath
-    else (import ../overlays/glibc.nix { inherit glibcSrc; } pkgs pkgs).glibc
+    else (import ./android-glibc.nix { inherit glibcSrc; } pkgs pkgs).glibc
   else null;
 
   # Build Android fakechroot if both sources provided
