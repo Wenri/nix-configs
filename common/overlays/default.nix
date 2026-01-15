@@ -21,7 +21,7 @@
     # autoPatchelfHook fails on Android/nix-on-droid due to Python prefix detection issue:
     # When Python runs via shebang, the wrapper's --inherit-argv0 sets argv[0] to script path,
     # causing Python to use base prefix instead of env prefix (missing pyelftools).
-    # Workaround: skip autoPatchelf and use patchPackageForAndroidGlibc instead.
+    # Workaround: skip autoPatchelf and use replaceAndroidDependencies instead.
     cursor-cli = prev.cursor-cli.overrideAttrs (_: {
       dontAutoPatchelf = true;
     });

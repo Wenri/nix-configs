@@ -88,7 +88,7 @@ nix-on-droid uses a **layered approach** to run Nix packages on Android:
 
 **Key insight:** Most packages come from the Nix binary cache unchanged. The Android glibc's ld.so automatically redirects library paths at runtime, so no patchelf or rebuilding is needed!
 
-**Activation script patching:** The activation script that runs during `nix-on-droid switch` uses `build.patchPackageForAndroidGlibc` to ensure all its tools (bash, coreutils, nix, etc.) are patched for Android glibc. This is necessary because the activation runs outside the fakechroot environment.
+**Environment patching:** The `build.replaceAndroidDependencies` function patches the entire `environment.path` (a buildEnv of all packages) for Android glibc compatibility. This includes activation script tools (bash, coreutils, nix, etc.) which run outside the fakechroot environment.
 
 ### Flake Structure
 
@@ -101,8 +101,7 @@ flake.nix
 │   ├── androidGlibc              # Android-patched glibc 2.40
 │   └── androidFakechroot         # Android-patched fakechroot
 └── lib.aarch64-linux
-    ├── androidGlibc              # Exported glibc package
-    └── patchPackageForAndroidGlibc  # Function to patch any package
+    └── androidGlibc              # Exported glibc package
 ```
 
 ### Module Structure
@@ -383,7 +382,7 @@ Android environment variables and Termux tools are handled by `android-integrati
 | Build fails "out of space" | Run `nix-collect-garbage -d` |
 | SSH connection refused | Check `pgrep -f sshd`, verify port 8022 |
 | malloc corruption | Update fakechroot from submodule |
-| "nix-env: command not found" in activation | Activation packages not patched - check `build.patchPackageForAndroidGlibc` |
+| "nix-env: command not found" in activation | Activation packages not patched - check `build.replaceAndroidDependencies` |
 | "__build-remote: error loading shared libraries" | See build-hook fix below |
 | Package conflict (strip) | Remove duplicate binutils if gcc-wrapper is present |
 

@@ -1,7 +1,7 @@
 # Base program enables shared across all configurations
 # These are simple program.*.enable settings used everywhere
 # Note: On nix-on-droid, packages from programs.* are patched centrally
-# by path.nix (via build.patchPackageForAndroidGlibc), NOT here.
+# by path.nix (via build.replaceAndroidDependencies), NOT here.
 {pkgs, ...}: {
   programs = {
     home-manager.enable = true;

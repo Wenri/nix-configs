@@ -427,7 +427,7 @@ $ claude
 # Notice the path is doubled!
 ```
 
-**Cause:** The `patchPackageForAndroidGlibc` function in `flake.nix` uses `sed` to replace `/nix/store` with the Android prefix. When a package is built locally (not from binary cache), its scripts already contain the full Android-prefixed paths. The sed replacement was matching `/nix/store` within those already-prefixed paths, causing double-prefixing.
+**Cause:** The `replaceAndroidDependencies` function uses `sed` to replace `/nix/store` with the Android prefix. When a package is built locally (not from binary cache), its scripts already contain the full Android-prefixed paths. The sed replacement was matching `/nix/store` within those already-prefixed paths, causing double-prefixing.
 
 **Solution:** The patching script now skips the prefix replacement if the file already contains Android-prefixed paths:
 

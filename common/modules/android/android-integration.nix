@@ -15,8 +15,8 @@
   glibcSrc = ../../../submodules/glibc;
   fakechrootSrc = ../../../submodules/fakechroot;
 
-  # Installation directory for nix-on-droid (outside proot)
-  installationDir = "/data/data/com.termux.nix/files/usr";
+  # Installation directory from nix-on-droid build config
+  inherit (config.build) installationDir;
 
   # Get Android packages from common/pkgs
   androidPkgs = import ../../pkgs {
@@ -150,85 +150,6 @@
       done || true
     '';
 
-  # Function to patch a single package for Android/nix-on-droid
-  # (kept for backward compatibility and special cases like bashInteractive)
-  patchPackage = pkg:
-    pkgs.runCommand "${pkg.pname or pkg.name or "package"}-android"
-    ({
-        nativeBuildInputs = [pkgs.patchelf pkgs.file];
-        passthru = pkg.passthru or {};
-      }
-      // (
-        if pkg ? meta.priority
-        then {meta.priority = pkg.meta.priority;}
-        else {}
-      )) ''
-      # Copy the package to output
-      # Note: Hardlinks (cp -rl) are blocked by nix sandbox for security reasons
-      cp -r ${pkg} $out
-      chmod -R u+w $out
-
-      # Rewrite symlinks that point to /nix/store to use the Android prefix
-      find $out -type l | while read -r link; do
-        target=$(readlink "$link")
-        if echo "$target" | grep -q "^/nix/store"; then
-          new_target="${installationDir}$target"
-          rm "$link"
-          ln -s "$new_target" "$link"
-        fi
-      done || true
-
-      # Patch script files
-      ORIG_STORE_PATH="${pkg}"
-      find $out -type f | while read -r file; do
-        if head -c 2 "$file" 2>/dev/null | grep -q "^#!"; then
-          if grep -q "/nix/store" "$file" 2>/dev/null; then
-            sed -i "s|$ORIG_STORE_PATH|$out|g" "$file"
-            if ! grep -qF "${installationDir}/nix/store" "$file" 2>/dev/null; then
-              sed -i "s|/nix/store|${installationDir}/nix/store|g" "$file"
-            fi
-          fi
-        fi
-      done || true
-
-      # Patch ELF files
-      find $out -type f | while read -r file; do
-        if ! file "$file" 2>/dev/null | grep -q "ELF.*dynamic"; then
-          continue
-        fi
-
-        INTERP=$(patchelf --print-interpreter "$file" 2>/dev/null || echo "")
-        # Patch any interpreter that isn't already pointing to our Android glibc
-        # This handles both /nix/store/... interpreters and standard /lib/ld-linux-*.so.1
-        if [ -n "$INTERP" ] && ! echo "$INTERP" | grep -qF "${installationDir}${glibc}"; then
-          NEW_INTERP="${installationDir}${glibc}/lib/ld-linux-aarch64.so.1"
-          patchelf --set-interpreter "$NEW_INTERP" "$file" 2>/dev/null || true
-        fi
-
-        RPATH=$(patchelf --print-rpath "$file" 2>/dev/null || echo "")
-        if [ -n "$RPATH" ] && echo "$RPATH" | grep -q "/nix/store"; then
-          # Existing RPATH with nix store paths - transform them
-          NEW_RPATH=$(echo "$RPATH" | sed "s|${standardGlibc}|${glibc}|g")
-          NEW_RPATH=$(echo "$NEW_RPATH" | sed "s|${standardGccLib}|${gccLib}|g")
-          NEW_RPATH=$(echo "$NEW_RPATH" | sed "s|/nix/store|${installationDir}/nix/store|g")
-          patchelf --set-rpath "$NEW_RPATH" "$file" 2>/dev/null || true
-        elif [ -z "$RPATH" ] || ! echo "$RPATH" | grep -qF "${installationDir}"; then
-          # Empty RPATH or non-Android RPATH - add essential Android library paths
-          # This handles binaries that skipped autoPatchelf (e.g., cursor-cli, github-copilot-cli)
-          ANDROID_LIBS="${installationDir}${glibc}/lib:${installationDir}${gccLib}/lib"
-          if [ -n "$RPATH" ]; then
-            NEW_RPATH="$ANDROID_LIBS:$RPATH"
-          else
-            NEW_RPATH="$ANDROID_LIBS"
-          fi
-          patchelf --set-rpath "$NEW_RPATH" "$file" 2>/dev/null || true
-        fi
-      done || true
-    '';
-
-  # With single-output glibc, all binaries (iconv, locale, getent, etc.) are in $out
-  # No need for separate glibcBin
-
 in {
   options.android = {
     termuxTools = lib.mkEnableOption "Termux integration tools (am, termux-*, xdg-open)";
@@ -237,15 +158,15 @@ in {
   config = {
     # Android glibc build settings (always enabled)
     # Single-output glibc includes all binaries (iconv, locale needed by oh-my-zsh)
-    environment.packages = [ glibc fakechroot gccLib ];
+    # zsh added here so it's available in the patched environment.path for user shell
+    environment.packages = [ glibc fakechroot gccLib pkgs.zsh ];
     build.androidGlibc = glibc;
     build.androidFakechroot = fakechroot;
-    build.bashInteractive = patchPackage pkgs.bashInteractive;
     # Environment-level patching (like NixOS replaceDependencies)
     # Patches entire environment at once - no per-package -android variants needed
     build.replaceAndroidDependencies = replaceAndroidDependencies;
-    # Legacy per-package patching (kept for bashInteractive and activation scripts)
-    build.patchPackageForAndroidGlibc = patchPackage;
+    # Use patched environment.path for shells (bashInteractive already in path.nix)
+    build.bashInteractive = config.environment.path;
     environment.etc."ld.so.preload".text = ''
       ${installationDir}${fakechroot}/lib/fakechroot/libfakechroot.so
     '';

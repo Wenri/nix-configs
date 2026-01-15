@@ -550,7 +550,6 @@ nix build .#androidFakechroot
 packages.aarch64-linux.androidGlibc           # Android-patched glibc 2.40
 packages.aarch64-linux.androidFakechroot      # Android-patched fakechroot
 lib.aarch64-linux.androidGlibc                # Same, via lib output
-lib.aarch64-linux.patchPackageForAndroidGlibc # Function to patch any package
 
 # nix-on-droid configurations
 nixOnDroidConfigurations.default              # Main config

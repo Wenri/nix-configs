@@ -15,9 +15,10 @@
   # Path to build-time scripts (gen-android-ids.sh, process-fakesyscalls.sh, fakesyscall.json)
   termuxScripts = ./patches/glibc-termux;
 
-  # nix-on-droid paths (equivalent to Termux's prefix paths)
-  nixOnDroidPrefix = "/data/data/com.termux.nix/files/usr";
-  nixOnDroidPrefixClassical = "/data/data/com.termux.nix/files";
+  # nix-on-droid paths from centralized config
+  androidPaths = import ../android-paths.nix;
+  nixOnDroidPrefix = androidPaths.installationDir;
+  nixOnDroidPrefixClassical = androidPaths.termuxBase;
 
   lib = final.lib;
 

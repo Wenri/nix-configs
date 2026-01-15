@@ -2,7 +2,8 @@
 # You can build them using 'nix build .#example'
 { pkgs, glibcSrc ? null, fakechrootSrc ? null }:
 let
-  installationDir = "/data/data/com.termux.nix/files/usr";
+  androidPaths = import ../android-paths.nix;
+  inherit (androidPaths) installationDir;
 
   # Use existing Android glibc from store if available, otherwise build
   # This is needed because bootstrap tools crash on Android (unpatched glibc)

@@ -11,6 +11,7 @@
   ...
 }: let
   keys = import ../../common/keys.nix;
+  androidPaths = import ../../common/android-paths.nix;
 in {
   # Import shared core modules
   imports = [
@@ -52,8 +53,8 @@ in {
     envExtra = ''
       # Source Android environment variables if not already set
       # (termux.env is captured by nix-on-droid from the original environment)
-      if [ -z "$ANDROID_ROOT" ] && [ -f "/data/data/com.termux.nix/files/usr/etc/termux/termux.env" ]; then
-        eval "$(${pkgs.gnugrep}/bin/grep -v -E '^export (PATH|HOME|USER|TMPDIR|LANG|TERM)=' "/data/data/com.termux.nix/files/usr/etc/termux/termux.env")"
+      if [ -z "$ANDROID_ROOT" ] && [ -f "${androidPaths.termuxEnvFile}" ]; then
+        eval "$(${pkgs.gnugrep}/bin/grep -v -E '^export (PATH|HOME|USER|TMPDIR|LANG|TERM)=' "${androidPaths.termuxEnvFile}")"
       fi
     '';
   };
