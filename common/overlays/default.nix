@@ -1,5 +1,5 @@
 # This file defines overlays
-{inputs, ...}: {
+{inputs, lib ? inputs.nixpkgs.lib, installationDir ? null, ...}: {
   # This one brings our custom packages from the 'pkgs' directory
   additions = final: _prev: import ../pkgs {pkgs = final;};
 
@@ -35,6 +35,24 @@
     gh = prev.gh.overrideAttrs (old: {
       passthru = (old.passthru or {}) // { skipAndroidGlibcPatch = true; };
     });
+
+    # Node.js makes direct syscalls that bypass fakechroot's LD_PRELOAD path translation.
+    # Replace the cli.js path with the real Android filesystem path so node can find it.
+    # Use symlinkJoin to avoid rebuilding (npm build also fails due to same syscall issue).
+    claude-code = if installationDir != null then
+      final.symlinkJoin {
+        name = "claude-code-${prev.claude-code.version}";
+        paths = [ prev.claude-code ];
+        postBuild = ''
+          rm $out/bin/claude $out/bin/.claude-wrapped
+          substitute ${prev.claude-code}/bin/.claude-wrapped $out/bin/.claude-wrapped \
+            --replace "${prev.claude-code}/lib" "${installationDir}${prev.claude-code}/lib"
+          substitute ${prev.claude-code}/bin/claude $out/bin/claude \
+            --replace "${prev.claude-code}/bin" "$out/bin"
+          chmod +x $out/bin/claude $out/bin/.claude-wrapped
+        '';
+      }
+    else prev.claude-code;
   };
 
   # When applied, the unstable nixpkgs set (declared in the flake inputs) will

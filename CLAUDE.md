@@ -305,11 +305,16 @@ This makes flake inputs and outputs accessible in all imported modules.
 - Modules must be registered in respective `default.nix` files
 - Overlays in `common/overlays/default.nix` provide:
   - `additions` - Custom packages from `common/pkgs/`
-  - `modifications` - Package modifications (e.g., fcitx5-rime-lua with Lua support)
+  - `modifications` - Package modifications (e.g., fcitx5-rime-lua with Lua support, claude-code path fix)
   - `unstable-packages` - Access to nixpkgs-unstable via `pkgs.unstable.*`
   - `master-packages` - Access to nixpkgs-master via `pkgs.master.*`
   - NUR overlay for Firefox extensions and community packages
   - nix-vscode-extensions overlay for VS Code marketplace extensions
+
+**Overlay Parameters:**
+- `inputs` - Flake inputs (required)
+- `lib` - nixpkgs lib (defaults to `inputs.nixpkgs.lib`)
+- `installationDir` - Android installation directory for path translation (optional, Android-only)
 
 **The unified flake exports from common:**
 ```nix
@@ -317,6 +322,11 @@ overlays = import ./common/overlays {inherit inputs;};
 nixosModules = import ./common/modules/nixos;
 homeModules = import ./common/modules/home-manager;
 packages = forAllSystems (system: import ./common/pkgs {pkgs = mkPkgs system;});
+```
+
+**Android-specific overlays** pass `installationDir` for Node.js path translation:
+```nix
+androidOverlays = import ./common/overlays { inherit inputs installationDir; };
 ```
 
 ### Home Manager Integration

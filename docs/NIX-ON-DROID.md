@@ -1,6 +1,6 @@
 # Nix-on-Droid Configuration Guide
 
-> **Last Updated:** December 28, 2025
+> **Last Updated:** January 15, 2026
 > **Platform:** Android/Termux (aarch64-linux)
 > **Nix Version:** nixpkgs-unstable
 
@@ -385,6 +385,7 @@ Android environment variables and Termux tools are handled by `android-integrati
 | "nix-env: command not found" in activation | Activation packages not patched - check `build.replaceAndroidDependencies` |
 | "__build-remote: error loading shared libraries" | See build-hook fix below |
 | Package conflict (strip) | Remove duplicate binutils if gcc-wrapper is present |
+| Node.js can't find modules | See Node.js direct syscalls fix below |
 
 ### Build-Hook Error Fix
 
@@ -412,6 +413,36 @@ nix.extraOptions = ''
 ```bash
 nix-on-droid switch --flake . --option build-hook "" --option builders ""
 ```
+
+### Node.js Direct Syscalls Fix
+
+Node.js (and npm) make direct syscalls that bypass fakechroot's LD_PRELOAD path translation. This causes issues with packages like `claude-code` that rely on Node.js finding files in `/nix/store`.
+
+**Symptom:** Node.js-based tools fail with "module not found" or similar errors because they can't find files at the `/nix/store` path.
+
+**Solution:** The overlay in `common/overlays/default.nix` uses `symlinkJoin` to wrap affected packages and substitute `/nix/store` paths with the real Android filesystem path:
+
+```nix
+claude-code = if installationDir != null then
+  final.symlinkJoin {
+    name = "claude-code-${prev.claude-code.version}";
+    paths = [ prev.claude-code ];
+    postBuild = ''
+      rm $out/bin/claude $out/bin/.claude-wrapped
+      substitute ${prev.claude-code}/bin/.claude-wrapped $out/bin/.claude-wrapped \
+        --replace "${prev.claude-code}/lib" "${installationDir}${prev.claude-code}/lib"
+      # ...
+    '';
+  }
+else prev.claude-code;
+```
+
+**Key points:**
+- Uses `symlinkJoin` instead of `overrideAttrs` to avoid triggering npm rebuild (which also fails due to syscall issues)
+- Only applies when `installationDir` is set (Android builds only)
+- Substitutes paths in wrapper scripts, not the original package
+
+**To add support for another Node.js package**, follow the same pattern in `common/overlays/default.nix`.
 
 ### Debugging Commands
 

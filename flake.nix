@@ -70,16 +70,22 @@
     nixosHosts = lib.filterAttrs (_: cfg: cfg.type != "android") hosts;
     androidHosts = lib.filterAttrs (_: cfg: cfg.type == "android") hosts;
 
+    # nix-on-droid installation directory (from build.installationDir default)
+    installationDir = "/data/data/com.termux.nix/files/usr";
+
+    # Android-specific overlays with installationDir for path translation
+    androidOverlays = import ./common/overlays { inherit inputs installationDir; };
+
     # Android pkgs with overlays (for nix-on-droid)
     androidPkgs = import nixpkgs {
       system = "aarch64-linux";
       config.allowUnfree = true;
       overlays = [
         nix-on-droid.overlays.default
-        outputs.overlays.additions
-        outputs.overlays.modifications
-        outputs.overlays.unstable-packages
-        outputs.overlays.master-packages
+        androidOverlays.additions
+        androidOverlays.modifications
+        androidOverlays.unstable-packages
+        androidOverlays.master-packages
       ];
     };
 
