@@ -1,6 +1,7 @@
 # Android integration module for nix-on-droid
 # Provides:
 # - Android glibc/fakechroot build settings
+# - nix-ld integration for shorter interpreter paths
 # - replaceAndroidDependencies function (like NixOS replaceDependencies but using patchelf)
 # - Termux integration tools
 {
@@ -24,6 +25,13 @@
   };
   glibc = androidPkgs.androidGlibc;
   fakechroot = androidPkgs.androidFakechroot;
+
+  # nix-ld for shorter interpreter path
+  # Instead of patching to long $PREFIX/nix/store/.../glibc-android/.../ld-linux-aarch64.so.1 (131 chars)
+  # We patch to short $PREFIX/lib/ld-linux-aarch64.so.1 (61 chars < original 83 chars)
+  # nix-ld shim reads NIX_LD env var to find the real dynamic linker
+  nixLd = pkgs.nix-ld;
+  nixLdInterp = "${installationDir}/lib/ld-linux-aarch64.so.1";
 
   # Standard glibc and gcc-lib from the base pkgs
   standardGlibc = pkgs.stdenv.cc.libc;
@@ -51,7 +59,7 @@
   replaceAndroidDependencies = drv:
     pkgs.runCommand "${drv.name or "env"}-android"
     {
-      nativeBuildInputs = [pkgs.patchelf pkgs.file pkgs.binutils];
+      nativeBuildInputs = [pkgs.patchelf pkgs.file];
     } ''
       # Step 1: Copy preserving symlinks (fast)
       cp -r ${drv} $out
@@ -116,35 +124,31 @@
             ;;
         esac
 
-        # Skip Go binaries - patchelf corrupts them due to ELF header restructuring
-        # when the interpreter path is longer. Go binaries work with environment
-        # variables instead (SSL_CERT_FILE, GODEBUG=netdns=cgo set in home.sessionVariables)
-        if readelf -S "$file" 2>/dev/null | grep -q "\.go\.buildinfo"; then
-          continue
-        fi
-
         INTERP=$(patchelf --print-interpreter "$file" 2>/dev/null || echo "")
-        # Patch any interpreter that isn't already pointing to our Android glibc
-        if [ -n "$INTERP" ] && ! echo "$INTERP" | grep -qF "${installationDir}${glibc}"; then
-          NEW_INTERP="${installationDir}${glibc}/lib/ld-linux-aarch64.so.1"
-          patchelf --set-interpreter "$NEW_INTERP" "$file" 2>/dev/null || true
+        # Patch interpreter to use nix-ld shim at short path
+        # nix-ld reads NIX_LD env var to find the real Android glibc ld.so
+        if [ -n "$INTERP" ] && [ "$INTERP" != "${nixLdInterp}" ]; then
+          patchelf --set-interpreter "${nixLdInterp}" "$file" 2>/dev/null || true
         fi
 
         RPATH=$(patchelf --print-rpath "$file" 2>/dev/null || echo "")
-        if [ -n "$RPATH" ] && echo "$RPATH" | grep -q "/nix/store"; then
+        # Skip RPATH patching for binaries with no original RPATH
+        # Adding RPATH causes patchelf to restructure ELF headers, which can corrupt some binaries
+        # nix-ld uses NIX_LD_LIBRARY_PATH to find libraries, so RPATH isn't strictly needed
+        if [ -z "$RPATH" ]; then
+          continue
+        fi
+
+        if echo "$RPATH" | grep -q "/nix/store"; then
           # Transform RPATH: replace glibc, gcc-lib, and add Android prefix
           NEW_RPATH=$(echo "$RPATH" | sed "s|${standardGlibc}|${glibc}|g")
           NEW_RPATH=$(echo "$NEW_RPATH" | sed "s|${standardGccLib}|${gccLib}|g")
           NEW_RPATH=$(echo "$NEW_RPATH" | sed "s|/nix/store|${installationDir}/nix/store|g")
           patchelf --set-rpath "$NEW_RPATH" "$file" 2>/dev/null || true
-        elif [ -z "$RPATH" ] || ! echo "$RPATH" | grep -qF "${installationDir}"; then
-          # Empty or non-Android RPATH - add essential Android library paths
+        elif ! echo "$RPATH" | grep -qF "${installationDir}"; then
+          # Non-Android RPATH - add Android prefix
           ANDROID_LIBS="${installationDir}${glibc}/lib:${installationDir}${gccLib}/lib"
-          if [ -n "$RPATH" ]; then
-            NEW_RPATH="$ANDROID_LIBS:$RPATH"
-          else
-            NEW_RPATH="$ANDROID_LIBS"
-          fi
+          NEW_RPATH="$ANDROID_LIBS:$RPATH"
           patchelf --set-rpath "$NEW_RPATH" "$file" 2>/dev/null || true
         fi
       done || true
@@ -159,7 +163,7 @@ in {
     # Android glibc build settings (always enabled)
     # Single-output glibc includes all binaries (iconv, locale needed by oh-my-zsh)
     # zsh added here so it's available in the patched environment.path for user shell
-    environment.packages = [ glibc fakechroot gccLib pkgs.zsh ];
+    environment.packages = [ glibc fakechroot gccLib nixLd pkgs.zsh ];
     build.androidGlibc = glibc;
     build.androidFakechroot = fakechroot;
     # Environment-level patching (like NixOS replaceDependencies)
@@ -170,6 +174,20 @@ in {
     environment.etc."ld.so.preload".text = ''
       ${installationDir}${fakechroot}/lib/fakechroot/libfakechroot.so
     '';
+
+    # nix-ld activation: create symlink at $PREFIX/lib/ld-linux-aarch64.so.1
+    build.activationBefore.linkNixLd = ''
+      $DRY_RUN_CMD mkdir $VERBOSE_ARG --parents ${installationDir}/lib
+      $DRY_RUN_CMD ln $VERBOSE_ARG --symbolic --force ${nixLd}/libexec/nix-ld ${installationDir}/lib/.ld-linux-aarch64.so.1.tmp
+      $DRY_RUN_CMD mv $VERBOSE_ARG ${installationDir}/lib/.ld-linux-aarch64.so.1.tmp ${installationDir}/lib/ld-linux-aarch64.so.1
+    '';
+
+    # NIX_LD points to the real Android glibc dynamic linker
+    # NIX_LD_LIBRARY_PATH provides library search paths
+    environment.sessionVariables = {
+      NIX_LD = "${installationDir}${glibc}/lib/ld-linux-aarch64.so.1";
+      NIX_LD_LIBRARY_PATH = "${installationDir}${glibc}/lib:${installationDir}${gccLib}/lib";
+    };
 
     # Termux tools (optional)
     android-integration = lib.mkIf cfg.termuxTools {

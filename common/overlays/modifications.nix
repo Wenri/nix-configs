@@ -24,9 +24,9 @@
     dontAutoPatchelf = true;
   });
 
-  # Android: Go binaries are SKIPPED by replaceAndroidDependencies (patchelf breaks them).
+  # Android: Go binaries work with nix-ld (short interpreter path + NIX_LD_LIBRARY_PATH).
   # SSL certs and GODEBUG=netdns=cgo are set globally in home.sessionVariables.
-  # See CLAUDE.md "Go Binaries on Android" section for details.
+  # Binaries with no RPATH skip RPATH patching to avoid patchelf corruption.
 
   # Android: Node.js makes direct syscalls that bypass fakechroot's LD_PRELOAD path translation.
   # Replace the cli.js path with the real Android filesystem path so node can find it.
