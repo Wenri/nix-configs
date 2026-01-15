@@ -33,6 +33,20 @@
   nixLd = pkgs.nix-ld;
   nixLdInterp = "${installationDir}/lib/ld-linux-aarch64.so.1";
 
+  # nix-ld library environment (like NixOS /run/current-system/sw/share/nix-ld/lib)
+  # Provides stable paths for NIX_LD and NIX_LD_LIBRARY_PATH
+  nixLdLibraries = pkgs.buildEnv {
+    name = "nix-ld-libraries";
+    pathsToLink = [ "/lib" ];
+    paths = [ glibc gccLib ];
+    extraPrefix = "/share/nix-ld";
+    postBuild = ''
+      # Create ld.so symlink pointing to Android glibc's dynamic linker
+      ln -s ${glibc}/lib/ld-linux-aarch64.so.1 $out/share/nix-ld/lib/ld.so
+    '';
+    ignoreCollisions = true;
+  };
+
   # Standard glibc and gcc-lib from the base pkgs
   standardGlibc = pkgs.stdenv.cc.libc;
   standardGccLib = pkgs.stdenv.cc.cc.lib;
@@ -163,7 +177,8 @@ in {
     # Android glibc build settings (always enabled)
     # Single-output glibc includes all binaries (iconv, locale needed by oh-my-zsh)
     # zsh added here so it's available in the patched environment.path for user shell
-    environment.packages = [ glibc fakechroot gccLib nixLd pkgs.zsh ];
+    # nixLdLibraries provides stable paths for NIX_LD env vars
+    environment.packages = [ glibc fakechroot gccLib nixLd nixLdLibraries pkgs.zsh ];
     build.androidGlibc = glibc;
     build.androidFakechroot = fakechroot;
     # Environment-level patching (like NixOS replaceDependencies)
@@ -182,11 +197,12 @@ in {
       $DRY_RUN_CMD mv $VERBOSE_ARG ${installationDir}/lib/.ld-linux-aarch64.so.1.tmp ${installationDir}/lib/ld-linux-aarch64.so.1
     '';
 
-    # NIX_LD points to the real Android glibc dynamic linker
-    # NIX_LD_LIBRARY_PATH provides library search paths
+    # NIX_LD and NIX_LD_LIBRARY_PATH use stable profile paths
+    # (like NixOS /run/current-system/sw/share/nix-ld/lib)
+    # Profile path survives updates - only the symlink target changes
     environment.sessionVariables = {
-      NIX_LD = "${installationDir}${glibc}/lib/ld-linux-aarch64.so.1";
-      NIX_LD_LIBRARY_PATH = "${installationDir}${glibc}/lib:${installationDir}${gccLib}/lib";
+      NIX_LD = "${config.user.home}/.nix-profile/share/nix-ld/lib/ld.so";
+      NIX_LD_LIBRARY_PATH = "${config.user.home}/.nix-profile/share/nix-ld/lib";
     };
 
     # Termux tools (optional)
