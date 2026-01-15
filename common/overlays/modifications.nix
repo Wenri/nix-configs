@@ -26,22 +26,8 @@
 
   # Android: Go binaries work fine with standard glibc - skip Android glibc patching.
   # The Android glibc patching causes SIGSEGV crashes in Go binaries.
-  # Also wrap with proper SSL cert paths since Go makes direct syscalls that bypass fakechroot.
-  # Use real nix store path for cacert since Go can't follow symlinks through fakechroot.
-  gh = if installationDir != null then
-    final.symlinkJoin {
-      name = "gh-${prev.gh.version}";
-      paths = [ prev.gh ];
-      nativeBuildInputs = [ final.makeWrapper ];
-      postBuild = ''
-        wrapProgram $out/bin/gh \
-          --set SSL_CERT_FILE "${installationDir}${final.cacert}/etc/ssl/certs/ca-bundle.crt" \
-          --set SSL_CERT_DIR "${installationDir}${final.cacert}/etc/ssl/certs" \
-          --set GODEBUG "netdns=cgo"
-      '';
-      passthru = (prev.gh.passthru or {}) // { skipAndroidGlibcPatch = true; };
-    }
-  else prev.gh.overrideAttrs (old: {
+  # SSL certs and GODEBUG=netdns=cgo are set globally in home.sessionVariables.
+  gh = prev.gh.overrideAttrs (old: {
     passthru = (old.passthru or {}) // { skipAndroidGlibcPatch = true; };
   });
 

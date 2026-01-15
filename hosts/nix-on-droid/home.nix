@@ -25,6 +25,16 @@ in {
   # due to seccomp blocking sem_open syscall
   manual.manpages.enable = false;
 
+  # Global environment variables for Go binaries
+  # Go makes direct syscalls that bypass fakechroot, so we need:
+  # - SSL certs at real nix store path (not symlinks)
+  # - CGO DNS resolver (Go's pure-Go resolver can't read /etc/resolv.conf)
+  home.sessionVariables = {
+    SSL_CERT_FILE = "${androidPaths.installationDir}${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
+    SSL_CERT_DIR = "${androidPaths.installationDir}${pkgs.cacert}/etc/ssl/certs";
+    GODEBUG = "netdns=cgo";
+  };
+
   # Declarative SSH authorized_keys and termux-boot
   home.file = lib.mkMerge [
     {
