@@ -24,12 +24,9 @@
     dontAutoPatchelf = true;
   });
 
-  # Android: Go binaries work fine with standard glibc - skip Android glibc patching.
-  # The Android glibc patching causes SIGSEGV crashes in Go binaries.
+  # Android: Go binaries are SKIPPED by replaceAndroidDependencies (patchelf breaks them).
   # SSL certs and GODEBUG=netdns=cgo are set globally in home.sessionVariables.
-  gh = prev.gh.overrideAttrs (old: {
-    passthru = (old.passthru or {}) // { skipAndroidGlibcPatch = true; };
-  });
+  # See CLAUDE.md "Go Binaries on Android" section for details.
 
   # Android: Node.js makes direct syscalls that bypass fakechroot's LD_PRELOAD path translation.
   # Replace the cli.js path with the real Android filesystem path so node can find it.

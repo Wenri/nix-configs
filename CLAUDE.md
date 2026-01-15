@@ -464,6 +464,28 @@ README.md                  # Project README
 3. **patchelf Strategy**: Instead of rebuilding all packages, we patch ELF headers to use our glibc
 4. **Binary Cache**: Most packages still come from nixpkgs binary cache
 5. **Fakechroot Login**: Uses fakechroot instead of proot for better performance
+6. **Go Binary Exceptions**: Go binaries cannot be patched with patchelf (see below)
+
+### Go Binaries on Android
+
+Go binaries require special handling because:
+
+1. **patchelf breaks Go binaries**: When patchelf changes the interpreter path to a longer Android path, it must restructure ELF headers. This corrupts Go's runtime which has specific memory layout assumptions. Both `gh` and `glab` crash with SIGSEGV after patchelf.
+
+2. **Go makes direct syscalls**: Go's runtime bypasses glibc for many operations:
+   - DNS resolution uses Go's pure-Go resolver (localhost:53 which doesn't exist on Android)
+   - File operations use direct syscalls that bypass fakechroot path translation
+   - SSL cert lookup fails through symlinks
+
+3. **Go 1.25+ uses blocked syscalls**: Newer Go versions use `faccessat2` (syscall 439) which Android's seccomp filter blocks with SIGSYS instead of returning ENOSYS.
+
+**Current solutions:**
+- `replaceAndroidDependencies` detects Go binaries via `.go.buildinfo` ELF section and skips them
+- Global environment variables in `home.sessionVariables` handle SSL and DNS:
+  - `SSL_CERT_FILE` / `SSL_CERT_DIR`: Point to real nix store paths (not symlinks)
+  - `GODEBUG=netdns=cgo`: Forces Go to use glibc's getaddrinfo for DNS resolution
+- **gh** works with these environment variables
+- **glab** fails due to `faccessat2` syscall (requires rebuild with older Go or Go patch)
 
 ### Fakechroot Login System
 
@@ -504,8 +526,16 @@ submodules/                             # Git submodules for external dependenci
     └── tailscale-auth.key              # Tailscale authentication key
 
 common/overlays/
-├── glibc.nix                           # Android glibc overlay (accepts glibcSrc parameter)
-└── patches/glibc-termux/               # 28 patch files + source files
+├── additions.nix                       # Custom packages overlay
+├── channels.nix                        # nixpkgs-unstable and nixpkgs-master channels
+├── default.nix                         # Overlay entry point
+└── modifications.nix                   # Package modifications (claude-code, etc.)
+
+common/pkgs/
+├── android-fakechroot.nix              # Android-patched fakechroot
+├── android-glibc.nix                   # Android-patched glibc 2.40
+├── default.nix                         # Package set entry point
+└── glibc-termux/                       # 28 patch files + source files for glibc
 
 common/modules/nix-on-droid/
 ├── base.nix                            # Core packages, nix settings

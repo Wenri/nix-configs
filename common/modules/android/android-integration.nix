@@ -51,7 +51,7 @@
   replaceAndroidDependencies = drv:
     pkgs.runCommand "${drv.name or "env"}-android"
     {
-      nativeBuildInputs = [pkgs.patchelf pkgs.file];
+      nativeBuildInputs = [pkgs.patchelf pkgs.file pkgs.binutils];
     } ''
       # Step 1: Copy preserving symlinks (fast)
       cp -r ${drv} $out
@@ -103,15 +103,8 @@
       done || true
 
       # Patch ELF files (patchelf handles any length change for interpreter/RPATH)
-      # Skip Go binaries - they have their own runtime and patching causes SIGSEGV
       find $out -type f | while read -r file; do
         if ! file "$file" 2>/dev/null | grep -q "ELF.*dynamic"; then
-          continue
-        fi
-
-        # Skip Go binaries (detected by "Go build" string in binary)
-        # Go binaries work fine with standard glibc on Android
-        if grep -q "Go build" "$file" 2>/dev/null; then
           continue
         fi
 
@@ -122,6 +115,13 @@
             continue
             ;;
         esac
+
+        # Skip Go binaries - patchelf corrupts them due to ELF header restructuring
+        # when the interpreter path is longer. Go binaries work with environment
+        # variables instead (SSL_CERT_FILE, GODEBUG=netdns=cgo set in home.sessionVariables)
+        if readelf -S "$file" 2>/dev/null | grep -q "\.go\.buildinfo"; then
+          continue
+        fi
 
         INTERP=$(patchelf --print-interpreter "$file" 2>/dev/null || echo "")
         # Patch any interpreter that isn't already pointing to our Android glibc
