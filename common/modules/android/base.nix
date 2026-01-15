@@ -42,6 +42,7 @@ in {
     experimental-features = nix-command flakes
     build-hook =
     builders =
+    pure-eval = false
   '';
 
   # User configuration (uses username from flake)
