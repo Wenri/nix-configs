@@ -441,7 +441,12 @@ nixos-anywhere --flake '.#freenix' \
 docs/
 ├── NIX-ON-DROID.md        # Overview: installation, configuration, architecture, usage
 ├── ANDROID-GLIBC.md       # Android glibc: Termux patches, ld.so path translation, build
-└── FAKECHROOT.md          # libfakechroot: modifications, integration, troubleshooting
+├── FAKECHROOT.md          # libfakechroot: modifications, integration, troubleshooting
+└── SECCOMP.md             # Seccomp capabilities, USER_NOTIF supervisor, static binary handling
+
+scripts/seccomp/           # Seccomp utilities for static binaries
+├── seccomp-wrapper.c      # Wrapper returning ENOSYS for blocked syscalls
+└── seccomp-supervisor-demo.c  # USER_NOTIF supervisor demo
 
 CLAUDE.md                  # This file - AI assistant guidance (root level)
 README.md                  # Project README
@@ -454,6 +459,7 @@ README.md                  # Project README
 | **NIX-ON-DROID.md** | Architecture overview, installation, module structure, services (SSH, Shizuku) |
 | **ANDROID-GLIBC.md** | Android seccomp, Termux patches, ld.so built-in path translation, building glibc |
 | **FAKECHROOT.md** | libfakechroot as LD_PRELOAD library, argv[0] fix, readlink buffer overflow fix |
+| **SECCOMP.md** | Seccomp features on Android, USER_NOTIF supervisor, handling static binaries |
 
 ## Android-Specific (nix-on-droid)
 
