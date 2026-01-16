@@ -46,6 +46,7 @@ in {
     settings = {
       init.defaultBranch = "main";
       pull.rebase = false;
+      submodule.recurse = true;
       user = {
         name = "Bingchen Gong";
         email = "6704443+Wenri@users.noreply.github.com";
