@@ -1,7 +1,6 @@
 # Android integration module for nix-on-droid
 # Provides:
 # - Android glibc/fakechroot build settings
-# - nix-ld integration for shorter interpreter paths
 # - replaceAndroidDependencies function (like NixOS replaceDependencies but using patchelf)
 # - Termux integration tools
 {
@@ -25,27 +24,6 @@
   };
   glibc = androidPkgs.androidGlibc;
   fakechroot = androidPkgs.androidFakechroot;
-
-  # nix-ld for shorter interpreter path
-  # Instead of patching to long $PREFIX/nix/store/.../glibc-android/.../ld-linux-aarch64.so.1 (131 chars)
-  # We patch to short $PREFIX/lib/ld-linux-aarch64.so.1 (61 chars < original 83 chars)
-  # nix-ld shim reads NIX_LD env var to find the real dynamic linker
-  nixLd = pkgs.nix-ld;
-  nixLdInterp = "${installationDir}/lib/ld-linux-aarch64.so.1";
-
-  # nix-ld library environment (like NixOS /run/current-system/sw/share/nix-ld/lib)
-  # Provides stable paths for NIX_LD and NIX_LD_LIBRARY_PATH
-  nixLdLibraries = pkgs.buildEnv {
-    name = "nix-ld-libraries";
-    pathsToLink = [ "/lib" ];
-    paths = [ glibc gccLib ];
-    extraPrefix = "/share/nix-ld";
-    postBuild = ''
-      # Create ld.so symlink pointing to Android glibc's dynamic linker
-      ln -s ${glibc}/lib/ld-linux-aarch64.so.1 $out/share/nix-ld/lib/ld.so
-    '';
-    ignoreCollisions = true;
-  };
 
   # Standard glibc and gcc-lib from the base pkgs
   standardGlibc = pkgs.stdenv.cc.libc;
@@ -139,16 +117,14 @@
         esac
 
         INTERP=$(patchelf --print-interpreter "$file" 2>/dev/null || echo "")
-        # Patch interpreter to use nix-ld shim at short path
-        # nix-ld reads NIX_LD env var to find the real Android glibc ld.so
-        if [ -n "$INTERP" ] && [ "$INTERP" != "${nixLdInterp}" ]; then
-          patchelf --set-interpreter "${nixLdInterp}" "$file" 2>/dev/null || true
+        # Patch interpreter to use Android glibc directly
+        if [ -n "$INTERP" ] && ! echo "$INTERP" | grep -qF "${installationDir}${glibc}"; then
+          patchelf --set-interpreter "${installationDir}${glibc}/lib/ld-linux-aarch64.so.1" "$file" 2>/dev/null || true
         fi
 
         RPATH=$(patchelf --print-rpath "$file" 2>/dev/null || echo "")
         # Skip RPATH patching for binaries with no original RPATH
-        # Adding RPATH causes patchelf to restructure ELF headers, which can corrupt some binaries
-        # nix-ld uses NIX_LD_LIBRARY_PATH to find libraries, so RPATH isn't strictly needed
+        # Adding RPATH causes patchelf to restructure ELF headers, which can corrupt some binaries (e.g., Go)
         if [ -z "$RPATH" ]; then
           continue
         fi
@@ -177,8 +153,7 @@ in {
     # Android glibc build settings (always enabled)
     # Single-output glibc includes all binaries (iconv, locale needed by oh-my-zsh)
     # zsh added here so it's available in the patched environment.path for user shell
-    # nixLdLibraries provides stable paths for NIX_LD env vars
-    environment.packages = [ glibc fakechroot gccLib nixLd nixLdLibraries pkgs.zsh ];
+    environment.packages = [ glibc fakechroot gccLib pkgs.zsh ];
     build.androidGlibc = glibc;
     build.androidFakechroot = fakechroot;
     # Environment-level patching (like NixOS replaceDependencies)
@@ -189,21 +164,6 @@ in {
     environment.etc."ld.so.preload".text = ''
       ${installationDir}${fakechroot}/lib/fakechroot/libfakechroot.so
     '';
-
-    # nix-ld activation: create symlink at $PREFIX/lib/ld-linux-aarch64.so.1
-    build.activationBefore.linkNixLd = ''
-      $DRY_RUN_CMD mkdir $VERBOSE_ARG --parents ${installationDir}/lib
-      $DRY_RUN_CMD ln $VERBOSE_ARG --symbolic --force ${nixLd}/libexec/nix-ld ${installationDir}/lib/.ld-linux-aarch64.so.1.tmp
-      $DRY_RUN_CMD mv $VERBOSE_ARG ${installationDir}/lib/.ld-linux-aarch64.so.1.tmp ${installationDir}/lib/ld-linux-aarch64.so.1
-    '';
-
-    # NIX_LD and NIX_LD_LIBRARY_PATH use stable profile paths
-    # (like NixOS /run/current-system/sw/share/nix-ld/lib)
-    # Profile path survives updates - only the symlink target changes
-    environment.sessionVariables = {
-      NIX_LD = "${config.user.home}/.nix-profile/share/nix-ld/lib/ld.so";
-      NIX_LD_LIBRARY_PATH = "${config.user.home}/.nix-profile/share/nix-ld/lib";
-    };
 
     # Termux tools (optional)
     android-integration = lib.mkIf cfg.termuxTools {
