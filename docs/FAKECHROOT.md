@@ -1,6 +1,6 @@
 # libfakechroot for nix-on-droid
 
-> **Last Updated:** December 28, 2025
+> **Last Updated:** January 16, 2026
 > **Source:** `submodules/fakechroot/` (forked from dex4er/fakechroot)
 > **Target Platform:** aarch64-linux (Android/Termux)
 
@@ -10,9 +10,10 @@
 2. [How It Works](#how-it-works)
 3. [Integration with Android glibc](#integration-with-android-glibc)
 4. [Modifications for nix-on-droid](#modifications-for-nix-on-droid)
-5. [Build Configuration](#build-configuration)
-6. [Troubleshooting](#troubleshooting)
-7. [References](#references)
+5. [Android Seccomp Bypass](#android-seccomp-bypass)
+6. [Build Configuration](#build-configuration)
+7. [Troubleshooting](#troubleshooting)
+8. [References](#references)
 
 ---
 
@@ -300,6 +301,150 @@ static char exclude_storage[8192];
 
 **File modified:**
 - `submodules/fakechroot/src/libfakechroot.c`
+
+### 7. SIGSYS Handler for Android Seccomp Bypass
+
+**Problem:** Android's seccomp filter blocks certain syscalls (like `faccessat2`, syscall 439) that newer glibc and Go use. When blocked, the kernel sends SIGSYS which crashes the process.
+
+**Symptom:**
+```bash
+$ glab --version
+SIGSYS: bad system call
+PC=0x16af0 m=0 sigcode=1
+```
+
+**Solution:** Install a SIGSYS handler that intercepts blocked syscalls and returns ENOSYS, allowing runtimes to fall back to alternative syscalls.
+
+```c
+// In libfakechroot.c
+void fakechroot_sigsys_handler(int sig, siginfo_t *info, void *ucontext)
+{
+    if (info->si_code == SYS_SECCOMP && info->si_syscall == SYS_faccessat2) {
+        ucontext_t *ctx = (ucontext_t *)ucontext;
+        ctx->uc_mcontext.regs[0] = -ENOSYS;  // Return ENOSYS
+        return;
+    }
+    // Chain to saved handler for other signals
+}
+```
+
+**Files modified:**
+- `submodules/fakechroot/src/libfakechroot.c`
+
+### 8. sigaction Wrapper for Go Compatibility
+
+**Problem:** Go's runtime installs its own SIGSYS handler during startup, which overrides our handler. Go's handler panics on SIGSYS from seccomp.
+
+**Solution:** Wrap `sigaction()` to intercept Go's attempt to install a SIGSYS handler:
+
+1. When code calls `sigaction(SIGSYS, ...)`, save the handler but don't install it
+2. Keep our SIGSYS handler installed
+3. Chain to the saved handler for signals we don't handle
+
+```c
+// In sigaction.c
+wrapper(sigaction, int, (int signum, const struct sigaction *act, struct sigaction *oldact))
+{
+    if (signum != SIGSYS)
+        return nextcall(sigaction)(signum, act, oldact);
+
+    // Save Go's handler for chaining
+    memcpy(&saved_sigsys_handler, act, sizeof(struct sigaction));
+    have_saved_sigsys_handler = 1;
+
+    // Don't actually install their handler - keep ours
+    return 0;
+}
+```
+
+**Files added:**
+- `submodules/fakechroot/src/sigaction.c`
+
+**Files modified:**
+- `submodules/fakechroot/src/Makefile.am`
+- `submodules/fakechroot/src/libfakechroot.c`
+
+**Result:** Go binaries like `glab` now work on Android:
+```bash
+$ glab --version
+glab 1.80.4 (f4b518e)
+```
+
+---
+
+## Android Seccomp Bypass
+
+Android's seccomp filter blocks several syscalls that cause issues with Nix packages:
+
+| Syscall | Number | Issue | Solution |
+|---------|--------|-------|----------|
+| `faccessat2` | 439 | Go's `exec.LookPath` uses it | SIGSYS handler returns ENOSYS |
+| `clone3` | 435 | glibc's `posix_spawn` uses it | Android glibc patches avoid it |
+| `set_robust_list` | 99 | Thread creation | Android glibc patches |
+| `rseq` | 293 | Restartable sequences | Android glibc patches |
+
+### How It Works
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Go Binary (e.g., glab)                    │
+│                          │                                   │
+│                          ▼                                   │
+│  ┌─────────────────────────────────────────────────────────┐│
+│  │         Raw syscall: faccessat2(439)                    ││
+│  └─────────────────────────────────────────────────────────┘│
+│                          │                                   │
+│                          ▼                                   │
+│  ┌─────────────────────────────────────────────────────────┐│
+│  │              Android Kernel Seccomp                     ││
+│  │         Syscall 439 blocked → Send SIGSYS               ││
+│  └─────────────────────────────────────────────────────────┘│
+│                          │                                   │
+│                          ▼                                   │
+│  ┌─────────────────────────────────────────────────────────┐│
+│  │         libfakechroot SIGSYS Handler                    ││
+│  │  • Check si_code == SYS_SECCOMP                         ││
+│  │  • Check si_syscall == 439 (faccessat2)                 ││
+│  │  • Set return value to -ENOSYS in registers             ││
+│  │  • Return (syscall appears to have returned ENOSYS)     ││
+│  └─────────────────────────────────────────────────────────┘│
+│                          │                                   │
+│                          ▼                                   │
+│  ┌─────────────────────────────────────────────────────────┐│
+│  │                Go Runtime                                ││
+│  │  • Sees ENOSYS from faccessat2                          ││
+│  │  • Falls back to faccessat (syscall 48)                 ││
+│  │  • Continues normally                                    ││
+│  └─────────────────────────────────────────────────────────┘│
+└─────────────────────────────────────────────────────────────┘
+```
+
+### sigaction Interception
+
+Go's runtime installs signal handlers early in process startup. To prevent Go from overriding our SIGSYS handler:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Process Startup                           │
+│                          │                                   │
+│ 1. ld.so loads libfakechroot.so (LD_PRELOAD)                │
+│                          │                                   │
+│ 2. fakechroot_init() runs (constructor)                     │
+│    └─ Installs SIGSYS handler via real sigaction()          │
+│                          │                                   │
+│ 3. Go runtime initializes                                    │
+│    └─ Tries to install SIGSYS handler via sigaction()       │
+│                          │                                   │
+│ 4. Our sigaction wrapper intercepts                          │
+│    └─ Saves Go's handler but doesn't install it             │
+│    └─ Returns success (Go thinks it worked)                  │
+│                          │                                   │
+│ 5. SIGSYS arrives (blocked syscall)                          │
+│    └─ Our handler runs first                                 │
+│    └─ If faccessat2: return ENOSYS                          │
+│    └─ Otherwise: chain to Go's saved handler                │
+└─────────────────────────────────────────────────────────────┘
+```
 
 ---
 
