@@ -439,8 +439,11 @@ typedef enum {
 
 *Direct script execution* (interpreter already patched):
 ```
-[interpPath, shebang_arg?, script_path, user_args...]
+[displayArgv0, shebang_arg?, script_path, user_args...]
 ```
+Note: `displayArgv0` is the original shebang interpreter (e.g., `/usr/bin/perl`),
+matching kernel behavior. The actual executed binary is `ctx->interpPath`
+(the expanded path like `/nix/store/.../bin/perl`).
 
 *Wrapped script execution* (needs ld.so):
 ```
