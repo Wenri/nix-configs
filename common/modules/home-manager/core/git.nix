@@ -46,6 +46,8 @@ in {
     settings = {
       init.defaultBranch = "main";
       pull.rebase = false;
+      fetch.recurseSubmodules = "on-demand";
+      push.recurseSubmodules = "on-demand";
       submodule.recurse = true;
       user = {
         name = "Bingchen Gong";
