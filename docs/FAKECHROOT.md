@@ -1,6 +1,6 @@
 # libfakechroot for nix-on-droid
 
-> **Last Updated:** January 16, 2026
+> **Last Updated:** January 17, 2026
 > **Source:** `submodules/fakechroot/` (forked from dex4er/fakechroot)
 > **Target Platform:** aarch64-linux (Android/Termux)
 
@@ -404,6 +404,64 @@ wrapper(sigaction, int, (int signum, const struct sigaction *act, struct sigacti
 $ glab --version
 glab 1.80.4 (f4b518e)
 ```
+
+### 10. Direct Execution for Script Interpreters
+
+**Problem:** When executing scripts with shebang lines (e.g., `#!/usr/bin/env python3`), fakechroot always wrapped the interpreter with `ld.so --argv0`. This was unnecessary overhead for interpreters that were already patched to use Android glibc or the nix-ld shim.
+
+**Solution:** Check the script interpreter's PT_INTERP section to determine if ld.so wrapping is needed:
+
+1. Parse the shebang line and expand the interpreter path
+2. Open the interpreter ELF and read its PT_INTERP
+3. If PT_INTERP points to a "direct-exec" linker, execute without wrapping
+4. Otherwise, use the standard `ld.so --argv0` wrapper
+
+**Direct-exec linkers recognized:**
+- `ANDROID_ELFLOADER` (Android glibc's ld.so)
+- nix-ld shim (`/data/data/com.termux.nix/files/usr/lib/ld-linux-aarch64.so.1`)
+- Android Bionic (`/system/bin/linker64`, `/system/bin/linker`)
+
+**Execution types:**
+```c
+typedef enum {
+    /* Direct execution (no ld.so wrapper needed) */
+    EXEC_TYPE_DIRECT_ELF,       /* ELF with direct-exec PT_INTERP */
+    EXEC_TYPE_DIRECT_LDSO,      /* Executing ld.so itself */
+    EXEC_TYPE_DIRECT_SCRIPT,    /* Script with direct-exec interpreter */
+
+    /* Elfloader wrapped execution (needs ld.so wrapper) */
+    EXEC_TYPE_ELFLOADER_ELF,    /* Regular ELF binary */
+    EXEC_TYPE_ELFLOADER_SCRIPT, /* Script with regular interpreter */
+} exec_type_t;
+```
+
+**Argv layout comparison:**
+
+*Direct script execution* (interpreter already patched):
+```
+[interpPath, shebang_arg?, script_path, user_args...]
+```
+
+*Wrapped script execution* (needs ld.so):
+```
+[displayArgv0, --argv0, displayArgv0, interpPath, shebang_arg?, script_path, user_args...]
+```
+
+**Buffer reuse optimization:**
+
+The implementation reuses `exec_ctx_t` buffers to minimize stack usage (~12KB+ saved):
+
+| Buffer | Usage during exec_prepare | Usage during script parsing |
+|--------|---------------------------|----------------------------|
+| `ctx.interpPath` | Temp for path expansion | Expanded interpreter path |
+| `ctx.hashbang` | Temp for path expansion, then file header | Shebang line / PT_INTERP |
+
+**Files modified:**
+- `submodules/fakechroot/src/execve.c`
+- `submodules/fakechroot/src/execve.h`
+- `submodules/fakechroot/src/posix_spawn.c`
+
+**Result:** Scripts with patched interpreters execute faster without unnecessary ld.so wrapper overhead.
 
 ---
 
