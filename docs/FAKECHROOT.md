@@ -157,7 +157,32 @@ The fakechroot source in `submodules/fakechroot/` has been modified from upstrea
 
 This ensures login shells correctly detect their status without parsing `-z` as an invalid option.
 
-### 2. Hashbang Script Path Fix
+### 2. Kernel-Style Shebang Parsing
+
+**Problem:** Original fakechroot split shebang arguments on every whitespace, which differs from Linux kernel behavior. The kernel only passes ONE optional argument after the interpreter.
+
+**Linux kernel behavior:**
+```bash
+#!/usr/bin/env python3        # interpreter="/usr/bin/env", arg="python3"
+#!/usr/bin/env -S python3 -u  # interpreter="/usr/bin/env", arg="-S python3 -u" (one string!)
+```
+
+**Fix:** Aligned shebang parsing with kernel behavior:
+- Parse interpreter path (first token)
+- Parse optional single argument (everything after whitespace until newline)
+
+**Constants defined in `execve.h`:**
+```c
+#define EXEC_PREFIX_LEN 4     /* [argv0, --argv0, argv0, program] */
+#define MAX_SHEBANG_ARGS 1    /* Kernel only passes 1 arg */
+```
+
+**Files modified:**
+- `submodules/fakechroot/src/execve.c`
+- `submodules/fakechroot/src/execve.h`
+- `submodules/fakechroot/src/posix_spawn.c`
+
+### 3. Hashbang Script Path Fix
 
 **Problem:** When executing hashbang scripts (e.g., `#!/bin/bash`), fakechroot was passing `argv[0]` (the command name like "claude") instead of the actual script path to the interpreter.
 
@@ -181,7 +206,7 @@ newargv[n++] = filename;  // Correct: passes "/path/to/.claude-wrapped"
 - `submodules/fakechroot/src/execve.c`
 - `submodules/fakechroot/src/posix_spawn.c`
 
-### 3. Improved argv[0] for ps/top Display
+### 4. Improved argv[0] for ps/top Display
 
 **Problem:** When fakechroot invoked `ld.so` to run binaries, it was setting `argv[0]` to `ANDROID_ELFLOADER` (the ld.so path). This caused all processes to show as "ld-linux-aarch64.so.1" in `ps` and `top` output.
 
@@ -209,17 +234,27 @@ $ ps
 12345 ?        00:00:00 sleep
 ```
 
-**argv layout:**
+**argv layout (EXEC_PREFIX_LEN = 4):**
 ```
-[argv0, --argv0, argv0, program/interpreter, args...]
- └─ for ps   └─ for $0
+[argv0, --argv0, argv0, program, args...]
+   │       │       │       │
+   │       │       │       └─ ELF: expanded binary path
+   │       │       │          Script: expanded interpreter path
+   │       │       └─ program's argv[0] (for $0, $^X)
+   │       └─ ld.so option
+   └─ ld.so's argv[0] (for ps/top display)
+```
+
+For scripts with shebang args (e.g., `#!/usr/bin/env python3`):
+```
+[argv0, --argv0, argv0, interpreter, shebang_arg, script, user_args...]
 ```
 
 **Files modified:**
 - `submodules/fakechroot/src/execve.c` (both hashbang and non-hashbang sections)
 - `submodules/fakechroot/src/posix_spawn.c` (both hashbang and non-hashbang sections)
 
-### 4. Readlink Buffer Overflow Fix
+### 5. Readlink Buffer Overflow Fix
 
 **Problem:** Buffer overflow in readlink wrapper functions. When reading symlinks to nix store paths (76+ characters like `/nix/store/pyh11hxaclcdq4qhl7zn2c1jq0b0s2mp-glibc-android-2.40-android/lib`), fakechroot was copying the full path into smaller caller buffers (e.g., 64 bytes) without checking size, causing heap metadata corruption.
 
@@ -252,7 +287,7 @@ else {
 - `submodules/fakechroot/src/__readlinkat_chk.c`
 - `submodules/fakechroot/src/readlinkat.c`
 
-### 5. va_start/va_end Fix
+### 6. va_start/va_end Fix
 
 **Problem:** In `libfakechroot.c`, the `fakechroot_debug()` function called `va_start()` then returned early without `va_end()`, causing undefined behavior.
 
@@ -283,7 +318,7 @@ LOCAL int fakechroot_debug (const char *fmt, ...) {
 **File modified:**
 - `submodules/fakechroot/src/libfakechroot.c`
 
-### 6. Static Storage for Exclude List
+### 7. Static Storage for Exclude List
 
 **Problem:** Using `malloc()` in library constructor on Android was unreliable.
 
@@ -302,7 +337,7 @@ static char exclude_storage[8192];
 **File modified:**
 - `submodules/fakechroot/src/libfakechroot.c`
 
-### 7. SIGSYS Handler for Android Seccomp Bypass
+### 8. SIGSYS Handler for Android Seccomp Bypass
 
 **Problem:** Android's seccomp filter blocks certain syscalls (like `faccessat2`, syscall 439) that newer glibc and Go use. When blocked, the kernel sends SIGSYS which crashes the process.
 
@@ -331,7 +366,7 @@ void fakechroot_sigsys_handler(int sig, siginfo_t *info, void *ucontext)
 **Files modified:**
 - `submodules/fakechroot/src/libfakechroot.c`
 
-### 8. sigaction Wrapper for Go Compatibility
+### 9. sigaction Wrapper for Go Compatibility
 
 **Problem:** Go's runtime installs its own SIGSYS handler during startup, which overrides our handler. Go's handler panics on SIGSYS from seccomp.
 
