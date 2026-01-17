@@ -63,24 +63,17 @@ in
           fi
         done
 
-        # CRITICAL: Patch libfakechroot.so RPATH to use Android glibc
+        # CRITICAL: Replace standard glibc in libfakechroot.so RPATH with Android glibc
         # This ensures all glibc function calls (posix_spawn, etc.) use Android glibc
         # which avoids clone3 and other blocked syscalls
         LIBFAKE="$out/lib/fakechroot/libfakechroot.so"
         if [ -f "$LIBFAKE" ]; then
-          OLD_RPATH=$(patchelf --print-rpath "$LIBFAKE" 2>/dev/null || echo "")
-          echo "  libfakechroot.so old RPATH: $OLD_RPATH"
-
-          # Prepend Android glibc path to RPATH (so it's searched first)
-          if [ -n "$OLD_RPATH" ]; then
-            NEW_RPATH="${androidGlibcAbs}:$OLD_RPATH"
-          else
-            NEW_RPATH="${androidGlibcAbs}"
+          OLD_RPATH=$(patchelf --print-rpath "$LIBFAKE")
+          NEW_RPATH=$(echo "$OLD_RPATH" | sed 's|/nix/store/[^:]*-glibc-[^:]*/lib|${androidGlibcAbs}|g')
+          if [ -n "$NEW_RPATH" ] && [ "$NEW_RPATH" != "$OLD_RPATH" ]; then
+            echo "  libfakechroot.so: $OLD_RPATH -> $NEW_RPATH"
+            patchelf --set-rpath "$NEW_RPATH" "$LIBFAKE"
           fi
-
-          patchelf --set-rpath "$NEW_RPATH" "$LIBFAKE" 2>/dev/null || true
-          echo "  libfakechroot.so new RPATH: $NEW_RPATH"
-          echo "  Patched library: $LIBFAKE"
         fi
 
         echo "=== Fakechroot patching complete ==="

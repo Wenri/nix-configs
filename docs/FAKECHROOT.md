@@ -586,13 +586,15 @@ fakechroot.overrideAttrs (oldAttrs: {
       fi
     done
 
-    # CRITICAL: Patch libfakechroot.so RPATH to use Android glibc
+    # CRITICAL: Replace standard glibc in libfakechroot.so RPATH with Android glibc
     # This ensures glibc calls (posix_spawn, etc.) use Android glibc
     LIBFAKE="$out/lib/fakechroot/libfakechroot.so"
     if [ -f "$LIBFAKE" ]; then
-      OLD_RPATH=$(patchelf --print-rpath "$LIBFAKE" 2>/dev/null || echo "")
-      NEW_RPATH="${androidGlibcAbs}:$OLD_RPATH"
-      patchelf --set-rpath "$NEW_RPATH" "$LIBFAKE"
+      OLD_RPATH=$(patchelf --print-rpath "$LIBFAKE")
+      NEW_RPATH=$(echo "$OLD_RPATH" | sed 's|/nix/store/[^:]*-glibc-[^:]*/lib|${androidGlibcAbs}|g')
+      if [ -n "$NEW_RPATH" ] && [ "$NEW_RPATH" != "$OLD_RPATH" ]; then
+        patchelf --set-rpath "$NEW_RPATH" "$LIBFAKE"
+      fi
     fi
   '';
 })
