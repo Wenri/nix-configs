@@ -56,7 +56,7 @@
   replaceAndroidDependencies = drv:
     pkgs.runCommand "${drv.name or "env"}-android"
     {
-      nativeBuildInputs = [pkgs.patchelf pkgs.python3];
+      nativeBuildInputs = [pkgs.nix pkgs.patchelf pkgs.python3];
     } ''
       nix-store --dump ${drv} | python3 ${narPatcher} \
         --prefix "${installationDir}" \
