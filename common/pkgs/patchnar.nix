@@ -7,7 +7,7 @@ let
 in
 stdenv.mkDerivation {
   pname = "patchnar";
-  version = "0.18.0";
+  version = "0.20.0";
 
   inherit src;
 

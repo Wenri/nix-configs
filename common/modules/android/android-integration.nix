@@ -1,7 +1,7 @@
 # Android integration module for nix-on-droid
 # Provides:
 # - Android glibc/fakechroot build settings
-# - replaceAndroidDependencies function (like NixOS replaceDependencies but using patchnar)
+# - replaceAndroidDependencies function (NixOS-style grafting with patchnar)
 # - Termux integration tools
 {
   config,
@@ -47,24 +47,29 @@
     done || true
   '';
 
-  # replaceAndroidDependencies - like NixOS replaceDependencies but for Android
-  # Uses NAR serialization for atomic, clean patching:
-  # 1. nix-store --dump -> serialize to NAR
-  # 2. patchnar -> rewrite symlinks, patch ELF interpreter/RPATH, patch scripts
-  # 3. nix-store --restore -> atomic output
+  # Import the NixOS-style grafting implementation
+  replaceAndroidDepsLib = import ../../lib/replace-android-dependencies.nix {
+    inherit lib;
+    inherit (pkgs) runCommand writeText nix;
+    inherit patchnar;
+  };
+
+  # replaceAndroidDependencies - NixOS-style grafting for Android
+  # Uses IFD to discover closure, recursively patches all packages
+  # with hash mapping for inter-package references
   replaceAndroidDependencies = drv:
-    pkgs.runCommand "${drv.name or "env"}-android"
-    {
-      nativeBuildInputs = [pkgs.nix patchnar];
-    } ''
-      nix-store --dump ${drv} | patchnar \
-        --prefix "${installationDir}" \
-        --glibc "${glibc}" \
-        --gcc-lib "${gccLib}" \
-        --old-glibc "${standardGlibc}" \
-        --old-gcc-lib "${standardGccLib}" \
-      | nix-store --restore $out
-    '';
+    replaceAndroidDepsLib {
+      inherit drv;
+      prefix = installationDir;
+      androidGlibc = glibc;
+      androidGccLib = gccLib;
+      inherit standardGlibc standardGccLib;
+      cutoffPackages = [
+        # Packages that shouldn't be patched (already Android-compatible)
+        glibc
+        gccLib
+      ];
+    };
 
 in {
   options.android = {
