@@ -124,15 +124,23 @@ The Android glibc's ld.so reads `/etc/ld.so.preload` and loads listed libraries 
 
 ### Compile-Time Configuration
 
-libfakechroot is built with paths baked in at compile time:
+libfakechroot is built with paths baked in at compile time. The Nix package passes Android configuration as environment variables to `./configure`, which uses `AC_ARG_VAR` and `AC_DEFINE_UNQUOTED` to write them to `config.h`:
 
 ```nix
-# common/overlays/fakechroot.nix
-NIX_CFLAGS_COMPILE = builtins.concatStringsSep " " [
-  "-DANDROID_ELFLOADER=\"${androidLdso}\""
-  "-DANDROID_BASE=\"${installationDir}\""
-  "-DANDROID_EXCLUDE_PATH=\"${excludePath}\""
-];
+# common/pkgs/android-fakechroot.nix
+# Pass Android paths to configure via AC_ARG_VAR environment variables
+# These get written to config.h via AC_DEFINE_UNQUOTED
+ANDROID_ELFLOADER = androidLdso;
+ANDROID_BASE = installationDir;
+ANDROID_EXCLUDE_PATH = excludePath;
+```
+
+The configure script defines these in `config.h`:
+```c
+/* In generated config.h */
+#define ANDROID_ELFLOADER "/data/data/com.termux.nix/files/usr/nix/store/.../ld-linux-aarch64.so.1"
+#define ANDROID_BASE "/data/data/com.termux.nix/files/usr"
+#define ANDROID_EXCLUDE_PATH "/3rdmodem:/acct:/apex:..."
 ```
 
 ---
@@ -546,12 +554,13 @@ Go's runtime installs signal handlers early in process startup. To prevent Go fr
 
 ## Build Configuration
 
-### Nix Overlay
+### Nix Package
 
 ```nix
-# common/overlays/fakechroot.nix
-{ stdenv, patchelf, fakechroot, androidGlibc, installationDir, excludePath, src }:
+# common/pkgs/android-fakechroot.nix
+{ stdenv, patchelf, fakechroot, androidGlibc, installationDir, src }:
 let
+  excludePath = "/3rdmodem:/acct:/apex:/android:...";  # Android system paths
   androidGlibcAbs = "${installationDir}${androidGlibc}/lib";
   androidLdso = "${androidGlibcAbs}/ld-linux-aarch64.so.1";
 in
@@ -561,30 +570,55 @@ fakechroot.overrideAttrs (oldAttrs: {
   inherit src;
   patches = [];
 
-  NIX_CFLAGS_COMPILE = builtins.concatStringsSep " " [
-    (oldAttrs.NIX_CFLAGS_COMPILE or "")
-    "-DANDROID_ELFLOADER=\"${androidLdso}\""
-    "-DANDROID_BASE=\"${installationDir}\""
-    "-DANDROID_EXCLUDE_PATH=\"${excludePath}\""
-  ];
+  nativeBuildInputs = (oldAttrs.nativeBuildInputs or []) ++ [patchelf];
+
+  # Pass Android paths to configure via AC_ARG_VAR environment variables
+  # These get written to config.h via AC_DEFINE_UNQUOTED
+  ANDROID_ELFLOADER = androidLdso;
+  ANDROID_BASE = installationDir;
+  ANDROID_EXCLUDE_PATH = excludePath;
 
   postFixup = (oldAttrs.postFixup or "") + ''
+    # Patch binaries to use Android glibc
     for bin in $out/bin/fakechroot $out/bin/ldd.fakechroot; do
       if [ -f "$bin" ]; then
         patchelf --set-interpreter "${androidLdso}" --set-rpath "${androidGlibcAbs}" "$bin"
       fi
     done
+
+    # CRITICAL: Patch libfakechroot.so RPATH to use Android glibc
+    # This ensures glibc calls (posix_spawn, etc.) use Android glibc
+    LIBFAKE="$out/lib/fakechroot/libfakechroot.so"
+    if [ -f "$LIBFAKE" ]; then
+      OLD_RPATH=$(patchelf --print-rpath "$LIBFAKE" 2>/dev/null || echo "")
+      NEW_RPATH="${androidGlibcAbs}:$OLD_RPATH"
+      patchelf --set-rpath "$NEW_RPATH" "$LIBFAKE"
+    fi
   '';
 })
 ```
 
 ### Compile-Time Constants
 
+These are passed as environment variables to `./configure` and written to `config.h` via `AC_DEFINE_UNQUOTED`:
+
 | Constant | Purpose |
 |----------|---------|
 | `ANDROID_ELFLOADER` | Path to Android glibc's ld.so |
 | `ANDROID_BASE` | Installation prefix (`/data/data/com.termux.nix/files/usr`) |
 | `ANDROID_EXCLUDE_PATH` | Paths to exclude from translation (e.g., `/proc:/sys:/dev`) |
+
+The `configure.ac` script handles these via `AC_ARG_VAR`:
+```autoconf
+AC_ARG_VAR([ANDROID_ELFLOADER], [Path to Android glibc's ld.so dynamic linker])
+AC_ARG_VAR([ANDROID_BASE], [Installation prefix for Android])
+AC_ARG_VAR([ANDROID_EXCLUDE_PATH], [Colon-separated paths excluded from chroot translation])
+
+if test -n "$ANDROID_BASE"; then
+    AC_DEFINE_UNQUOTED([ANDROID_BASE], ["$ANDROID_BASE"], [Installation prefix])
+fi
+# ... similar for other variables
+```
 
 ### Building
 
@@ -732,3 +766,9 @@ subprocess.run(['cmd'], preexec_fn=lambda: None)  # preexec_fn forces fork mode
 
 - **LD_PRELOAD**: https://man7.org/linux/man-pages/man8/ld.so.8.html
 - **dlsym RTLD_NEXT**: Used to call original functions after interception
+
+### Why dlsym Instead of Symbol Versioning?
+
+GNU symbol versioning (`.symver` directive) does not work for LD_PRELOAD interposition libraries. When using `.symver __real_open, open@@GLIBC_2.17` in a preload library, the linker resolves the versioned reference to the local `open` wrapper instead of leaving it undefined for the real glibc. This causes infinite recursion.
+
+`dlsym(RTLD_NEXT, "open")` is the correct approach for LD_PRELOAD libraries because it explicitly requests the *next* symbol in the library search order, which is the glibc function.
