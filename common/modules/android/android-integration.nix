@@ -130,7 +130,8 @@
           NEW_RPATH=""
           if echo "$RPATH" | grep -q "/nix/store"; then
             # Transform RPATH: replace glibc, gcc-lib, and add Android prefix
-            NEW_RPATH=$(echo "$RPATH" | sed "s|${standardGlibc}|${glibc}|g;s|${standardGccLib}|${gccLib}|g;s|/nix/store|${installationDir}/nix/store|g")
+            # Only prefix /nix/store at path boundaries (start or after :) to avoid double-prefixing
+            NEW_RPATH=$(echo "$RPATH" | sed "s|${standardGlibc}|${glibc}|g;s|${standardGccLib}|${gccLib}|g;s|^/nix/store|${installationDir}/nix/store|;s|:/nix/store|:${installationDir}/nix/store|g")
           elif ! echo "$RPATH" | grep -qF "${installationDir}"; then
             # Non-Android RPATH - add Android prefix
             NEW_RPATH="${installationDir}${glibc}/lib:${installationDir}${gccLib}/lib:$RPATH"
