@@ -170,6 +170,7 @@
         pkgs = mkPkgs system;
         glibcSrc = ./submodules/glibc;
         fakechrootSrc = ./submodules/fakechroot;
+        patchnarSrc = ./submodules/patchnar;
       };
     in
       (lib.mapAttrs (hostname: _:

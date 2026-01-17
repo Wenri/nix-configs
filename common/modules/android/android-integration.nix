@@ -1,7 +1,7 @@
 # Android integration module for nix-on-droid
 # Provides:
 # - Android glibc/fakechroot build settings
-# - replaceAndroidDependencies function (like NixOS replaceDependencies but using patchelf)
+# - replaceAndroidDependencies function (like NixOS replaceDependencies but using patchnar)
 # - Termux integration tools
 {
   config,
@@ -14,16 +14,18 @@
   # Source paths relative to this module
   glibcSrc = ../../../submodules/glibc;
   fakechrootSrc = ../../../submodules/fakechroot;
+  patchnarSrc = ../../../submodules/patchnar;
 
   # Installation directory from nix-on-droid build config
   inherit (config.build) installationDir;
 
   # Get Android packages from common/pkgs
   androidPkgs = import ../../pkgs {
-    inherit pkgs glibcSrc fakechrootSrc;
+    inherit pkgs glibcSrc fakechrootSrc patchnarSrc;
   };
   glibc = androidPkgs.androidGlibc;
   fakechroot = androidPkgs.androidFakechroot;
+  patchnar = androidPkgs.patchnar;
 
   # Standard glibc and gcc-lib from the base pkgs
   standardGlibc = pkgs.stdenv.cc.libc;
@@ -45,20 +47,17 @@
     done || true
   '';
 
-  # NAR patcher script for atomic Android patching
-  narPatcher = ../../../scripts/nar-patcher.py;
-
   # replaceAndroidDependencies - like NixOS replaceDependencies but for Android
   # Uses NAR serialization for atomic, clean patching:
   # 1. nix-store --dump -> serialize to NAR
-  # 2. Python NAR patcher -> rewrite symlinks, patch ELF/scripts
+  # 2. patchnar -> rewrite symlinks, patch ELF interpreter/RPATH, patch scripts
   # 3. nix-store --restore -> atomic output
   replaceAndroidDependencies = drv:
     pkgs.runCommand "${drv.name or "env"}-android"
     {
-      nativeBuildInputs = [pkgs.nix pkgs.patchelf pkgs.python3];
+      nativeBuildInputs = [pkgs.nix patchnar];
     } ''
-      nix-store --dump ${drv} | python3 ${narPatcher} \
+      nix-store --dump ${drv} | patchnar \
         --prefix "${installationDir}" \
         --glibc "${glibc}" \
         --gcc-lib "${gccLib}" \
