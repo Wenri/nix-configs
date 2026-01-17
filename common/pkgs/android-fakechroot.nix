@@ -40,6 +40,10 @@ in
 
     nativeBuildInputs = (oldAttrs.nativeBuildInputs or []) ++ [patchelf];
 
+    # Enable parallel building and LTO
+    enableParallelBuilding = true;
+    configureFlags = (oldAttrs.configureFlags or []) ++ ["--enable-lto"];
+
     # Pass Android paths to configure via AC_ARG_VAR environment variables
     # These get written to config.h via AC_DEFINE_UNQUOTED
     ANDROID_ELFLOADER = androidLdso;
