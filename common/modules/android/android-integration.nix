@@ -45,107 +45,26 @@
     done || true
   '';
 
-  # replaceAndroidDependencies - like NixOS replaceDependencies but using patchelf
-  # Takes a derivation and patches ALL ELF binaries and scripts for Android glibc
-  # This is applied to the final environment, giving transitive dependency patching
+  # NAR patcher script for atomic Android patching
+  narPatcher = ../../../scripts/nar-patcher.py;
+
+  # replaceAndroidDependencies - like NixOS replaceDependencies but for Android
+  # Uses NAR serialization for atomic, clean patching:
+  # 1. nix-store --dump -> serialize to NAR
+  # 2. Python NAR patcher -> rewrite symlinks, patch ELF/scripts
+  # 3. nix-store --restore -> atomic output
   replaceAndroidDependencies = drv:
     pkgs.runCommand "${drv.name or "env"}-android"
     {
-      nativeBuildInputs = [pkgs.patchelf pkgs.file];
+      nativeBuildInputs = [pkgs.patchelf pkgs.python3];
     } ''
-      # Step 1: Copy preserving symlinks (fast)
-      cp -r ${drv} $out
-      chmod -R u+w $out
-
-      # Step 2: Handle symlinks - rewrite targets and dereference ELF files
-      find $out -type l | while read -r link; do
-        target=$(readlink "$link")
-
-        # Skip broken symlinks that point to Android paths (glibc compat symlinks)
-        if echo "$target" | grep -q "data/data/com.termux"; then
-          # Make absolute and keep as symlink
-          abs_target=$(echo "$target" | sed 's|.*/\(data/data/\)|/\1|')
-          rm "$link"
-          ln -sf "$abs_target" "$link" 2>/dev/null || true
-          continue
-        fi
-
-        # For symlinks to /nix/store, check if target is ELF
-        if echo "$target" | grep -q "^/nix/store"; then
-          # Check if target exists and is ELF
-          if [ -f "$target" ] && file "$target" 2>/dev/null | grep -q "ELF"; then
-            # Dereference: replace symlink with copy of actual file
-            rm "$link"
-            cp "$target" "$link"
-            chmod u+w "$link"
-          else
-            # Not ELF or doesn't exist - just add Android prefix
-            new_target="${installationDir}$target"
-            rm "$link"
-            ln -s "$new_target" "$link"
-          fi
-        fi
-      done || true
-
-      # Step 3: Remove remaining dangling symlinks
-      find $out -xtype l -delete 2>/dev/null || true
-
-      # Patch script files (text files can handle any length change)
-      find $out -type f | while read -r file; do
-        if head -c 2 "$file" 2>/dev/null | grep -q "^#!"; then
-          if grep -q "/nix/store" "$file" 2>/dev/null; then
-            # Only add prefix if not already prefixed
-            if ! grep -qF "${installationDir}/nix/store" "$file" 2>/dev/null; then
-              sed -i "s|/nix/store|${installationDir}/nix/store|g" "$file"
-            fi
-          fi
-        fi
-      done || true
-
-      # Patch ELF files (patchelf handles any length change for interpreter/RPATH)
-      # Combine interpreter and RPATH into single patchelf call per binary
-      find $out -type f | while read -r file; do
-        if ! file "$file" 2>/dev/null | grep -q "ELF.*dynamic"; then
-          continue
-        fi
-
-        # Skip files that are part of our Android glibc/fakechroot (already correct)
-        case "$file" in
-          *glibc-android*|*fakechroot-android*|*gcc-lib-android*)
-            continue
-            ;;
-        esac
-
-        PATCHELF_ARGS=""
-
-        # Check interpreter
-        INTERP=$(patchelf --print-interpreter "$file" 2>/dev/null || echo "")
-        if [ -n "$INTERP" ] && ! echo "$INTERP" | grep -qF "${installationDir}${glibc}"; then
-          PATCHELF_ARGS="--set-interpreter ${installationDir}${glibc}/lib/ld-linux-aarch64.so.1"
-        fi
-
-        # Check RPATH (skip if empty to avoid corrupting Go binaries)
-        RPATH=$(patchelf --print-rpath "$file" 2>/dev/null || echo "")
-        if [ -n "$RPATH" ]; then
-          NEW_RPATH=""
-          if echo "$RPATH" | grep -q "/nix/store"; then
-            # Transform RPATH: replace glibc, gcc-lib, and add Android prefix
-            # Only prefix /nix/store at path boundaries (start or after :) to avoid double-prefixing
-            NEW_RPATH=$(echo "$RPATH" | sed "s|${standardGlibc}|${glibc}|g;s|${standardGccLib}|${gccLib}|g;s|^/nix/store|${installationDir}/nix/store|;s|:/nix/store|:${installationDir}/nix/store|g")
-          elif ! echo "$RPATH" | grep -qF "${installationDir}"; then
-            # Non-Android RPATH - add Android prefix
-            NEW_RPATH="${installationDir}${glibc}/lib:${installationDir}${gccLib}/lib:$RPATH"
-          fi
-          if [ -n "$NEW_RPATH" ] && [ "$NEW_RPATH" != "$RPATH" ]; then
-            PATCHELF_ARGS="$PATCHELF_ARGS --set-rpath $NEW_RPATH"
-          fi
-        fi
-
-        # Single patchelf call with all needed modifications
-        if [ -n "$PATCHELF_ARGS" ]; then
-          patchelf $PATCHELF_ARGS "$file" 2>/dev/null || true
-        fi
-      done || true
+      nix-store --dump ${drv} | python3 ${narPatcher} \
+        --prefix "${installationDir}" \
+        --glibc "${glibc}" \
+        --gcc-lib "${gccLib}" \
+        --old-glibc "${standardGlibc}" \
+        --old-gcc-lib "${standardGccLib}" \
+      | nix-store --restore $out
     '';
 
 in {
