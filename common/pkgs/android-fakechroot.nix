@@ -40,9 +40,8 @@ in
 
     nativeBuildInputs = (oldAttrs.nativeBuildInputs or []) ++ [patchelf];
 
-    # Enable parallel building and LTO
+    # Enable parallel building (LTO disabled - conflicts with glibc always_inline)
     enableParallelBuilding = true;
-    configureFlags = (oldAttrs.configureFlags or []) ++ ["--enable-lto"];
 
     # Pass Android paths to configure via AC_ARG_VAR environment variables
     # These get written to config.h via AC_DEFINE_UNQUOTED
