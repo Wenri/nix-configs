@@ -103,43 +103,46 @@
       done || true
 
       # Patch ELF files (patchelf handles any length change for interpreter/RPATH)
+      # Combine interpreter and RPATH into single patchelf call per binary
       find $out -type f | while read -r file; do
         if ! file "$file" 2>/dev/null | grep -q "ELF.*dynamic"; then
           continue
         fi
 
         # Skip files that are part of our Android glibc/fakechroot (already correct)
-        # These packages are already built for Android and shouldn't be modified
         case "$file" in
           *glibc-android*|*fakechroot-android*|*gcc-lib-android*)
             continue
             ;;
         esac
 
+        PATCHELF_ARGS=""
+
+        # Check interpreter
         INTERP=$(patchelf --print-interpreter "$file" 2>/dev/null || echo "")
-        # Patch interpreter to use Android glibc directly
         if [ -n "$INTERP" ] && ! echo "$INTERP" | grep -qF "${installationDir}${glibc}"; then
-          patchelf --set-interpreter "${installationDir}${glibc}/lib/ld-linux-aarch64.so.1" "$file" 2>/dev/null || true
+          PATCHELF_ARGS="--set-interpreter ${installationDir}${glibc}/lib/ld-linux-aarch64.so.1"
         fi
 
+        # Check RPATH (skip if empty to avoid corrupting Go binaries)
         RPATH=$(patchelf --print-rpath "$file" 2>/dev/null || echo "")
-        # Skip RPATH patching for binaries with no original RPATH
-        # Adding RPATH causes patchelf to restructure ELF headers, which can corrupt some binaries (e.g., Go)
-        if [ -z "$RPATH" ]; then
-          continue
+        if [ -n "$RPATH" ]; then
+          NEW_RPATH=""
+          if echo "$RPATH" | grep -q "/nix/store"; then
+            # Transform RPATH: replace glibc, gcc-lib, and add Android prefix
+            NEW_RPATH=$(echo "$RPATH" | sed "s|${standardGlibc}|${glibc}|g;s|${standardGccLib}|${gccLib}|g;s|/nix/store|${installationDir}/nix/store|g")
+          elif ! echo "$RPATH" | grep -qF "${installationDir}"; then
+            # Non-Android RPATH - add Android prefix
+            NEW_RPATH="${installationDir}${glibc}/lib:${installationDir}${gccLib}/lib:$RPATH"
+          fi
+          if [ -n "$NEW_RPATH" ] && [ "$NEW_RPATH" != "$RPATH" ]; then
+            PATCHELF_ARGS="$PATCHELF_ARGS --set-rpath $NEW_RPATH"
+          fi
         fi
 
-        if echo "$RPATH" | grep -q "/nix/store"; then
-          # Transform RPATH: replace glibc, gcc-lib, and add Android prefix
-          NEW_RPATH=$(echo "$RPATH" | sed "s|${standardGlibc}|${glibc}|g")
-          NEW_RPATH=$(echo "$NEW_RPATH" | sed "s|${standardGccLib}|${gccLib}|g")
-          NEW_RPATH=$(echo "$NEW_RPATH" | sed "s|/nix/store|${installationDir}/nix/store|g")
-          patchelf --set-rpath "$NEW_RPATH" "$file" 2>/dev/null || true
-        elif ! echo "$RPATH" | grep -qF "${installationDir}"; then
-          # Non-Android RPATH - add Android prefix
-          ANDROID_LIBS="${installationDir}${glibc}/lib:${installationDir}${gccLib}/lib"
-          NEW_RPATH="$ANDROID_LIBS:$RPATH"
-          patchelf --set-rpath "$NEW_RPATH" "$file" 2>/dev/null || true
+        # Single patchelf call with all needed modifications
+        if [ -n "$PATCHELF_ARGS" ]; then
+          patchelf $PATCHELF_ARGS "$file" 2>/dev/null || true
         fi
       done || true
     '';
