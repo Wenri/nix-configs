@@ -16,3 +16,6 @@
 [submodule ".claude"]
 	path = .claude
 	url = https://gitlab.com/gt404/claude-code-settings.git
+[submodule "submodules/patchnar"]
+	path = submodules/patchnar
+	url = https://github.com/Wenri/patchnar
