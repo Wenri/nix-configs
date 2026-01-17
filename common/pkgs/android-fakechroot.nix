@@ -40,15 +40,11 @@ in
 
     nativeBuildInputs = (oldAttrs.nativeBuildInputs or []) ++ [patchelf];
 
-    # Pass Android paths as compile-time constants
-    # Note: LIBRARY_PATH and PRELOAD removed - ld.so handles these now
-    # Use regular strings with \" escape (not ''..'' which doesn't escape)
-    NIX_CFLAGS_COMPILE = builtins.concatStringsSep " " [
-      (oldAttrs.NIX_CFLAGS_COMPILE or "")
-      "-DANDROID_ELFLOADER=\"${androidLdso}\""
-      "-DANDROID_BASE=\"${installationDir}\""
-      "-DANDROID_EXCLUDE_PATH=\"${excludePath}\""
-    ];
+    # Pass Android paths to configure via AC_ARG_VAR environment variables
+    # These get written to config.h via AC_DEFINE_UNQUOTED
+    ANDROID_ELFLOADER = androidLdso;
+    ANDROID_BASE = installationDir;
+    ANDROID_EXCLUDE_PATH = excludePath;
 
     # Patch interpreter and RPATH for Android glibc
     # IMPORTANT: libfakechroot.so MUST have RPATH set to Android glibc!
