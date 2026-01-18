@@ -1,6 +1,6 @@
 # Nix-on-Droid Configuration Guide
 
-> **Last Updated:** January 15, 2026
+> **Last Updated:** January 18, 2026
 > **Platform:** Android/Termux (aarch64-linux)
 > **Nix Version:** nixpkgs-unstable
 
@@ -27,7 +27,8 @@ This repository provides a comprehensive nix-on-droid configuration that enables
 | Feature | Description |
 |---------|-------------|
 | **Android-patched glibc** | Custom glibc 2.40 with Termux patches for Android kernel compatibility |
-| **Binary cache support** | ld.so built-in path translation instead of rebuilding packages |
+| **NixOS-style grafting** | Recursive dependency patching with patchnar and hash mapping |
+| **Binary cache support** | Packages from cache are patched at install time (no rebuilding) |
 | **Home-manager integration** | Full home-manager support with shared modules from `common/` |
 | **Unified infrastructure** | Same tools, packages, and configuration as desktop/server hosts |
 | **Modular design** | Separate modules for SSH, locale, Shizuku, and Android integration |
@@ -58,10 +59,23 @@ This repository provides a comprehensive nix-on-droid configuration that enables
 
 ### How It Works
 
-nix-on-droid uses a **layered approach** to run Nix packages on Android:
+nix-on-droid uses a **two-stage approach** to run Nix packages on Android:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
+│              Stage 1: Build-time (NixOS-style grafting)          │
+├─────────────────────────────────────────────────────────────────┤
+│  replaceAndroidDependencies + patchnar:                          │
+│  • IFD discovers full dependency closure                         │
+│  • patchnar patches NAR streams (ELF, symlinks, scripts)         │
+│  • Hash mapping substitutes inter-package references             │
+│  • Result: All binaries use Android glibc + prefixed paths       │
+└─────────────────────────────────────────────────────────────────┘
+                               │
+                               ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    Stage 2: Runtime                              │
+├─────────────────────────────────────────────────────────────────┤
 │                        Application                               │
 │                            │                                     │
 │                            ▼                                     │
@@ -74,10 +88,8 @@ nix-on-droid uses a **layered approach** to run Nix packages on Android:
 │                            │                                     │
 │                            ▼                                     │
 │  ┌───────────────────────────────────────────────────────────┐  │
-│  │  Android glibc (ld.so with built-in features)              │  │
-│  │  • Termux patches for blocked syscalls                     │  │
-│  │  • RPATH translation in decompose_rpath()                  │  │
-│  │  • Standard glibc → Android glibc redirection              │  │
+│  │  Android glibc (with Termux patches)                       │  │
+│  │  • Workarounds for blocked syscalls (clone3, rseq, etc.)  │  │
 │  │  See: ANDROID-GLIBC.md                                     │  │
 │  └───────────────────────────────────────────────────────────┘  │
 │                            │                                     │
@@ -86,9 +98,9 @@ nix-on-droid uses a **layered approach** to run Nix packages on Android:
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-**Key insight:** Most packages come from the Nix binary cache unchanged. The Android glibc's ld.so automatically redirects library paths at runtime, so no patchelf or rebuilding is needed!
+**Key insight:** Most packages come from the Nix binary cache. patchnar patches them at install time using NAR stream processing - no package rebuilding needed!
 
-**Environment patching:** The `build.replaceAndroidDependencies` function patches the entire `environment.path` (a buildEnv of all packages) for Android glibc compatibility. This includes activation script tools (bash, coreutils, nix, etc.) which run outside the fakechroot environment.
+**NixOS-style grafting:** The `build.replaceAndroidDependencies` function implements recursive dependency patching similar to nixpkgs' `replaceDependencies`. It uses IFD with `exportReferencesGraph` to discover the full closure, then patches each package with patchnar. Hash mapping ensures all inter-package store path references are updated consistently.
 
 ### Flake Structure
 
@@ -107,13 +119,14 @@ flake.nix
 ### Module Structure
 
 ```
-common/modules/nix-on-droid/
-├── default.nix                   # Module exports
-├── base.nix                      # Core configuration (packages, nix settings)
-├── android-integration.nix       # Termux tools integration
-├── sshd.nix                      # SSH server configuration
-├── locale.nix                    # Locale and timezone
-└── shizuku.nix                   # Shizuku rish shell integration
+common/modules/android/
+├── default.nix                       # Module exports
+├── base.nix                          # Core configuration (packages, nix settings)
+├── android-integration.nix           # NixOS-style grafting with patchnar, Termux tools
+├── replace-android-dependencies.nix  # IFD-based recursive dependency patching
+├── sshd.nix                          # SSH server configuration
+├── locale.nix                        # Locale and timezone
+└── shizuku.nix                       # Shizuku rish shell integration
 
 hosts/nix-on-droid/
 ├── configuration.nix             # System configuration
@@ -122,6 +135,7 @@ hosts/nix-on-droid/
 submodules/
 ├── fakechroot/                   # Android-patched fakechroot source
 ├── glibc/                        # Pre-patched glibc source (release/2.40)
+├── patchnar/                     # NAR stream patcher (ELF, symlinks, scripts)
 ├── nix-on-droid/                 # nix-on-droid source (fork)
 └── secrets/                      # Secrets repository
 ```

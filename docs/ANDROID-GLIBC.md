@@ -1,6 +1,6 @@
 # Android glibc for nix-on-droid
 
-> **Last Updated:** December 28, 2025
+> **Last Updated:** January 18, 2026
 > **glibc Version:** 2.40 (from nixpkgs-unstable)
 > **Target Platform:** aarch64-linux (Android/Termux)
 
@@ -10,7 +10,7 @@
 2. [The Problem](#the-problem)
 3. [Solution Architecture](#solution-architecture)
 4. [Termux Patches](#termux-patches)
-5. [ld.so Built-in Path Translation](#ldso-built-in-path-translation)
+5. [patchnar: NAR Stream Patcher](#patchnar-nar-stream-patcher)
 6. [Build System](#build-system)
 7. [Troubleshooting](#troubleshooting)
 8. [Updating Patches](#updating-patches)
@@ -24,8 +24,9 @@ This document describes the Android-patched glibc used in nix-on-droid. Standard
 
 **Key Benefits:**
 - Uses nixpkgs binary cache for most packages (no rebuilding)
-- Only glibc needs to be compiled (~20 minutes)
-- Build-time patching via ld.so built-in path translation
+- Only glibc and patchnar need to be compiled (~20 minutes)
+- NixOS-style grafting with patchnar for recursive dependency patching
+- Hash mapping ensures consistent inter-package references
 - Works with both system and home-manager packages
 
 ### What Gets Built vs Downloaded
@@ -33,8 +34,9 @@ This document describes the Android-patched glibc used in nix-on-droid. Standard
 | Component | Source | Build Time | Size |
 |-----------|--------|------------|------|
 | Android glibc | **Built from source** | ~20 minutes | ~50 MB |
+| patchnar | **Built from source** | ~2 minutes | ~1 MB |
 | Android fakechroot | **Built from source** | ~1 minute | ~200 KB |
-| All other packages | **Binary cache** | Downloaded | Varies |
+| All other packages | **Binary cache** (patched by patchnar) | Downloaded + patched | Varies |
 
 ---
 
@@ -89,27 +91,38 @@ Our solution uses a **two-stage approach**:
 │  • Fake syscalls return -ENOSYS                                 │
 │  • Android-specific passwd/group handling                       │
 │  • System V shared memory emulation                             │
-│  • Built-in path translation in ld.so (RPATH processing)       │
-│  • Built-in glibc redirection (standard → android)             │
 └─────────────────────────────────────────────────────────────────┘
                                │
                                ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│        Stage 2: Runtime (ld.so built-in translation)           │
+│      Stage 2: NixOS-style Grafting (patchnar + hash mapping)    │
 ├─────────────────────────────────────────────────────────────────┤
-│  The Android glibc's ld.so has built-in path processing:       │
+│  replaceAndroidDependencies function (IFD-based):               │
 │                                                                 │
-│  1. RPATH Translation (in decompose_rpath):                    │
-│     /nix/store/xxx/lib → /data/data/.../usr/nix/store/xxx/lib  │
+│  1. Discover closure with exportReferencesGraph                 │
+│  2. For each package in closure:                                │
+│     • Dump as NAR stream                                        │
+│     • patchnar patches ELF, symlinks, scripts                   │
+│     • Restore as patched package                                │
 │                                                                 │
-│  2. glibc Redirection:                                          │
-│     .../xxx-glibc-2.40/lib → .../xxx-glibc-android-2.40/lib    │
+│  patchnar modifications:                                        │
+│  • ELF interpreter: standard glibc → Android glibc             │
+│  • ELF RPATH: add prefix + glibc substitution + hash mapping   │
+│  • Symlinks: add prefix to /nix/store targets + hash mapping   │
+│  • Scripts: patch shebangs with prefix + hash mapping          │
 │                                                                 │
-│  3. ld.so.preload:                                              │
-│     Automatically loads libfakechroot.so for path virtualization│
-│                                                                 │
-│  Result: Binary cache packages work with Android glibc          │
-│          without rebuild, patchelf, or rtld-audit!              │
+│  Hash mapping ensures all inter-package references updated      │
+│  Only glibc is cutoff (special Android build, not patched)     │
+└─────────────────────────────────────────────────────────────────┘
+                               │
+                               ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                      Stage 3: Runtime                            │
+├─────────────────────────────────────────────────────────────────┤
+│  ld.so.preload loads libfakechroot.so for path virtualization   │
+│  • Chroot to /data/data/.../usr                                 │
+│  • Path translation for file operations                         │
+│  All binaries already patched with correct glibc and paths!     │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -245,42 +258,55 @@ These files are copied into the glibc source tree:
 
 ---
 
-## ld.so Built-in Path Translation
+## patchnar: NAR Stream Patcher
 
-The Android glibc's ld.so has built-in path processing in `submodules/glibc/elf/dl-android-paths.h`. The `_dl_android_process_path()` function performs two operations:
+patchnar is a tool that patches NAR (Nix Archive) streams for Android compatibility. It's based on patchelf and processes NAR streams from stdin to stdout, modifying ELF binaries, symlinks, and scripts without unpacking to disk.
 
-### 1. Nix Store Path Translation
+### How patchnar Works
 
-```c
-/nix/store/xxx-package/lib → /data/data/com.termux.nix/files/usr/nix/store/xxx-package/lib
+```bash
+nix-store --dump /nix/store/xxx-package | patchnar \
+  --prefix /data/data/com.termux.nix/files/usr \
+  --glibc /nix/store/yyy-glibc-android-2.40 \
+  --old-glibc /nix/store/zzz-glibc-2.40 \
+  --mappings /path/to/mappings.txt \
+| nix-store --restore $out
 ```
 
-### 2. Standard glibc Redirection
+### What patchnar Patches
 
-```c
-// Detects paths like: xxx-glibc-2.40-66/lib (NOT xxx-glibc-android-2.40-66)
-// Redirects to: ANDROID_GLIBC_LIB (compiled in via -DANDROID_GLIBC_LIB)
+| Content Type | Modification |
+|--------------|--------------|
+| **ELF interpreter** | Standard glibc → Android glibc |
+| **ELF RPATH** | Add prefix, substitute glibc, apply hash mappings |
+| **Symlinks** | Add prefix to `/nix/store/` targets, apply hash mappings |
+| **Script shebangs** | Add prefix, substitute glibc, apply hash mappings |
+| **All content** | Apply hash mappings for inter-package references |
+
+### Hash Mapping
+
+Hash mapping substitutes old store path basenames with new ones:
+```
+# mappings.txt format: OLD_PATH NEW_PATH
+/nix/store/abc123-bash-5.2 /nix/store/xyz789-bash-5.2
 ```
 
-**Where it's called:**
-- In `decompose_rpath()` in `dl-load.c` during RPATH/RUNPATH processing
-- Each RPATH entry is processed before library search
+This ensures that when package A references package B, the reference is updated to point to the patched version of B.
 
-**Compile-time configuration (in glibc.nix):**
-```nix
-env.NIX_CFLAGS_COMPILE = "-DANDROID_GLIBC_LIB=\"${nixOnDroidPrefix}${placeholder \"out\"}/lib\"";
-```
+### Order of Operations
 
-Example redirection:
-```
-/data/.../nix/store/xxx-glibc-2.40-66/lib/libc.so.6
-                            ↓
-/data/.../nix/store/yyy-glibc-android-2.40-66/lib/libc.so.6
-```
+**Critical:** glibc substitution happens BEFORE hash mapping:
 
-This applies to ALL libraries from standard glibc: `libc.so.6`, `libpthread.so.0`, `libm.so.6`, `libdl.so.2`, etc.
+1. Replace standard glibc paths with Android glibc
+2. Apply hash mappings for inter-package references
+3. Add prefix to `/nix/store/` paths
 
-**No environment variables needed!** The Android glibc path is compiled into ld.so at build time.
+This ordering is important because hash mapping would change the path and prevent glibc matching.
+
+### Source Location
+
+- `submodules/patchnar/src/patchnar.cc` - Main patchnar implementation
+- `submodules/patchnar/src/nar.h` - NAR stream processing
 
 ---
 
@@ -289,74 +315,101 @@ This applies to ALL libraries from standard glibc: `libc.so.6`, `libpthread.so.0
 ### File Structure
 
 ```
-submodules/glibc/elf/
-└── dl-android-paths.h                  # ld.so path translation (built-in to glibc)
+submodules/
+├── glibc/                              # Pre-patched glibc source (from Wenri/glibc)
+└── patchnar/                           # NAR stream patcher (from Wenri/patchnar)
+    └── src/
+        ├── patchnar.cc                 # Main patchnar implementation
+        ├── nar.h                       # NAR stream processing
+        ├── patchelf.cc                 # Embedded patchelf functionality
+        └── elf.h                       # ELF header definitions
 
-common/overlays/
-├── glibc.nix                           # Android glibc overlay (uses glibcSrc from submodule)
-├── fakechroot.nix                      # Android fakechroot overlay
-└── patches/
-    └── glibc-termux/
-        ├── disable-clone3.patch        # Essential: disable clone3 syscall
-        ├── kernel-features.h.patch     # Android kernel feature flags
-        ├── set-nptl-syscalls.patch     # Disable set_robust_list, rseq
-        ├── set-fakesyscalls.patch      # Fake syscall implementations
-        ├── ... (other patches)
-        ├── android_passwd_group.c      # Source files (copied, not patches)
-        ├── shmem-android.c
-        └── ... (other source files)
+common/pkgs/
+├── android-glibc.nix                   # Android glibc package
+├── android-fakechroot.nix              # Android fakechroot package
+├── patchnar.nix                        # NAR stream patcher package
+└── glibc-termux/
+    ├── disable-clone3.patch            # Essential: disable clone3 syscall
+    ├── kernel-features.h.patch         # Android kernel feature flags
+    ├── set-nptl-syscalls.patch         # Disable set_robust_list, rseq
+    ├── set-fakesyscalls.patch          # Fake syscall implementations
+    ├── android_passwd_group.c          # Source files (copied, not patches)
+    ├── shmem-android.c
+    └── ... (other patches and source files)
+
+common/modules/android/
+├── android-integration.nix             # NixOS-style grafting with patchnar
+└── replace-android-dependencies.nix    # IFD-based recursive dependency patching
 ```
 
 ### Flake Integration
 
+The flake builds Android packages and wires up the grafting:
+
 ```nix
-# In mkNixOnDroidConfiguration
-mkNixOnDroidConfiguration = { hostname, system, username, ... }: let
-  basePkgs = import nixpkgs {
-    inherit system;
-    config.allowUnfree = true;
-    overlays = [ /* standard overlays, NOT glibc */ ];
+# In flake.nix - Android packages
+androidPkgs = import ./common/pkgs {
+  inherit pkgs;
+  glibcSrc = ./submodules/glibc;
+  fakechrootSrc = ./submodules/fakechroot;
+  patchnarSrc = ./submodules/patchnar;
+};
+
+# In android-integration.nix - grafting setup
+replaceAndroidDependencies = drv:
+  replaceAndroidDepsLib {
+    inherit drv;
+    prefix = installationDir;
+    androidGlibc = glibc;
+    standardGlibc = pkgs.stdenv.cc.libc;
+    cutoffPackages = [ glibc ];  # Only glibc is cutoff
   };
 
-  # Build Android-patched glibc using pre-patched source from submodule
-  androidGlibc = let
-    glibcOverlay = import ./common/overlays/glibc.nix {
-      glibcSrc = ./submodules/glibc;  # Pre-patched glibc source
-    };
-  in (glibcOverlay basePkgs basePkgs).glibc;
-in
-  nix-on-droid.lib.nixOnDroidConfiguration {
-    extraSpecialArgs = {
-      inherit androidGlibc;
-    };
-  };
+# Applied to environment.path
+build.replaceAndroidDependencies = replaceAndroidDependencies;
 ```
 
 ### Build Process
 
-The glibc source is **pre-patched** in the `submodules/glibc` git submodule. The overlay performs:
+The build involves two main components:
 
-1. **Use Pre-Patched Source** - glibc submodule has nixpkgs + Termux patches as git commits
-2. **Skip nixpkgs Patches** - `patches = []` since already applied
-3. **Build-Time Processing** - Run gen-android-ids.sh, process-fakesyscalls.sh
-4. **Path Substitution** - Replace /dev/* with /proc/self/fd/*
-5. **Configure Flags** - Add Android-specific configure options
-6. **Compile-Time Constants** - Pass `-DANDROID_GLIBC_LIB` for runtime redirection
-7. **Post-Install Fixes** - Remove broken symlinks, fix cross-output references
+**1. Android glibc** (pre-patched in `submodules/glibc`):
+1. Use pre-patched source (nixpkgs + Termux patches as git commits)
+2. Skip nixpkgs patches (`patches = []` since already applied)
+3. Run gen-android-ids.sh, process-fakesyscalls.sh at build time
+4. Replace /dev/* with /proc/self/fd/*
+5. Add Android-specific configure options
+6. Post-install fixes for broken symlinks
 
-### Building Android glibc
+**2. patchnar** (from `submodules/patchnar`):
+1. Build with autotools (autoreconfHook)
+2. Links patchelf library for ELF modifications
+3. Produces both `patchelf` and `patchnar` binaries
+
+**3. NixOS-style grafting** (at package install time):
+1. IFD discovers full dependency closure
+2. For each package, dump → patchnar → restore
+3. Hash mappings ensure consistent references
+
+### Building Components
 
 ```bash
 # Build the Android-patched glibc
 nix build .#androidGlibc
 
-# Verify the build
+# Verify glibc build
 ls -la result/lib/
 # Should contain: ld-linux-aarch64.so.1, libc.so.6, libpthread.so.0, etc.
 
-# Check interpreter
-patchelf --print-interpreter result/bin/hello
-# Should show: /nix/store/...-glibc-android-2.40-xx/lib/ld-linux-aarch64.so.1
+# Build patchnar
+nix build .#patchnar
+
+# Verify patchnar build
+result/bin/patchnar --help
+# Should show usage with --prefix, --glibc, --old-glibc, --mappings options
+
+# Build everything and apply
+nix-on-droid switch --flake .
 ```
 
 ---
@@ -373,10 +426,12 @@ Bad system call (core dumped)
 
 **Cause:** Binary is using standard glibc that tries blocked syscalls
 
-**Solution:** The Android glibc's ld.so has built-in glibc redirection. Ensure:
-1. Binary is invoked through ld.so (standard for dynamically-linked binaries)
-2. ld.so.preload is loading libfakechroot.so
-3. Android glibc was built with `-DANDROID_GLIBC_LIB`
+**Solution:** Ensure the binary was patched by patchnar:
+1. Check interpreter: `patchelf --print-interpreter /path/to/binary`
+   - Should point to Android glibc's ld.so
+2. Check RPATH: `patchelf --print-rpath /path/to/binary`
+   - Should include Android glibc path with prefix
+3. Verify the package was included in `replaceAndroidDependencies` closure
 
 ### Binary Hangs During Thread Creation
 
@@ -395,9 +450,16 @@ error while loading shared libraries: libreadline.so.8: cannot open shared objec
 
 **Cause:** Dynamic linker can't find required libraries
 
-**Solution:** The Android glibc's ld.so has built-in path translation:
-- Automatically translates `/nix/store/...` → `/data/data/.../usr/nix/store/...`
-- No `LD_LIBRARY_PATH` or rtld-audit needed
+**Solution:** Check that patchnar correctly patched the RPATH:
+```bash
+patchelf --print-rpath /path/to/binary
+# Should show prefixed paths: /data/.../nix/store/xxx-readline-8.2/lib
+```
+
+If RPATH is missing the prefix:
+1. Verify the package is in the grafting closure
+2. Check for hash mapping mismatches (must be same length)
+3. Rebuild with `--show-trace` to debug patchnar invocation
 
 ### "malloc(): corrupted top size" Error
 

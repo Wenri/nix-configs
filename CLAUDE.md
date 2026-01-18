@@ -467,10 +467,34 @@ README.md                  # Project README
 
 1. **Android glibc**: Standard glibc won't work on Android due to seccomp-blocked syscalls (clone3, set_robust_list, rseq)
 2. **Termux Patches**: Community-maintained patches that disable/workaround blocked syscalls
-3. **patchelf Strategy**: Instead of rebuilding all packages, we patch ELF headers to use our glibc
-4. **Binary Cache**: Most packages still come from nixpkgs binary cache
-5. **Fakechroot Login**: Uses fakechroot instead of proot for better performance
-6. **Go Binary Exceptions**: Go binaries cannot be patched with patchelf (see below)
+3. **NixOS-style Grafting**: Uses patchnar for recursive dependency patching with hash mapping
+4. **patchnar**: NAR stream patcher that modifies ELF interpreters/RPATH, symlinks, and scripts
+5. **Binary Cache**: Most packages still come from nixpkgs binary cache (patched at install time)
+6. **Fakechroot Login**: Uses fakechroot instead of proot for better performance
+7. **Go Binary Exceptions**: Go binaries cannot be patched with patchelf (see below)
+
+### NixOS-style Grafting with patchnar
+
+The `build.replaceAndroidDependencies` function implements NixOS-style recursive grafting for Android:
+
+**How it works:**
+1. Uses IFD (Import From Derivation) with `exportReferencesGraph` to discover full dependency closure
+2. Creates a fixed-point memo that recursively patches each package
+3. patchnar processes NAR streams, modifying ELF binaries, symlinks, and scripts
+4. Hash mapping substitutes old store path hashes with new patched ones
+5. Only glibc is a cutoff package (replaced with Android glibc, not patched)
+
+**What patchnar patches:**
+- **ELF interpreters**: `/nix/store/xxx-glibc-2.40/lib/ld-linux.so` → `$PREFIX/nix/store/yyy-glibc-android-2.40/lib/ld-linux.so`
+- **ELF RPATH**: Adds prefix, substitutes glibc paths, applies hash mapping
+- **Symlinks**: Adds prefix to `/nix/store/` targets, applies hash mapping
+- **Script shebangs**: Adds prefix, substitutes glibc paths, applies hash mapping
+- **Inter-package references**: Hash mapping ensures all store path references are updated
+
+**Key files:**
+- `common/modules/android/replace-android-dependencies.nix` - IFD-based grafting
+- `common/modules/android/android-integration.nix` - Wires up replaceAndroidDependencies
+- `submodules/patchnar/src/patchnar.cc` - NAR stream patcher
 
 ### nix-ld Integration
 
@@ -535,6 +559,9 @@ submodules/                             # Git submodules for external dependenci
 ├── glibc/                              # GNU C Library source (from Wenri/glibc)
 │                                        # Tracking release/2.40/master branch
 │                                        # Patches applied at build time from patches/glibc-termux/
+├── patchnar/                           # NAR stream patcher (from Wenri/patchnar)
+│                                        # Patches ELF, symlinks, scripts within NAR streams
+│                                        # Uses patchelf library for ELF modifications
 ├── nix-on-droid/                       # nix-on-droid source (from Wenri/nix-on-droid fork)
 │   └── modules/                        # nix-on-droid modules and build config
 └── secrets/                            # Secrets repository (from GitLab)
@@ -549,12 +576,15 @@ common/overlays/
 common/pkgs/
 ├── android-fakechroot.nix              # Android-patched fakechroot
 ├── android-glibc.nix                   # Android-patched glibc 2.40
+├── patchnar.nix                        # NAR stream patcher (uses patchelf for ELF)
 ├── default.nix                         # Package set entry point
 └── glibc-termux/                       # 28 patch files + source files for glibc
 
-common/modules/nix-on-droid/
+common/modules/android/
+├── default.nix                         # Module exports
 ├── base.nix                            # Core packages, nix settings
-├── android-integration.nix             # Termux tools
+├── android-integration.nix             # NixOS-style grafting with patchnar, Termux tools
+├── replace-android-dependencies.nix    # IFD-based recursive dependency patching
 ├── sshd.nix                            # SSH server
 ├── locale.nix                          # Timezone/locale
 └── shizuku.nix                         # Shizuku rish shell
