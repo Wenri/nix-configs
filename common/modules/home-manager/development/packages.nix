@@ -6,6 +6,19 @@
     cabal-install
     haskell-language-server
   ];
+  rustToolchain = with pkgs; [
+    rustc
+    cargo
+    rust-analyzer
+    clippy
+    rustfmt
+  ];
+  goToolchain = with pkgs; [
+    go
+    gopls
+    delve
+    go-tools # staticcheck, etc.
+  ];
   latexStack = with pkgs; [
     texlive.combined.scheme-full
     python3Packages.pygments
@@ -21,5 +34,7 @@ in {
     latexStack
     ++ [pythonEnv]
     ++ miscLanguages
-    ++ haskellToolchain;
+    ++ haskellToolchain
+    ++ rustToolchain
+    ++ goToolchain;
 }
