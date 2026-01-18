@@ -28,21 +28,14 @@
   # SSL certs and GODEBUG=netdns=cgo are set globally in home.sessionVariables.
   # Binaries with no RPATH skip RPATH patching to avoid patchelf corruption.
 
-  # Android: Node.js makes direct syscalls that bypass fakechroot's LD_PRELOAD path translation.
-  # Replace the cli.js path with the real Android filesystem path so node can find it.
-  # Use symlinkJoin to avoid rebuilding (npm build also fails due to same syscall issue).
+  # Android: Set CLAUDE_CODE_TMPDIR to the real Android tmp directory.
+  # patchnar handles symlink path rewriting; we just add env var to wrapProgram.
   claude-code = if installationDir != null then
-    final.symlinkJoin {
-      name = "claude-code-${prev.claude-code.version}";
-      paths = [ prev.claude-code ];
-      postBuild = ''
-        rm $out/bin/claude $out/bin/.claude-wrapped
-        substitute ${prev.claude-code}/bin/.claude-wrapped $out/bin/.claude-wrapped \
-          --replace "${prev.claude-code}/lib" "${installationDir}${prev.claude-code}/lib"
-        substitute ${prev.claude-code}/bin/claude $out/bin/claude \
-          --replace "${prev.claude-code}/bin" "$out/bin"
-        chmod +x $out/bin/claude $out/bin/.claude-wrapped
+    prev.claude-code.overrideAttrs (oldAttrs: {
+      postInstall = oldAttrs.postInstall + ''
+        wrapProgram $out/bin/claude \
+          --set CLAUDE_CODE_TMPDIR "${installationDir}/tmp"
       '';
-    }
+    })
   else prev.claude-code;
 }
