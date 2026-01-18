@@ -14,14 +14,7 @@
   imports = [
     # Import common base modules shared across configurations
     outputs.homeModules.core.default
-  ];
-
-  # Add Rust and Go toolchains (full development module has NUR deps)
-  home.packages = with pkgs; [
-    # Rust
-    rustc cargo rust-analyzer clippy rustfmt
-    # Go
-    go gopls delve go-tools
+    outputs.homeModules.development.default # Core dev packages (works everywhere)
   ];
 
   # nixpkgs config is inherited from system when using home-manager.useGlobalPkgs

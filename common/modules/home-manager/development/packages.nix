@@ -1,3 +1,5 @@
+# Core development packages (no texlive, no NUR dependencies)
+# Works on all platforms including Android and WSL
 {pkgs, ...}: let
   pythonEnv = pkgs.python3.withPackages (ps: with ps; [requests]);
   haskellToolchain = with pkgs.haskellPackages; [
@@ -12,20 +14,16 @@
   goToolchain = with pkgs; [
     go gopls delve go-tools
   ];
-  latexStack = with pkgs; [
-    texlive.combined.scheme-full
-    python3Packages.pygments
-  ];
   miscLanguages = with pkgs; [
     agda
     elixir
+    octave
     typst
     tinymist
   ];
 in {
   home.packages =
-    latexStack
-    ++ [pythonEnv]
+    [pythonEnv]
     ++ miscLanguages
     ++ haskellToolchain
     ++ rustToolchain

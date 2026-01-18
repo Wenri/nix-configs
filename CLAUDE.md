@@ -32,7 +32,7 @@ Shared infrastructure providing identical userspace across all 6 hosts:
   - `secrets.nix` - Secrets management configuration
   - `tailscale.nix` - Tailscale VPN configuration
   - `disk-config.nix` - Disko disk partitioning
-- `modules/home-manager/` - Empty, ready for exportable home-manager modules
+- `modules/home-manager/` - Exportable home-manager modules (core, desktop, development)
 - `pkgs/` - Custom package definitions (example-package)
 
 **Core home-manager modules** (auto-imported via `common/home-manager/default.nix`):
@@ -48,9 +48,10 @@ Shared infrastructure providing identical userspace across all 6 hosts:
 - `desktop/packages.nix` - GUI applications (Discord, Slack, Zoom, Chrome, etc.)
 - `desktop/default.nix` - Desktop program bundle (Firefox, VS Code, Emacs, GNOME, Rime, optional WeChat)
 - `desktop/emacs.nix`, `desktop/firefox`, `desktop/gnome`, `desktop/rime`, `desktop/vscode`, `desktop/wechat` - individual program modules
-- `development/packages.nix` - Language/toolchain bundles (Agda, Elixir, Haskell, LaTeX, Python, Typst)
+- `development/default.nix` - Core dev packages (Agda, Elixir, Go, Haskell, Octave, Python, Rust, Typst) - works everywhere
+- `development/full.nix` - Full dev (texlive + coq) - desktop only, requires NUR
 - `development/coq.nix` - Coq proof assistant with NUR packages (lngen, ott-sweirich)
-- `development/pcloud.nix` - pCloud with patches
+- `desktop/pcloud.nix` - pCloud with patches
   - `rime/` - Rime input method
   - `vscode/` - VS Code settings and vscode-marketplace extensions
   - `emacs.nix` - Emacs configuration
@@ -90,12 +91,12 @@ Each host has its own directory with minimal configuration:
 **wslnix/** (WSL)
 - `configuration.nix` - WSL system config, imports from `common/modules/nixos/`
 - `users.nix` - WSL-specific user configuration
-- `home.nix` - Imports common home-manager modules only
+- `home.nix` - Imports `core.default` + `development.default` (no texlive/NUR)
 
 **nixos-gnome/, nixos-plasma6/, irif/** (Desktops)
 - `configuration.nix` - Desktop config, imports `common/modules/nixos/users.nix`, `locale.nix`, `secrets.nix`
 - `hardware-configuration.nix` - Hardware-specific configuration
-- `home.nix` - Imports `core.default` + `desktop.default` + `development`
+- `home.nix` - Imports `core.default` + `desktop.default` + `development.full` (texlive + coq)
 
 **matrix/, freenix/** (Servers)
 - `configuration.nix` - Server config, imports `common/modules/nixos/server-base.nix`, `users.nix`, `tailscale.nix`
@@ -105,7 +106,7 @@ Each host has its own directory with minimal configuration:
 
 **nix-on-droid/** (Android)
 - `configuration.nix` - Nix-on-droid system config with environment.packages and home-manager integration
-- `home.nix` - Home-manager config with zsh, git, fzf, claude-code, development tools
+- `home.nix` - Imports `core.default` + `development.default` (no texlive/NUR)
 - Uses advanced nix-on-droid template pattern with `home-manager-path = home-manager.outPath`
 - Master home-manager branch for latest features
 

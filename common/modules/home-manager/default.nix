@@ -5,7 +5,8 @@
 #   imports = [
 #     outputs.homeModules.core.default        # Core modules (git, zsh, ssh, etc.)
 #     outputs.homeModules.desktop.default     # Desktop packages + program configs
-#     outputs.homeModules.development         # Dev environments (optional)
+#     outputs.homeModules.development.default # Core dev packages (works everywhere)
+#     outputs.homeModules.development.full    # Full dev (texlive + coq, needs NUR)
 #   ];
 {
   core = {
@@ -23,5 +24,8 @@
     packages = import ./desktop/packages.nix;
   };
 
-  development = import ./development;
+  development = {
+    default = import ./development;              # Core packages (works everywhere)
+    full = import ./development/full.nix;        # Full (texlive + coq, needs NUR)
+  };
 }

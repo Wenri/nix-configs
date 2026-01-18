@@ -17,7 +17,7 @@
 
       # Import desktop and development modules from common
       outputs.homeModules.desktop.default
-      outputs.homeModules.development
+      outputs.homeModules.development.full
 
       # Or modules exported from other flakes (such as nix-colors):
       # inputs.nix-colors.homeModules.default

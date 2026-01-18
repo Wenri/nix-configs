@@ -14,6 +14,7 @@
     imports = [
       # Import common base modules shared across configurations
       outputs.homeModules.core.default
+      outputs.homeModules.development.default # Core dev packages (works everywhere)
 
       # Or modules exported from other flakes (such as nix-colors):
       # inputs.nix-colors.homeModules.default

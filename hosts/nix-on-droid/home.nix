@@ -16,14 +16,7 @@ in {
   # Import shared core modules
   imports = [
     outputs.homeModules.core.default
-  ];
-
-  # Add Rust and Go toolchains (full development module has NUR deps)
-  home.packages = with pkgs; [
-    # Rust
-    rustc cargo rust-analyzer clippy rustfmt
-    # Go
-    go gopls delve go-tools
+    outputs.homeModules.development.default # Core dev packages (works everywhere)
   ];
 
   # Home Manager release compatibility
