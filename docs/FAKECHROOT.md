@@ -474,6 +474,69 @@ The implementation reuses `exec_ctx_t` buffers to minimize stack usage (~12KB+ s
 
 **Result:** Scripts with patched interpreters execute faster without unnecessary ld.so wrapper overhead.
 
+### 11. syscall() Wrapper for Direct Syscall Interception
+
+**Problem:** Some libraries (notably libuv, used by Node.js) bypass glibc wrappers and call `syscall()` directly for certain operations. For example, libuv uses `syscall(__NR_statx, ...)` instead of the glibc `statx()` function. This bypasses libfakechroot's LD_PRELOAD interception, causing path translation to fail.
+
+**Symptom:**
+```bash
+$ strace -e statx node -e 'require("fs").statSync("/nix/store")'
+statx(AT_FDCWD, "/nix/store", ...) = -1 ENOENT (No such file or directory)
+# Path NOT translated - should be /data/data/.../nix/store
+```
+
+**Solution:** Add a `syscall()` wrapper that intercepts direct syscalls and translates paths for path-related syscall numbers:
+
+```c
+wrapper(syscall, long, (long number, ...))
+{
+    va_list ap;
+    va_start(ap, number);
+
+    switch (number) {
+    case SYS_statx: {
+        int dirfd = va_arg(ap, int);
+        const char *pathname = va_arg(ap, const char *);
+        // ... extract remaining args
+        expand_chroot_path_at(dirfd, pathname);
+        return nextcall(syscall)(number, dirfd, pathname, ...);
+    }
+    // ... other path-related syscalls
+    default:
+        // Pass through with 6 args (glibc pattern)
+        return nextcall(syscall)(number, a1, a2, a3, a4, a5, a6);
+    }
+}
+```
+
+**Syscalls handled:**
+
+| Syscall | Number (aarch64) | Arguments |
+|---------|------------------|-----------|
+| `SYS_statx` | 291 | dirfd, pathname, flags, mask, statxbuf |
+| `SYS_openat` | 56 | dirfd, pathname, flags, mode |
+| `SYS_faccessat` | 48 | dirfd, pathname, mode, flags |
+| `SYS_newfstatat` | 79 | dirfd, pathname, statbuf, flags |
+| `SYS_readlinkat` | 78 | dirfd, pathname, buf, bufsiz |
+| `SYS_unlinkat` | 35 | dirfd, pathname, flags |
+| `SYS_mkdirat` | 34 | dirfd, pathname, mode |
+
+**Why extract 6 args in default case?** Glibc's own `syscall()` implementation extracts exactly 6 `va_arg` unconditionally. The kernel expects 6 register arguments (x0-x5 on aarch64) and ignores unused ones.
+
+**Files added:**
+- `submodules/fakechroot/src/syscall.c`
+
+**Files modified:**
+- `submodules/fakechroot/src/Makefile.am`
+- `submodules/fakechroot/configure.ac`
+
+**Result:**
+```bash
+$ strace -e statx node -e 'require("fs").statSync("/nix/store")'
+statx(AT_FDCWD, "/data/data/com.termux.nix/files/usr/nix/store", ...) = 0
+# Path correctly translated!
+```
+
 ---
 
 ## Android Seccomp Bypass
