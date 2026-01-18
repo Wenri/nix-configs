@@ -3,21 +3,16 @@
   lib,
   ...
 }: {
+  # Packages here are in addition to common/packages.nix
+  # Avoid duplicates - htop, file, jq, ripgrep, fzf, gnumake are in common/packages.nix
   home.packages = with pkgs; [
     # System utilities (tmux enabled via programs.tmux)
     parted
-    htop
-    file
-    jq
     iperf3
-    ripgrep
-    fzf
 
     # Development tools
-    gnumake
     nodejs
     glab
-    # guix  # Disabled: too complex to patch for Android glibc
 
     # AI assistants and tools
     claude-code

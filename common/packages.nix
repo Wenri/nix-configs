@@ -44,6 +44,8 @@
     netcat-gnu
     rsync
     aria2
+    mtr # better traceroute
+    socat # socket utility
   ];
 
   # System tools
@@ -58,6 +60,12 @@
     ncurses # reset, clear, tput
     htop
     lsof
+    # Debugging and tracing
+    strace
+    ltrace
+    time # command timer
+    psmisc # pstree, fuser
+    sysstat # sar, iostat, pidstat
   ];
 
   # Editors (neovim only - vim is provided by nixosOnly or home-manager)
@@ -72,21 +80,36 @@
     bat # better cat
     eza # better ls
     fzf # fuzzy finder
+    jq # JSON processor
     yq # jq for yaml
+    delta # better git diff
+    difftastic # structural diff
   ];
 
   # Development tools (shared)
-  # Note: binutils removed - gcc-wrapper already provides strip, ar, nm, etc.
+  # Includes key stdenv components for building software
   devTools = with pkgs; [
-    jq
+    # From stdenv
     gnumake
     gcc
     stdenv.cc
+    patch
+    pkg-config
+    binutils # readelf, objdump, strings, nm, ar
+    # Build system tools
+    autoconf
+    automake
+    libtool
+    cmake
+    ninja
+    # Debugging
+    gdb
   ];
 
   # NixOS-specific packages (require real system, not proot)
   nixosOnly = with pkgs; [
     vim
+    guix # too complex to patch for Android glibc
     ethtool
     usbutils
     ndisc6
