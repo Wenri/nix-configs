@@ -1,23 +1,11 @@
 {pkgs, ...}: let
+  packages = import ../../../packages.nix {inherit pkgs;};
   pythonEnv = pkgs.python3.withPackages (ps: with ps; [requests]);
   haskellToolchain = with pkgs.haskellPackages; [
     ghc
     stack
     cabal-install
     haskell-language-server
-  ];
-  rustToolchain = with pkgs; [
-    rustc
-    cargo
-    rust-analyzer
-    clippy
-    rustfmt
-  ];
-  goToolchain = with pkgs; [
-    go
-    gopls
-    delve
-    go-tools # staticcheck, etc.
   ];
   latexStack = with pkgs; [
     texlive.combined.scheme-full
@@ -35,6 +23,6 @@ in {
     ++ [pythonEnv]
     ++ miscLanguages
     ++ haskellToolchain
-    ++ rustToolchain
-    ++ goToolchain;
+    ++ packages.rustToolchain
+    ++ packages.goToolchain;
 }

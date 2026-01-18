@@ -10,5 +10,6 @@
     ./emacs.nix
     ./firefox
     ./gnome.nix
+    ./pcloud.nix
   ];
 }

@@ -106,6 +106,23 @@
     gdb
   ];
 
+  # Rust toolchain
+  rustToolchain = with pkgs; [
+    rustc
+    cargo
+    rust-analyzer
+    clippy
+    rustfmt
+  ];
+
+  # Go toolchain
+  goToolchain = with pkgs; [
+    go
+    gopls
+    delve
+    go-tools # staticcheck, etc.
+  ];
+
   # NixOS-specific packages (require real system, not proot)
   nixosOnly = with pkgs; [
     vim
