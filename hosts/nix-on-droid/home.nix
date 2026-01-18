@@ -11,7 +11,7 @@
   ...
 }: let
   keys = import ../../common/keys.nix;
-  androidPaths = import ../../common/android-paths.nix;
+  androidPaths = outputs.androidModules.paths;
 in {
   # Import shared core modules
   imports = [

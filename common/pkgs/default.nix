@@ -2,7 +2,7 @@
 # You can build them using 'nix build .#example'
 { pkgs, glibcSrc ? null, fakechrootSrc ? null, patchnarSrc ? null }:
 let
-  androidPaths = import ../android-paths.nix;
+  androidPaths = import ../modules/android/paths.nix;
   inherit (androidPaths) installationDir;
 
   # Use existing Android glibc from store if available, otherwise build

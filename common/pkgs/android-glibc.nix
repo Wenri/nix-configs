@@ -16,7 +16,7 @@
   termuxScripts = ./glibc-termux;
 
   # nix-on-droid paths from centralized config
-  androidPaths = import ../android-paths.nix;
+  androidPaths = import ../modules/android/paths.nix;
   nixOnDroidPrefix = androidPaths.installationDir;
   nixOnDroidPrefixClassical = androidPaths.termuxBase;
 
