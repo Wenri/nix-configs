@@ -29,9 +29,12 @@ let
 
   # patchnar - NAR stream patcher (includes patchelf)
   patchnar = pkgs.callPackage ./patchnar.nix { inherit patchnarSrc; };
+
+  # rish - Shizuku shell for privileged Android commands
+  rish = pkgs.callPackage ./rish.nix { inherit installationDir; };
 in {
   # example = pkgs.callPackage ./example { };
-  inherit patchnar;
+  inherit patchnar rish;
 }
 // (if androidGlibc != null then { inherit androidGlibc; } else {})
 // (if androidFakechroot != null then { inherit androidFakechroot; } else {})
