@@ -9,9 +9,7 @@
   username,
   hostname,
   ...
-}: let
-  packages = import ../../common/packages.nix {inherit pkgs;};
-in {
+}: {
   # You can import other home-manager modules here
   imports = [
     # Import common base modules shared across configurations
@@ -19,7 +17,12 @@ in {
   ];
 
   # Add Rust and Go toolchains (full development module has NUR deps)
-  home.packages = packages.rustToolchain ++ packages.goToolchain;
+  home.packages = with pkgs; [
+    # Rust
+    rustc cargo rust-analyzer clippy rustfmt
+    # Go
+    go gopls delve go-tools
+  ];
 
   # nixpkgs config is inherited from system when using home-manager.useGlobalPkgs
 

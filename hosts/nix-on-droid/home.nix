@@ -12,7 +12,6 @@
 }: let
   keys = import ../../common/keys.nix;
   androidPaths = outputs.androidModules.paths;
-  packages = import ../../common/packages.nix {inherit pkgs;};
 in {
   # Import shared core modules
   imports = [
@@ -20,7 +19,12 @@ in {
   ];
 
   # Add Rust and Go toolchains (full development module has NUR deps)
-  home.packages = packages.rustToolchain ++ packages.goToolchain;
+  home.packages = with pkgs; [
+    # Rust
+    rustc cargo rust-analyzer clippy rustfmt
+    # Go
+    go gopls delve go-tools
+  ];
 
   # Home Manager release compatibility
   home.stateVersion = "24.05";
