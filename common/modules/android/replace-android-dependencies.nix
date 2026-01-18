@@ -117,6 +117,7 @@ let
           --glibc "${androidGlibc}" \
           --old-glibc "${standardGlibc}" \
           --mappings ${mappingsFile} \
+          --self-mapping "$originalPath $out" \
         | nix-store --restore $out
       '';
     }) packagesToPatch)
