@@ -577,6 +577,7 @@ common/pkgs/
 ├── android-fakechroot.nix              # Android-patched fakechroot
 ├── android-glibc.nix                   # Android-patched glibc 2.40
 ├── patchnar.nix                        # NAR stream patcher (uses patchelf for ELF)
+├── rish.nix                            # Shizuku rish shell for Android
 ├── default.nix                         # Package set entry point
 └── glibc-termux/                       # 28 patch files + source files for glibc
 
@@ -634,6 +635,8 @@ nix build .#androidFakechroot
 # Available outputs for aarch64-linux
 packages.aarch64-linux.androidGlibc           # Android-patched glibc 2.40
 packages.aarch64-linux.androidFakechroot      # Android-patched fakechroot
+packages.aarch64-linux.patchnar               # NAR stream patcher
+packages.aarch64-linux.rish                   # Shizuku rish shell
 lib.aarch64-linux.androidGlibc                # Same, via lib output
 
 # nix-on-droid configurations
