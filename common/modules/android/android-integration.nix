@@ -27,28 +27,11 @@
   fakechroot = androidPkgs.androidFakechroot;
   patchnar = androidPkgs.patchnar;
 
-  # Standard glibc and gcc-lib from the base pkgs
+  # Standard glibc from the base pkgs (gcc-lib is patched through normal grafting)
   standardGlibc = pkgs.stdenv.cc.libc;
-  standardGccLib = pkgs.stdenv.cc.cc.lib;
 
-  # Patched gcc-lib with symlinks rewritten for Android
-  gccLib = pkgs.runCommand "gcc-lib-android" {} ''
-    cp -r ${standardGccLib} $out
-    chmod -R u+w $out
-
-    # Rewrite symlinks that point to /nix/store to use the Android prefix
-    find $out -type l | while read -r link; do
-      target=$(readlink "$link")
-      if echo "$target" | grep -q "^/nix/store"; then
-        new_target="${installationDir}$target"
-        rm "$link"
-        ln -s "$new_target" "$link"
-      fi
-    done || true
-  '';
-
-  # Import the NixOS-style grafting implementation
-  replaceAndroidDepsLib = import ../../lib/replace-android-dependencies.nix {
+  # Import the NixOS-style grafting implementation (local to this module)
+  replaceAndroidDepsLib = import ./replace-android-dependencies.nix {
     inherit lib;
     inherit (pkgs) runCommand writeText nix;
     inherit patchnar;
@@ -57,17 +40,17 @@
   # replaceAndroidDependencies - NixOS-style grafting for Android
   # Uses IFD to discover closure, recursively patches all packages
   # with hash mapping for inter-package references
+  # gcc-lib is patched through normal grafting (hash mapping handles it)
   replaceAndroidDependencies = drv:
     replaceAndroidDepsLib {
       inherit drv;
       prefix = installationDir;
       androidGlibc = glibc;
-      androidGccLib = gccLib;
-      inherit standardGlibc standardGccLib;
+      inherit standardGlibc;
       cutoffPackages = [
-        # Packages that shouldn't be patched (already Android-compatible)
+        # Only glibc is cutoff (special Android build)
+        # gcc-lib is patched through normal grafting
         glibc
-        gccLib
       ];
     };
 
@@ -80,7 +63,8 @@ in {
     # Android glibc build settings (always enabled)
     # Single-output glibc includes all binaries (iconv, locale needed by oh-my-zsh)
     # zsh added here so it's available in the patched environment.path for user shell
-    environment.packages = [ glibc fakechroot gccLib pkgs.zsh ];
+    # gcc-lib is patched through grafting (no longer needs manual android version)
+    environment.packages = [ glibc fakechroot pkgs.zsh ];
     build.androidGlibc = glibc;
     build.androidFakechroot = fakechroot;
     # Environment-level patching (like NixOS replaceDependencies)

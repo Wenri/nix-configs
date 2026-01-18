@@ -13,9 +13,7 @@
   drv,
   prefix,
   androidGlibc,
-  androidGccLib,
   standardGlibc,
-  standardGccLib,
   cutoffPackages ? [],
 }:
 
@@ -108,6 +106,8 @@ let
 
       # IMPORTANT: Use same name portion (without hash) for hash mapping to work!
       # This ensures: /nix/store/OLD-name -> /nix/store/NEW-name (same length)
+      # gcc-lib is handled by hash mapping (same package, different hash)
+      # Only glibc needs explicit substitution (different package: standard -> android)
       in runCommand (extractName originalPath) {
         nativeBuildInputs = [ nix patchnar ];
         inherit originalPath;
@@ -115,9 +115,7 @@ let
         nix-store --dump "$originalPath" | patchnar \
           --prefix "${prefix}" \
           --glibc "${androidGlibc}" \
-          --gcc-lib "${androidGccLib}" \
           --old-glibc "${standardGlibc}" \
-          --old-gcc-lib "${standardGccLib}" \
           --mappings ${mappingsFile} \
         | nix-store --restore $out
       '';
