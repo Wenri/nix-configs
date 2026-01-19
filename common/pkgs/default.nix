@@ -5,17 +5,9 @@ let
   androidPaths = import ../modules/android/paths.nix;
   inherit (androidPaths) installationDir;
 
-  # Use existing Android glibc from store if available, otherwise build
-  # This is needed because bootstrap tools crash on Android (unpatched glibc)
-  # and rebuilding glibc requires patched bootstrap tools
-  existingGlibcStorePath = /nix/store/6mjpqffiqrgqc80d3f54j5hxcj2dl0aj-glibc-android-2.40-android;
-
-  # Build Android glibc if source provided
+  # Build Android glibc from source (uses final stdenv, not bootstrap)
   androidGlibc = if glibcSrc != null then
-    # Try using existing glibc if it exists, otherwise build from source
-    if builtins.pathExists existingGlibcStorePath
-    then builtins.storePath existingGlibcStorePath
-    else (import ./android-glibc.nix { inherit glibcSrc; } pkgs pkgs).glibc
+    (import ./android-glibc.nix { inherit glibcSrc; } pkgs pkgs).glibc
   else null;
 
   # Build Android fakechroot if both sources provided
