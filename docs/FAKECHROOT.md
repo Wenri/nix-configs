@@ -1,6 +1,6 @@
 # libfakechroot for nix-on-droid
 
-> **Last Updated:** January 17, 2026
+> **Last Updated:** January 19, 2026
 > **Source:** `submodules/fakechroot/` (forked from dex4er/fakechroot)
 > **Target Platform:** aarch64-linux (Android/Termux)
 
@@ -511,15 +511,70 @@ wrapper(syscall, long, (long number, ...))
 
 **Syscalls handled:**
 
-| Syscall | Number (aarch64) | Arguments |
-|---------|------------------|-----------|
-| `SYS_statx` | 291 | dirfd, pathname, flags, mask, statxbuf |
-| `SYS_openat` | 56 | dirfd, pathname, flags, mode |
-| `SYS_faccessat` | 48 | dirfd, pathname, mode, flags |
-| `SYS_newfstatat` | 79 | dirfd, pathname, statbuf, flags |
-| `SYS_readlinkat` | 78 | dirfd, pathname, buf, bufsiz |
-| `SYS_unlinkat` | 35 | dirfd, pathname, flags |
-| `SYS_mkdirat` | 34 | dirfd, pathname, mode |
+| Syscall | Number (aarch64) | Arguments | Purpose |
+|---------|------------------|-----------|---------|
+| `SYS_statx` | 291 | dirfd, pathname, flags, mask, statxbuf | Path translation |
+| `SYS_openat` | 56 | dirfd, pathname, flags, mode | Path translation |
+| `SYS_faccessat` | 48 | dirfd, pathname, mode, flags | Path translation |
+| `SYS_newfstatat` | 79 | dirfd, pathname, statbuf, flags | Path translation |
+| `SYS_readlinkat` | 78 | dirfd, pathname, buf, bufsiz | Path translation |
+| `SYS_unlinkat` | 35 | dirfd, pathname, flags | Path translation |
+| `SYS_mkdirat` | 34 | dirfd, pathname, mode | Path translation |
+| `SYS_close_range` | 436 | first, last, flags | Android seccomp bypass (returns ENOSYS) |
+| `SYS_rt_sigaction` | 134 | signum, act, oldact, sigsetsize | Protects SIGSYS handler |
+
+**SYS_close_range (Android seccomp bypass):**
+
+The `close_range` syscall is blocked by Android's seccomp filter. Programs like Python's subprocess call `syscall(SYS_close_range, ...)` directly. This wrapper returns ENOSYS so callers fall back to closing FDs one by one.
+
+```c
+case SYS_close_range: {
+    unsigned int first = va_arg(ap, unsigned int);
+    unsigned int last = va_arg(ap, unsigned int);
+    unsigned int flags = va_arg(ap, unsigned int);
+    va_end(ap);
+    debug("syscall(SYS_close_range, %u, %u, %u) -> ENOSYS", first, last, flags);
+    errno = ENOSYS;
+    return -1;
+}
+```
+
+**SYS_rt_sigaction (SIGSYS handler protection):**
+
+Python's subprocess module (and other programs) reset signal handlers to SIG_DFL before exec() using raw `syscall(SYS_rt_sigaction, ...)` instead of the libc `sigaction()` function. This bypasses our sigaction() wrapper.
+
+When SIGSYS is reset to SIG_DFL and a seccomp-blocked syscall is made, the process dies instead of using our handler that returns ENOSYS.
+
+Solution: Intercept `SYS_rt_sigaction` for SIGSYS and save the handler without actually installing it:
+
+```c
+case SYS_rt_sigaction: {
+    int signum = va_arg(ap, int);
+    struct sigaction *act = va_arg(ap, struct sigaction *);
+    struct sigaction *oldact = va_arg(ap, struct sigaction *);
+    size_t sigsetsize = va_arg(ap, size_t);
+    va_end(ap);
+
+    /* Only intercept SIGSYS */
+    if (signum != SIGSYS) {
+        return nextcall(syscall)(number, signum, act, oldact, sigsetsize);
+    }
+
+    /* Return saved handler if requested */
+    if (oldact != NULL) {
+        memcpy(oldact, &saved_sigsys_handler, sizeof(struct sigaction));
+    }
+
+    /* If just querying, we're done */
+    if (act == NULL) return 0;
+
+    /* Save their handler for chaining but don't install it */
+    memcpy(&saved_sigsys_handler, act, sizeof(struct sigaction));
+    return 0;
+}
+```
+
+This shares `saved_sigsys_handler` with `sigaction.c` (declared non-static) to maintain consistency between the wrapper function and raw syscall interception.
 
 **Why extract 6 args in default case?** Glibc's own `syscall()` implementation extracts exactly 6 `va_arg` unconditionally. The kernel expects 6 register arguments (x0-x5 on aarch64) and ignores unused ones.
 
@@ -537,6 +592,46 @@ statx(AT_FDCWD, "/data/data/com.termux.nix/files/usr/nix/store", ...) = 0
 # Path correctly translated!
 ```
 
+### 12. close_range() Wrapper for Android Seccomp Bypass
+
+**Problem:** The `close_range()` syscall is blocked by Android's seccomp filter. Python's subprocess module calls `close_range()` via both the libc function and raw `syscall(SYS_close_range, ...)` to close file descriptors before exec.
+
+When the syscall is blocked, the kernel sends SIGSYS. Python's subprocess also resets signal handlers to SIG_DFL before exec using raw `syscall(SYS_rt_sigaction, ...)`, which bypasses our sigaction() wrapper. With SIGSYS set to SIG_DFL, the process crashes instead of falling back.
+
+**Symptom:**
+```bash
+$ nix build .#androidGlibc
+# Fails with "Bad system call" during glibc's configure phase
+# strace shows: close_range(3, ~0U, 0) → SIGSYS
+```
+
+**Solution:** Add wrapper for `close_range()` libc function that returns ENOSYS directly:
+
+```c
+// src/close_range.c
+wrapper(close_range, int, (unsigned int first, unsigned int last, unsigned int flags))
+{
+    debug("close_range(%u, %u, %u) -> returning ENOSYS for Android", first, last, flags);
+    errno = ENOSYS;
+    return -1;
+}
+```
+
+Combined with the `SYS_close_range` case in the syscall() wrapper (section 11), this intercepts both:
+1. Direct `close_range()` libc calls
+2. Raw `syscall(__NR_close_range, ...)` calls
+
+**Files added:**
+- `submodules/fakechroot/src/close_range.c`
+
+**Files modified:**
+- `submodules/fakechroot/src/Makefile.am` (added close_range.c)
+- `submodules/fakechroot/configure.ac` (added close_range to function checks)
+- `submodules/fakechroot/src/syscall.c` (added SYS_close_range and SYS_rt_sigaction cases)
+- `submodules/fakechroot/src/sigaction.c` (made saved_sigsys_handler non-static)
+
+**Result:** Python subprocess and other programs that use `close_range()` fall back to closing FDs individually, avoiding the seccomp crash.
+
 ---
 
 ## Android Seccomp Bypass
@@ -546,6 +641,7 @@ Android's seccomp filter blocks several syscalls that cause issues with Nix pack
 | Syscall | Number | Issue | Solution |
 |---------|--------|-------|----------|
 | `faccessat2` | 439 | Go's `exec.LookPath` uses it | SIGSYS handler returns ENOSYS |
+| `close_range` | 436 | Python subprocess uses it | close_range() wrapper + syscall() wrapper return ENOSYS |
 | `clone3` | 435 | glibc's `posix_spawn` uses it | Android glibc patches avoid it |
 | `set_robust_list` | 99 | Thread creation | Android glibc patches |
 | `rseq` | 293 | Restartable sequences | Android glibc patches |
