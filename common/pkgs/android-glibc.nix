@@ -22,26 +22,45 @@
 
   lib = final.lib;
 
+  # Use final stdenv and pkgsBuildBuild to avoid bootstrap stages entirely
+  # This builds Android glibc with the final compiler instead of bootstrap-stage2-stdenv
+  glibcWithFinalStdenv = prev.glibc.override {
+    stdenv = final.stdenv;
+    # Use final packages for build-time dependencies instead of bootstrap
+    pkgsBuildBuild = final.pkgsBuildBuild;
+  };
+
 in {
   glibc = if isAndroid then
-    prev.glibc.overrideAttrs (oldAttrs: {
-      # Force a new derivation name to track Android-specific builds
-      pname = "glibc-android";
+    glibcWithFinalStdenv.overrideAttrs (oldAttrs: {
+      # Use same-length name for patchnar compatibility (13 chars like "glibc-2.40-66")
+      # "a1" = android version 1
+      version = "2.40-a1";
 
       # Use patched glibc source from submodule
       # Both nixpkgs and Termux patches are pre-applied as git commits
       src = glibcSrc;
-      version = "2.40-android";
 
       # Force single output to work around multi-output build issues on Android
       # The bootstrap tools crash when building multi-output derivations
       outputs = [ "out" ];
 
+      # Override depsBuildBuild to use final gcc instead of bootstrap
+      depsBuildBuild = [ final.stdenv.cc ];
+
       # Skip nixpkgs patches - our source from submodule already has them pre-applied
       patches = [];
 
-      # Add jq for processing fakesyscall.json
-      nativeBuildInputs = (oldAttrs.nativeBuildInputs or []) ++ [ final.jq ];
+      # Replace nativeBuildInputs to use Android-patched tools
+      # The original uses python3-minimal which hits seccomp issues on Android
+      nativeBuildInputs = [
+        final.bison
+        final.python3
+        final.jq
+      ];
+
+      # Don't set LD_PRELOAD - rely on /etc/ld.so.preload from nix-on-droid
+      # which loads libfakechroot with SIGSYS handler for seccomp-blocked syscalls
 
       # Post-patch phase: run nixpkgs postPatch first, then Android-specific processing
       postPatch = (oldAttrs.postPatch or "") + ''
