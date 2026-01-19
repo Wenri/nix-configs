@@ -62,6 +62,10 @@ in {
     # login-inner only runs in Termux app, so SSH sessions miss these vars
     # envExtra runs for ALL zsh instances (login, interactive, scripts)
     envExtra = ''
+      # Set GC_NPROCS for Boehm GC (used by Nix) to limit thread count
+      # This prevents excessive GC threads on many-core Android devices
+      export GC_NPROCS=$(/system/bin/nproc)
+
       # Source Android environment variables if not already set
       # (termux.env is captured by nix-on-droid from the original environment)
       if [ -z "$ANDROID_ROOT" ] && [ -f "${androidPaths.termuxEnvFile}" ]; then
