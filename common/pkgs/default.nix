@@ -13,7 +13,7 @@ let
   # Build Android fakechroot if both sources provided
   androidFakechroot = if androidGlibc != null && fakechrootSrc != null then
     import ./android-fakechroot.nix {
-      inherit (pkgs) stdenv patchelf fakechroot;
+      inherit (pkgs) stdenv patchelf fakechroot boost;
       inherit androidGlibc installationDir;
       src = fakechrootSrc;
     }

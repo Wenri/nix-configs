@@ -22,6 +22,7 @@
   stdenv,
   patchelf,
   fakechroot,
+  boost,
   androidGlibc,
   installationDir,
   src,
@@ -38,7 +39,7 @@ in
     inherit src;
     patches = [];
 
-    nativeBuildInputs = (oldAttrs.nativeBuildInputs or []) ++ [patchelf];
+    nativeBuildInputs = (oldAttrs.nativeBuildInputs or []) ++ [patchelf boost];
 
     # Enable parallel building (LTO disabled - conflicts with glibc always_inline)
     enableParallelBuilding = true;
