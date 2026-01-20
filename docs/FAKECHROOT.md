@@ -1,6 +1,6 @@
 # libfakechroot for nix-on-droid
 
-> **Last Updated:** January 19, 2026
+> **Last Updated:** January 20, 2026
 > **Source:** `submodules/fakechroot/` (forked from dex4er/fakechroot)
 > **Target Platform:** aarch64-linux (Android/Termux)
 
@@ -631,6 +631,82 @@ Combined with the `SYS_close_range` case in the syscall() wrapper (section 11), 
 - `submodules/fakechroot/src/sigaction.c` (made saved_sigsys_handler non-static)
 
 **Result:** Python subprocess and other programs that use `close_range()` fall back to closing FDs individually, avoiding the seccomp crash.
+
+### 13. Lazy-Load Stub with __builtin_apply
+
+**Problem:** The original `nextcall` macro had runtime overhead from NULL checks on every call:
+
+```c
+// Old implementation
+#define nextcall(function) \
+    ( \
+      (fakechroot_##function##_fn_t)( \
+          fakechroot_##function##_wrapper_decl.nextfunc ? \
+          fakechroot_##function##_wrapper_decl.nextfunc : \
+          fakechroot_loadfunc(&fakechroot_##function##_wrapper_decl) \
+      ) \
+    )
+```
+
+Every call to a wrapped function checked if `nextfunc` was NULL, even though it was only NULL on the first call.
+
+**Solution:** Use a lazy-load stub with GCC's `__builtin_apply` to forward arguments:
+
+```c
+/*
+ * Lazy-load stub using GCC's __builtin_apply to forward all arguments.
+ * Size 64 covers our max of 7 args (syscall) with padding. Most args
+ * are in registers anyway (6 on x86-64, 8 on aarch64).
+ */
+#define wrapper_stub(function, return_type, arguments) \
+    static return_type fakechroot_##function##_stub arguments { \
+        fakechroot_##function##_nextfunc = \
+            (fakechroot_wrapperfn_t)dlsym(RTLD_NEXT, #function); \
+        void *args = __builtin_apply_args(); \
+        void *ret = __builtin_apply( \
+            (void(*)())fakechroot_##function##_nextfunc, \
+            args, 64); \
+        __builtin_return(ret); \
+    }
+```
+
+**How it works:**
+1. Each wrapper is a single `fakechroot_wrapperfn_t` variable initialized to point to the stub
+2. On first call, the stub:
+   - Loads the real libc function via `dlsym(RTLD_NEXT, #function)`
+   - Overwrites itself in the variable with the real function pointer
+   - Uses `__builtin_apply` to forward all arguments to the real function
+3. Subsequent calls go directly to the real function (no stub, no NULL check)
+
+**Why size 64?** Analysis of all wrapper functions showed:
+- Maximum args: 7 (`syscall` with number + a1-a6)
+- Most args are passed in registers (6 on x86-64, 8 on aarch64)
+- Stack space needed is minimal (0-8 bytes typically)
+- 64 bytes provides ample margin for any architecture
+
+**Simplified wrapper structure:**
+```c
+// Each wrapper uses its own typed function pointer
+#define wrapper_decl(function, return_type, arguments) \
+    wrapper_stub(function, return_type, arguments); \
+    LOCAL fakechroot_##function##_fn_t fakechroot_##function##_nextfunc SECTION_DATA_FAKECHROOT = \
+        fakechroot_##function##_stub
+
+#define nextcall(function) (fakechroot_##function##_nextfunc)
+```
+
+**Changes from upstream:**
+- Removed `struct fakechroot_wrapper` entirely (had unused `func` and `name` fields)
+- Each wrapper uses its own typed function pointer (e.g., `fakechroot_open_fn_t`)
+- Removed generic `fakechroot_wrapperfn_t` typedef
+- Removed `fakechroot_loadfunc()` from `libfakechroot.c` (no longer needed)
+- Added `#include <dlfcn.h>` with `_GNU_SOURCE` to `libfakechroot.h` for `RTLD_NEXT`
+
+**Files modified:**
+- `submodules/fakechroot/src/libfakechroot.h` (macros, removed struct)
+- `submodules/fakechroot/src/libfakechroot.c` (removed fakechroot_loadfunc)
+
+**Result:** Cleaner architecture with no runtime NULL checks and no unused struct fields. The stub handles lazy loading transparently and self-replaces after first call.
 
 ---
 
