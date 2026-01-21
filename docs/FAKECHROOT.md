@@ -1,6 +1,6 @@
 # libfakechroot for nix-on-droid
 
-> **Last Updated:** January 21, 2026
+> **Last Updated:** January 22, 2026
 > **Source:** `submodules/fakechroot/` (forked from dex4er/fakechroot)
 > **Target Platform:** aarch64-linux (Android/Termux)
 
@@ -632,7 +632,47 @@ Combined with the `SYS_close_range` case in the syscall() wrapper (section 11), 
 
 **Result:** Python subprocess and other programs that use `close_range()` fall back to closing FDs individually, avoiding the seccomp crash.
 
-### 13. Lazy-Load Stub with __builtin_apply
+### 13. Syscall Macro Architecture (syscall.h)
+
+The `syscall.h` file provides a unified macro system for generating syscall redirect/passthrough code. This architecture enables code sharing between two different contexts:
+
+1. **syscall.c** - syscall() wrapper using `va_arg`
+2. **sigaction.c** - SIGSYS handler using `ucontext` registers
+
+**Macro Groups (7 macros in 3 groups):**
+
+| Group | Macro | Description | p1 | p2 |
+|-------|-------|-------------|----|----|
+| **1: No path** | FORWARD | Pass args through, append zeros | nargs | nzeros |
+| **2: PATH family** | PATH0 | Path at arg 0, optional AT_FDCWD+extra | nargs | empty or extra |
+| | PATH1 | Path at arg 1, optional AT_FDCWD insert | nargs | fdcwd flag |
+| | PATH2 | Two paths at 0,1 with AT_FDCWD pairs | unused | extra |
+| **3: AT family** | AT1 | dirfd@0, path@1 | nargs | nzeros |
+| | AT2 | dirfd@1, path@2 (e.g., symlinkat) | unused | unused |
+| | AT1_AT3 | Two (dirfd,path) pairs at (0,1) and (2,3) | nargs | unused |
+
+**Context-specific macros** (defined per source file):
+- `CTX_SETUP` - Initialize context (va_arg array or ucontext pointer)
+- `CTX_ARG(ctx, n)` - Access argument n
+- `CTX_EXPAND_PATH(ctx, n)` - Expand path at argument n
+- `CTX_EXPAND_PATH_AT(ctx, dirfd_idx, path_idx)` - Expand path relative to dirfd
+- `CTX_DONE(result)` - Return result (return statement or goto)
+
+**Consolidation history:** Originally 10 macros, reduced to 7:
+- LINKAT merged into AT1_AT3 (same dual-path structure)
+- SYMLINK + INOTIFY merged into PATH1 (both path at arg 1)
+- PATH0_DIRECT merged into PATH0 (using `BOOST_PP_IS_EMPTY` for empty p2)
+
+**Key implementation details:**
+- Uses Boost.Preprocessor for table iteration (`BOOST_PP_SEQ_FOR_EACH`)
+- `BOOST_PP_IS_EMPTY(p2)` detects direct mode vs AT_FDCWD mode in PATH0
+- Entries use 5-tuple format: `((MACRO, from, to, p1, p2))`
+- Conditional compilation via `#ifdef SYS_xxx`
+
+**Files:**
+- `submodules/fakechroot/src/syscall.h` - Macro definitions and entry tables
+
+### 14. Lazy-Load Stub with __builtin_apply
 
 **Problem:** The original `nextcall` macro had runtime overhead from NULL checks on every call:
 
