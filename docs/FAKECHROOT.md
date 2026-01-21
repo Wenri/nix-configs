@@ -1,6 +1,6 @@
 # libfakechroot for nix-on-droid
 
-> **Last Updated:** January 20, 2026
+> **Last Updated:** January 21, 2026
 > **Source:** `submodules/fakechroot/` (forked from dex4er/fakechroot)
 > **Target Platform:** aarch64-linux (Android/Termux)
 
@@ -655,41 +655,37 @@ Every call to a wrapped function checked if `nextfunc` was NULL, even though it 
 ```c
 /*
  * Lazy-load stub using GCC's __builtin_apply to forward all arguments.
- * Size 64 covers our max of 7 args (syscall) with padding. Most args
- * are in registers anyway (6 on x86-64, 8 on aarch64).
+ * Most args are in registers anyway (6 on x86-64, 8 on aarch64).
  */
 #define wrapper_stub(function, return_type, arguments) \
     static return_type fakechroot_##function##_stub arguments { \
-        fakechroot_##function##_nextfunc = \
-            (fakechroot_wrapperfn_t)dlsym(RTLD_NEXT, #function); \
-        void *args = __builtin_apply_args(); \
-        void *ret = __builtin_apply( \
-            (void(*)())fakechroot_##function##_nextfunc, \
-            args, 64); \
-        __builtin_return(ret); \
+        __builtin_return(__builtin_apply((void(*)())( \
+            fakechroot_##function##_nextfunc = \
+                (fakechroot_##function##_fn_t)dlsym(RTLD_NEXT, #function)), \
+            __builtin_apply_args(), 0)); \
     }
 ```
 
 **How it works:**
-1. Each wrapper is a single `fakechroot_wrapperfn_t` variable initialized to point to the stub
+1. Each wrapper is a single typed function pointer initialized to point to the stub
 2. On first call, the stub:
    - Loads the real libc function via `dlsym(RTLD_NEXT, #function)`
-   - Overwrites itself in the variable with the real function pointer
+   - Chains the assignment into `__builtin_apply` (C assignment returns the assigned value)
    - Uses `__builtin_apply` to forward all arguments to the real function
+   - Uses `__builtin_return` to forward the return value
 3. Subsequent calls go directly to the real function (no stub, no NULL check)
 
-**Why size 64?** Analysis of all wrapper functions showed:
-- Maximum args: 7 (`syscall` with number + a1-a6)
-- Most args are passed in registers (6 on x86-64, 8 on aarch64)
-- Stack space needed is minimal (0-8 bytes typically)
-- 64 bytes provides ample margin for any architecture
+**Why a single chained expression?** The stub uses C's assignment expression semantics:
+- `(nextfunc = dlsym(...))` both assigns and returns the function pointer
+- This is chained directly into `__builtin_apply` as the function to call
+- The entire stub body is a single statement with no intermediate variables
 
 **Simplified wrapper structure:**
 ```c
 // Each wrapper uses its own typed function pointer
 #define wrapper_decl(function, return_type, arguments) \
     wrapper_stub(function, return_type, arguments); \
-    LOCAL fakechroot_##function##_fn_t fakechroot_##function##_nextfunc SECTION_DATA_FAKECHROOT = \
+    LOCAL fakechroot_##function##_fn_t fakechroot_##function##_nextfunc = \
         fakechroot_##function##_stub
 
 #define nextcall(function) (fakechroot_##function##_nextfunc)
