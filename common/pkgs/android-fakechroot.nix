@@ -29,6 +29,10 @@
 }: let
   # Android system paths excluded from chroot translation
   excludePath = "/3rdmodem:/acct:/apex:/android:/bugreports:/cache:/config:/d:/data:/data_mirror:/debug_ramdisk:/dev:/linkerconfig:/log:/metadata:/mnt:/odm:/odm_dlkm:/oem:/proc:/product:/sdcard:/storage:/sys:/system:/system_ext:/vendor:/vendor_dlkm";
+  # Paths that override excludes (un-exclude these paths)
+  # /dev/shm and /dev/pts need translation for proper operation
+  # /data/data/com.termux is the nix-on-droid installation directory
+  includePath = "/dev/shm:/dev/pts:/data/data/com.termux";
   # Compute absolute paths with Android prefix
   androidGlibcAbs = "${installationDir}${androidGlibc}/lib";
   androidLdso = "${androidGlibcAbs}/ld-linux-aarch64.so.1";
@@ -49,6 +53,7 @@ in
     ANDROID_ELFLOADER = androidLdso;
     ANDROID_BASE = installationDir;
     ANDROID_EXCLUDE_PATH = excludePath;
+    ANDROID_INCLUDE_PATH = includePath;
 
     # Patch interpreter and RPATH for Android glibc
     # IMPORTANT: libfakechroot.so MUST have RPATH set to Android glibc!
