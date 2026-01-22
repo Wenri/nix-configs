@@ -26,6 +26,9 @@ in {
   # due to seccomp blocking sem_open syscall
   manual.manpages.enable = false;
 
+  # Add ~/.local/bin to PATH for user scripts
+  home.sessionPath = ["$HOME/.local/bin"];
+
   # Global environment variables for Go binaries
   # Go makes direct syscalls that bypass fakechroot, so we need:
   # - SSL certs at real nix store path (not symlinks)
