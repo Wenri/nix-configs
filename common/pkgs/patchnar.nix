@@ -1,17 +1,18 @@
 # patchnar - NAR stream patcher for Android compatibility
 # Patches ELF binaries, symlinks, and scripts within NAR streams
-{ stdenv, autoreconfHook, autoconf-archive, patchnarSrc ? null }:
+{ stdenv, autoreconfHook, autoconf-archive, pkg-config, boost, sourceHighlight, patchnarSrc ? null }:
 
 let
   src = if patchnarSrc != null then patchnarSrc else ../../../submodules/patchnar;
 in
 stdenv.mkDerivation {
   pname = "patchnar";
-  version = "0.21.0";
+  version = "0.22.0";
 
   inherit src;
 
-  nativeBuildInputs = [ autoreconfHook autoconf-archive ];
+  nativeBuildInputs = [ autoreconfHook autoconf-archive pkg-config ];
+  buildInputs = [ boost sourceHighlight ];
 
   # Build both patchelf and patchnar
   # patchnar includes all patchelf functionality plus NAR processing

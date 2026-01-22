@@ -22,3 +22,6 @@
 	path = submodules/patchnar
 	url = https://github.com/Wenri/patchnar
 	branch = master
+[submodule "submodules/src-highlite"]
+	path = submodules/src-highlite
+	url = git://git.savannah.gnu.org/src-highlite.git

@@ -33,7 +33,7 @@
   # Import the NixOS-style grafting implementation (local to this module)
   replaceAndroidDepsLib = import ./replace-android-dependencies.nix {
     inherit lib;
-    inherit (pkgs) runCommand writeText nix;
+    inherit (pkgs) runCommand writeText nix sourceHighlight;
     inherit patchnar;
   };
 
@@ -41,9 +41,14 @@
   # Uses IFD to discover closure, recursively patches all packages
   # with hash mapping for inter-package references
   # gcc-lib is patched through normal grafting (hash mapping handles it)
-  replaceAndroidDependencies = drv:
+  #
+  # Arguments:
+  #   drv: the derivation to patch
+  #   addPrefixToPaths (optional): list of additional paths to prefix in script strings
+  #                                (e.g., ["/nix/var/"] for nix.sh)
+  replaceAndroidDependencies = drv: { addPrefixToPaths ? [] }:
     replaceAndroidDepsLib {
-      inherit drv;
+      inherit drv addPrefixToPaths;
       prefix = installationDir;
       androidGlibc = glibc;
       inherit standardGlibc;

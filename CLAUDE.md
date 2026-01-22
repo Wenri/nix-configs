@@ -442,6 +442,7 @@ nixos-anywhere --flake '.#freenix' \
 docs/
 ├── NIX-ON-DROID.md        # Overview: installation, configuration, architecture, usage
 ├── ANDROID-GLIBC.md       # Android glibc: Termux patches, ld.so path translation, build
+├── PATCHNAR.md            # patchnar: NAR stream patcher, string-aware patching
 ├── FAKECHROOT.md          # libfakechroot: modifications, integration, troubleshooting
 └── SECCOMP.md             # Seccomp capabilities, USER_NOTIF supervisor, static binary handling
 
@@ -459,6 +460,7 @@ README.md                  # Project README
 |----------|---------------|
 | **NIX-ON-DROID.md** | Architecture overview, installation, module structure, services (SSH, Shizuku) |
 | **ANDROID-GLIBC.md** | Android seccomp, Termux patches, ld.so built-in path translation, building glibc |
+| **PATCHNAR.md** | NAR stream patcher, ELF/symlink/script patching, string-aware patching with source-highlight |
 | **FAKECHROOT.md** | libfakechroot as LD_PRELOAD library, argv[0] fix, readlink buffer overflow fix |
 | **SECCOMP.md** | Seccomp features on Android, USER_NOTIF supervisor, handling static binaries |
 
@@ -469,7 +471,7 @@ README.md                  # Project README
 1. **Android glibc**: Standard glibc won't work on Android due to seccomp-blocked syscalls (clone3, set_robust_list, rseq)
 2. **Termux Patches**: Community-maintained patches that disable/workaround blocked syscalls
 3. **NixOS-style Grafting**: Uses patchnar for recursive dependency patching with hash mapping
-4. **patchnar**: NAR stream patcher that modifies ELF interpreters/RPATH, symlinks, and scripts
+4. **patchnar**: NAR stream patcher that modifies ELF interpreters/RPATH, symlinks, and scripts. Uses GNU Source-highlight for string-aware patching of shell scripts.
 5. **Binary Cache**: Most packages still come from nixpkgs binary cache (patched at install time)
 6. **Fakechroot Login**: Uses fakechroot instead of proot for better performance
 7. **Go Binary Exceptions**: Go binaries cannot be patched with patchelf (see below)
@@ -563,6 +565,9 @@ submodules/                             # Git submodules for external dependenci
 ├── patchnar/                           # NAR stream patcher (from Wenri/patchnar)
 │                                        # Patches ELF, symlinks, scripts within NAR streams
 │                                        # Uses patchelf library for ELF modifications
+│                                        # Uses source-highlight for string-aware script patching
+├── src-highlite/                       # GNU Source-highlight (for shell script tokenization)
+│                                        # Used by patchnar to identify string literals
 ├── nix-on-droid/                       # nix-on-droid source (from Wenri/nix-on-droid fork)
 │   └── modules/                        # nix-on-droid modules and build config
 └── secrets/                            # Secrets repository (from GitLab)
@@ -577,7 +582,7 @@ common/overlays/
 common/pkgs/
 ├── android-fakechroot.nix              # Android-patched fakechroot
 ├── android-glibc.nix                   # Android-patched glibc 2.40
-├── patchnar.nix                        # NAR stream patcher (uses patchelf for ELF)
+├── patchnar.nix                        # NAR stream patcher (patchelf + source-highlight)
 ├── rish.nix                            # Shizuku rish shell for Android
 ├── default.nix                         # Package set entry point
 └── glibc-termux/                       # 28 patch files + source files for glibc
