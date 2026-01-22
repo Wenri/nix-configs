@@ -68,6 +68,9 @@ in {
     # login-inner only runs in Termux app, so SSH sessions miss these vars
     # envExtra runs for ALL zsh instances (login, interactive, scripts)
     envExtra = ''
+      # Set default umask to 002 (group-writable files)
+      umask 002
+
       # Set GC_NPROCS for Boehm GC (used by Nix) to limit thread count
       # This prevents excessive GC threads on many-core Android devices
       export GC_NPROCS=$(/system/bin/nproc)
