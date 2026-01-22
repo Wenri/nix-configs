@@ -165,6 +165,7 @@ Source-highlight supports 100+ languages. Common ones include:
 - C/C++ (`.c`, `.h`, `.cpp`, `.hpp`)
 - Java (`.java`)
 - JavaScript (`.js`)
+- JSON (`.json`) - all string values are patched (no comments in JSON)
 - Makefiles (`Makefile`, `makefile`)
 - And many more...
 
@@ -207,6 +208,7 @@ Source-highlight's language definitions (`.lang` files) define what constitutes 
 | Python | `"..."`, `'...'`, `"""..."""`, `'''...'''` |
 | C/C++ | `"..."` |
 | JavaScript | `"..."`, `'...'`, `` `...` `` (template literals) |
+| JSON | `"..."` (all values are strings, no comments) |
 | Perl | `"..."`, `'...'`, `q{...}`, `qq{...}` |
 | Ruby | `"..."`, `'...'`, `%q{...}`, `%Q{...}` |
 
@@ -271,6 +273,20 @@ my $path = "/nix/var/nix/profiles/default";
 my $other = qq{/nix/var/other/path};
 #              ↑ PATCHED (inside qq{})
 ```
+
+#### 9. JSON String Values
+```json
+{
+  "nixProfile": "/nix/var/nix/profiles/default",
+                 ↑ PATCHED (JSON string value)
+  "nested": {
+    "path": "/nix/var/nix/profiles/per-user/root"
+             ↑ PATCHED (nested string value)
+  }
+}
+```
+
+> **Note:** JSON has no comment syntax (officially), so ALL string values containing the pattern will be patched. This is usually the desired behavior for configuration files.
 
 ---
 
@@ -461,6 +477,55 @@ prefix = os.environ.get("PREFIX", "")
 full_path = f"{prefix}/nix/var/nix/profiles/default"
 #                      ↑ NOT PATCHED (follows variable in f-string)
 ```
+
+---
+
+### Complete Example: JSON Configuration
+
+**Input (`config.json`):**
+```json
+{
+  "name": "nix-config",
+  "version": "1.0.0",
+  "paths": {
+    "nixProfile": "/nix/var/nix/profiles/default",
+    "nixStore": "/nix/store",
+    "customPath": "/nix/var/custom/path"
+  },
+  "description": "Path /nix/var/nix/profiles/default is used",
+  "nested": {
+    "deep": {
+      "path": "/nix/var/nix/profiles/per-user/root"
+    }
+  }
+}
+```
+
+**Output (after `--add-prefix-to /nix/var/`):**
+```json
+{
+  "name": "nix-config",
+  "version": "1.0.0",
+  "paths": {
+    "nixProfile": "/data/.../nix/var/nix/profiles/default",
+    ↑ PATCHED
+    "nixStore": "/nix/store",
+    ↑ NOT PATCHED (pattern is /nix/var/, not /nix/store/)
+    "customPath": "/data/.../nix/var/custom/path"
+    ↑ PATCHED
+  },
+  "description": "Path /data/.../nix/var/nix/profiles/default is used",
+  ↑ PATCHED (all JSON strings are string literals)
+  "nested": {
+    "deep": {
+      "path": "/data/.../nix/var/nix/profiles/per-user/root"
+      ↑ PATCHED
+    }
+  }
+}
+```
+
+> **Note:** In JSON, ALL string values are treated as string literals (JSON has no comments), so every occurrence of the pattern in any string value will be patched.
 
 ---
 
