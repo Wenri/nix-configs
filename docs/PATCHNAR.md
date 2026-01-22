@@ -25,7 +25,9 @@ patchnar is a NAR (Nix Archive) stream patcher designed for Android compatibilit
 - ELF binary patching (interpreter, RPATH)
 - Symlink target patching
 - Script shebang patching
-- **String-aware script patching** (new in v0.22.0) using GNU Source-highlight
+- **String-aware source patching** (new in v0.22.0) using GNU Source-highlight
+  - Automatic language detection from filename (100+ languages supported)
+  - Patches paths only inside string literals (avoids comments, variable expansions)
 - Hash mapping for inter-package reference substitution
 - Based on patchelf with NAR stream support
 
@@ -53,7 +55,8 @@ patchnar intercepts file contents and symlink targets, applying patches as neede
 | Content Type | Patches Applied |
 |--------------|-----------------|
 | **ELF binaries** | Interpreter path, RPATH entries |
-| **Scripts** | Shebang line, string literals (with source-highlight) |
+| **Scripts** | Shebang line, string literals (auto-detected language) |
+| **Source files** | String literals (language detected from filename) |
 | **Symlinks** | Target paths pointing to `/nix/store/` |
 | **All content** | Hash mapping substitution for inter-package references |
 
@@ -117,23 +120,29 @@ Options:
 
 ### The Problem
 
-Some scripts contain hardcoded paths like `/nix/var/nix/profiles/default` that need the Android prefix. However, simply searching and replacing all occurrences could patch:
+Some source files contain hardcoded paths like `/nix/var/nix/profiles/default` that need the Android prefix. However, simply searching and replacing all occurrences could patch:
 - Comments (shouldn't be patched)
 - Variable-concatenated paths like `$PREFIX/nix/var/` (already prefixed)
 
 ### The Solution
 
-patchnar v0.22.0 uses [GNU Source-highlight](https://www.gnu.org/software/src-highlite/) to tokenize shell scripts and identify string literal regions. Paths are only patched when they appear inside string literals.
+patchnar v0.22.0 uses [GNU Source-highlight](https://www.gnu.org/software/src-highlite/) to tokenize source files and identify string literal regions. Paths are only patched when they appear inside string literals.
+
+**Key feature:** patchnar uses **automatic language detection** via source-highlight's LangMap. The language is detected from the filename extension or name (e.g., `.sh` → shell, `.py` → Python, `Makefile` → makefile). This means patchnar can correctly handle string literals in **any language** that source-highlight supports (100+ languages including shell, Python, Perl, Ruby, C, C++, Java, JavaScript, etc.).
 
 ### How It Works
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│ Input: Shell script content                                      │
+│ Input: Source file content + filename                            │
 ├─────────────────────────────────────────────────────────────────┤
 │                         │                                        │
 │                         ▼                                        │
-│     Source-highlight tokenizes with sh.lang                      │
+│     LangMap detects language from filename                       │
+│     (e.g., "nix.sh" → sh.lang, "config.py" → python.lang)       │
+│                         │                                        │
+│                         ▼                                        │
+│     Source-highlight tokenizes with detected language            │
 │                         │                                        │
 │                         ▼                                        │
 │     StringCapture formatter records "string" token positions     │
@@ -142,9 +151,22 @@ patchnar v0.22.0 uses [GNU Source-highlight](https://www.gnu.org/software/src-hi
 │     patchnar patches /nix/var/ only inside string regions        │
 │                         │                                        │
 │                         ▼                                        │
-│ Output: Patched script with correct prefixes                     │
+│ Output: Patched source with correct prefixes                     │
 └─────────────────────────────────────────────────────────────────┘
 ```
+
+### Supported Languages
+
+Source-highlight supports 100+ languages. Common ones include:
+- Shell scripts (`.sh`, `.bash`, `.zsh`)
+- Python (`.py`)
+- Perl (`.pl`, `.pm`)
+- Ruby (`.rb`)
+- C/C++ (`.c`, `.h`, `.cpp`, `.hpp`)
+- Java (`.java`)
+- JavaScript (`.js`)
+- Makefiles (`Makefile`, `makefile`)
+- And many more...
 
 ### Example
 
