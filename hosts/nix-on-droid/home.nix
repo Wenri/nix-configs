@@ -50,6 +50,12 @@ in {
     })
   ];
 
+  # Android-specific git configuration
+  programs.git.extraConfig = {
+    # Allow git operations in Android shared storage
+    safe.directory = "/storage/emulated/*";
+  };
+
   # nix-on-droid specific shell configuration
   programs.zsh = {
     shellAliases = {
