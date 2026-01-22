@@ -41,9 +41,9 @@ in {
       # Both nixpkgs and Termux patches are pre-applied as git commits
       src = glibcSrc;
 
-      # Force single output to work around multi-output build issues on Android
-      # The bootstrap tools crash when building multi-output derivations
-      outputs = [ "out" ];
+      # Use standard multi-output build (out, bin, dev, static, getent)
+      # Now works because we use final.stdenv instead of bootstrap
+      # outputs inherited from upstream glibc
 
       # Override depsBuildBuild to use final gcc instead of bootstrap
       depsBuildBuild = [ final.stdenv.cc ];
@@ -94,58 +94,19 @@ in {
         echo "=== Android build-time processing complete ==="
       '';
       
-      # Replace postInstall - simplified for single-output build
-      # (nixpkgs version has glob issues and multi-output handling we don't need)
-      postInstall = ''
-        echo "=== Android glibc postInstall ==="
+      # Patch upstream postInstall to fix glob issue
+      # Upstream uses "../glibc-2*/localedata/SUPPORTED" which fails with multiple matches
+      # Replace with "$sourceRoot" which is the actual source directory variable
+      postInstall = builtins.replaceStrings
+        ["../glibc-2*/localedata/SUPPORTED"]
+        ["../$sourceRoot/localedata/SUPPORTED"]
+        (oldAttrs.postInstall or "")
+      + ''
+        echo "=== Android glibc postInstall additions ==="
 
-        # Fix the glob issue - find the actual source directory
-        GLIBC_SRC=$(find .. -maxdepth 1 -type d -name 'glibc-*' | head -1)
-        if [ -n "$GLIBC_SRC" ] && [ -d "$GLIBC_SRC/localedata" ]; then
-          echo SUPPORTED-LOCALES=C.UTF-8/UTF-8 > "$GLIBC_SRC/localedata/SUPPORTED"
-        fi
-
-        # Build locales
-        make -j''${NIX_BUILD_CORES:-1} localedata/install-locale-files || true
-
-        test -f $out/etc/ld.so.cache && rm $out/etc/ld.so.cache
-
-        # Link linux headers to include directory
-        if test -n "$linuxHeaders"; then
-            mkdir -p $out/include
-            (cd $out/include && \
-             ln -sv $(ls -d $linuxHeaders/include/* | grep -v scsi\$) .)
-        fi
-
-        # Fix for NIXOS-54 (ldd not working on x86_64)
-        if test -n "$is64bit"; then
-            ln -s lib $out/lib64
-        fi
-
-        rm -rf $out/var
-        rm -f $out/bin/sln 2>/dev/null || true
-
-        # Backwards-compatibility symlinks
-        ln -sf $out/lib/libpthread.so.0 $out/lib/libpthread.so
-        ln -sf $out/lib/librt.so.1 $out/lib/librt.so
-        ln -sf $out/lib/libdl.so.2 $out/lib/libdl.so
-        test -f $out/lib/libutil.so.1 && ln -sf $out/lib/libutil.so.1 $out/lib/libutil.so
-        touch $out/lib/libpthread.a
-
-        # Keep static libraries in $out/lib (single output)
-        # No need to move to separate $static output
-
-        # Work around Nix hard link bug for getconf
-        if [ -f "$out/bin/getconf" ]; then
-          cp $out/bin/getconf $out/bin/getconf_
-          mv $out/bin/getconf_ $out/bin/getconf
-        fi
-
-        # Android-specific fixes
-        echo "Fixing broken getconf symlinks..."
-        find $out -xtype l -name "*LP64*" -delete 2>/dev/null || true
-        find $out -xtype l -name "*XBS5*" -delete 2>/dev/null || true
-
+        # Fix cycle: $out/libexec/getconf/* symlinks point to $bin/bin/getconf
+        # This creates out->bin reference, causing cycle with bin->out (libraries)
+        # Solution: replace symlinks with copies of the actual binary
         if [ -d "$out/libexec/getconf" ]; then
           for link in $out/libexec/getconf/*; do
             if [ -L "$link" ]; then
@@ -153,12 +114,13 @@ in {
               if [ -n "$target" ] && [ -f "$target" ]; then
                 rm "$link"
                 cp "$target" "$link"
+              else
+                # Broken symlink - just remove it
+                rm -f "$link"
               fi
             fi
           done
         fi
-
-        find "$out" -type d -empty -delete 2>/dev/null || true
 
         echo "=== Android glibc postInstall complete ==="
       '';
@@ -177,8 +139,8 @@ in {
       # Add Android prefix to trusted directories so ld.so searches there
       makeFlags = (oldAttrs.makeFlags or []) ++ [
         "user-defined-trusted-dirs=${nixOnDroidPrefix}/nix/store"
-        # Set slibdir to Android path so library paths are baked correctly
-        "slibdir=${nixOnDroidPrefix}${builtins.placeholder "out"}/lib"
+        # slibdir commented out to avoid multi-output cycles
+        # "slibdir=${nixOnDroidPrefix}${builtins.placeholder "out"}/lib"
       ];
 
       # Pass android glibc lib path to ld.so for standard glibc redirection
@@ -190,8 +152,8 @@ in {
           " -DANDROID_GLIBC_LIB=\"${nixOnDroidPrefix}${builtins.placeholder "out"}/lib\"";
       };
 
-      # Disable separateDebugInfo to avoid output cycles
-      separateDebugInfo = false;
+      # Enable separateDebugInfo for proper debug symbol handling
+      separateDebugInfo = true;
     })
   else
     prev.glibc;

@@ -10,6 +10,7 @@
   ...
 }: let
   packages = import ../../packages.nix {inherit pkgs;};
+  androidPaths = import ./paths.nix;
 in {
   # Environment packages for nix-on-droid (system-level)
   # Uses shared package lists from common/packages.nix
@@ -40,6 +41,7 @@ in {
     build-hook =
     builders =
     pure-eval = false
+    build-dir = ${androidPaths.installationDir}/nix/var/nix/builds
   '';
 
   # User configuration (uses username from flake)

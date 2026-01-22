@@ -1,6 +1,6 @@
 # Nix-on-Droid Configuration Guide
 
-> **Last Updated:** January 18, 2026
+> **Last Updated:** January 23, 2026
 > **Platform:** Android/Termux (aarch64-linux)
 > **Nix Version:** nixpkgs-unstable
 
@@ -384,6 +384,43 @@ Android environment variables and Termux tools are handled by `android-integrati
 }
 ```
 
+### Android-Specific Home Manager Settings
+
+The nix-on-droid home configuration includes Android-specific settings:
+
+**Session Variables:**
+```nix
+home.sessionVariables = {
+  CLAUDE_CODE_TMPDIR = "${androidPaths.installationDir}/tmp";
+};
+```
+
+**Additional PATH:**
+```nix
+home.sessionPath = ["$HOME/.local/bin"];
+```
+
+**Default umask (for shared storage compatibility):**
+```nix
+programs.zsh.envExtra = ''
+  umask 002
+  # Also source Termux environment variables...
+'';
+```
+
+**Git safe.directory (for shared storage):**
+```nix
+programs.git.extraConfig = {
+  safe.directory = "/storage/emulated/*";
+};
+```
+
+These settings ensure:
+- `CLAUDE_CODE_TMPDIR`: Claude Code uses a temp directory within the Android prefix
+- `~/.local/bin` in PATH: User-installed binaries are accessible
+- `umask 002`: Files created in shared storage have group write permission
+- `safe.directory`: Git can work with repositories in Android shared storage (owned by a different UID)
+
 ---
 
 ## Troubleshooting
@@ -418,10 +455,15 @@ This fails because `__build-remote` is a nix subcommand, not a standalone progra
 **Fix:** Add to `nix.extraOptions` in your configuration:
 ```nix
 nix.extraOptions = ''
+  experimental-features = nix-command flakes
   build-hook =
   builders =
+  pure-eval = false
+  build-dir = ${androidPaths.installationDir}/nix/var/nix/builds
 '';
 ```
+
+**Note:** The `build-dir` setting is important for Android. It sets the directory where Nix performs builds. Using a path within the Android app directory (`$PREFIX/nix/var/nix/builds`) ensures builds work properly within the Android sandbox.
 
 **Workaround for current build:** If the config change isn't applied yet, use:
 ```bash

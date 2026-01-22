@@ -1,6 +1,6 @@
 # libfakechroot for nix-on-droid
 
-> **Last Updated:** January 22, 2026
+> **Last Updated:** January 23, 2026
 > **Source:** `submodules/fakechroot/` (forked from dex4er/fakechroot)
 > **Target Platform:** aarch64-linux (Android/Termux)
 
@@ -345,7 +345,81 @@ static char exclude_storage[8192];
 **File modified:**
 - `submodules/fakechroot/src/libfakechroot.c`
 
-### 8. SIGSYS Handler for Android Seccomp Bypass
+### 8. Include List (Negative Exclude)
+
+**Problem:** The exclude list prevents path translation for system directories like `/dev`, `/proc`, `/sys`. However, some subdirectories within excluded paths *should* be translated. For example, `/dev/shm` (shared memory) should be translated to the nix-on-droid prefix, even though `/dev` is excluded.
+
+**Solution:** Add an include list that overrides the exclude list for specific paths:
+
+```c
+/* Compile-time include list (overrides excludes) from configure */
+#ifdef INCLUDE_PATH_SEQ
+static const char * const include_list[] = {
+    BOOST_PP_SEQ_FOR_EACH(EXCLUDE_PATH_ELEM, _, INCLUDE_PATH_SEQ)
+};
+static const size_t include_length[] = {
+    BOOST_PP_SEQ_FOR_EACH(EXCLUDE_LENGTH_ELEM, _, INCLUDE_PATH_SEQ)
+};
+static const size_t include_max = BOOST_PP_SEQ_SIZE(INCLUDE_PATH_SEQ);
+#else
+#error "ANDROID_INCLUDE_PATH must be set at configure time"
+#endif
+```
+
+**Updated `fakechroot_localdir()` function:**
+
+```c
+/* Check if path matches any prefix in the given list */
+static inline bool match_prefix_list(const char *v_path, size_t len,
+                                     const char * const *list, const size_t *lengths, size_t count)
+{
+    for (size_t i = 0; i < count; i++) {
+        const size_t prefix_len = lengths[i];
+        if (len < prefix_len) continue;
+        if (strncmp(list[i], v_path, prefix_len) != 0) continue;
+        if (len == prefix_len || v_path[prefix_len] == '/') return true;
+    }
+    return false;
+}
+
+LOCAL bool fakechroot_localdir(const char *p_path)
+{
+    // ... path expansion ...
+    const size_t len = strlen(v_path);
+
+    /* Include list overrides exclude list */
+    if (match_prefix_list(v_path, len, include_list, include_length, include_max))
+        return false;  /* NOT local, should translate */
+
+    /* Check exclude list (tail call) */
+    return match_prefix_list(v_path, len, exclude_list, exclude_length, exclude_max);
+}
+```
+
+**Include list configuration (in `android-fakechroot.nix`):**
+
+```nix
+includePath = "/dev/shm:/data/data/com.termux";
+```
+
+**Logic:**
+
+| Path | Exclude Match | Include Match | Result |
+|------|---------------|---------------|--------|
+| `/dev/random` | `/dev` ✓ | none | `true` (local, no translate) |
+| `/dev/shm/foo` | `/dev` ✓ | `/dev/shm` ✓ | `false` (translate) |
+| `/data/data/com.termux/files` | `/data` ✓ | `/data/data/com.termux` ✓ | `false` (translate) |
+| `/nix/store/x` | none | none | `false` (translate) |
+| `/proc/self` | `/proc` ✓ | none | `true` (local, no translate) |
+
+**Note:** `/dev/pts` is intentionally NOT in the include list. The pseudo-terminal filesystem requires the real kernel devpts mount point, not a translated path.
+
+**Files modified:**
+- `submodules/fakechroot/src/libfakechroot.c`
+- `submodules/fakechroot/configure.ac`
+- `common/pkgs/android-fakechroot.nix`
+
+### 9. SIGSYS Handler for Android Seccomp Bypass
 
 **Problem:** Android's seccomp filter blocks certain syscalls (like `faccessat2`, syscall 439) that newer glibc and Go use. When blocked, the kernel sends SIGSYS which crashes the process.
 
@@ -374,7 +448,7 @@ void fakechroot_sigsys_handler(int sig, siginfo_t *info, void *ucontext)
 **Files modified:**
 - `submodules/fakechroot/src/libfakechroot.c`
 
-### 9. sigaction Wrapper for Go Compatibility
+### 10. sigaction Wrapper for Go Compatibility
 
 **Problem:** Go's runtime installs its own SIGSYS handler during startup, which overrides our handler. Go's handler panics on SIGSYS from seccomp.
 
@@ -413,7 +487,7 @@ $ glab --version
 glab 1.80.4 (f4b518e)
 ```
 
-### 10. Direct Execution for Script Interpreters
+### 11. Direct Execution for Script Interpreters
 
 **Problem:** When executing scripts with shebang lines (e.g., `#!/usr/bin/env python3`), fakechroot always wrapped the interpreter with `ld.so --argv0`. This was unnecessary overhead for interpreters that were already patched to use Android glibc or the nix-ld shim.
 
@@ -474,7 +548,7 @@ The implementation reuses `exec_ctx_t` buffers to minimize stack usage (~12KB+ s
 
 **Result:** Scripts with patched interpreters execute faster without unnecessary ld.so wrapper overhead.
 
-### 11. syscall() Wrapper for Direct Syscall Interception
+### 12. syscall() Wrapper for Direct Syscall Interception
 
 **Problem:** Some libraries (notably libuv, used by Node.js) bypass glibc wrappers and call `syscall()` directly for certain operations. For example, libuv uses `syscall(__NR_statx, ...)` instead of the glibc `statx()` function. This bypasses libfakechroot's LD_PRELOAD interception, causing path translation to fail.
 
@@ -592,7 +666,7 @@ statx(AT_FDCWD, "/data/data/com.termux.nix/files/usr/nix/store", ...) = 0
 # Path correctly translated!
 ```
 
-### 12. close_range() Wrapper for Android Seccomp Bypass
+### 13. close_range() Wrapper for Android Seccomp Bypass
 
 **Problem:** The `close_range()` syscall is blocked by Android's seccomp filter. Python's subprocess module calls `close_range()` via both the libc function and raw `syscall(SYS_close_range, ...)` to close file descriptors before exec.
 
@@ -617,7 +691,7 @@ wrapper(close_range, int, (unsigned int first, unsigned int last, unsigned int f
 }
 ```
 
-Combined with the `SYS_close_range` case in the syscall() wrapper (section 11), this intercepts both:
+Combined with the `SYS_close_range` case in the syscall() wrapper (section 12), this intercepts both:
 1. Direct `close_range()` libc calls
 2. Raw `syscall(__NR_close_range, ...)` calls
 
@@ -632,7 +706,7 @@ Combined with the `SYS_close_range` case in the syscall() wrapper (section 11), 
 
 **Result:** Python subprocess and other programs that use `close_range()` fall back to closing FDs individually, avoiding the seccomp crash.
 
-### 13. Syscall Macro Architecture (syscall.h)
+### 14. Syscall Macro Architecture (syscall.h)
 
 The `syscall.h` file provides a unified macro system for generating syscall redirect/passthrough code. This architecture enables code sharing between two different contexts:
 
@@ -672,7 +746,7 @@ The `syscall.h` file provides a unified macro system for generating syscall redi
 **Files:**
 - `submodules/fakechroot/src/syscall.h` - Macro definitions and entry tables
 
-### 14. Lazy-Load Stub with __builtin_apply
+### 15. Lazy-Load Stub with __builtin_apply
 
 **Problem:** The original `nextcall` macro had runtime overhead from NULL checks on every call:
 
@@ -832,6 +906,7 @@ Go's runtime installs signal handlers early in process startup. To prevent Go fr
 { stdenv, patchelf, fakechroot, androidGlibc, installationDir, src }:
 let
   excludePath = "/3rdmodem:/acct:/apex:/android:...";  # Android system paths
+  includePath = "/dev/shm:/data/data/com.termux";       # Override excludes (un-exclude)
   androidGlibcAbs = "${installationDir}${androidGlibc}/lib";
   androidLdso = "${androidGlibcAbs}/ld-linux-aarch64.so.1";
 in
@@ -848,6 +923,7 @@ fakechroot.overrideAttrs (oldAttrs: {
   ANDROID_ELFLOADER = androidLdso;
   ANDROID_BASE = installationDir;
   ANDROID_EXCLUDE_PATH = excludePath;
+  ANDROID_INCLUDE_PATH = includePath;
 
   postFixup = (oldAttrs.postFixup or "") + ''
     # Patch binaries to use Android glibc
@@ -880,17 +956,24 @@ These are passed as environment variables to `./configure` and written to `confi
 | `ANDROID_ELFLOADER` | Path to Android glibc's ld.so |
 | `ANDROID_BASE` | Installation prefix (`/data/data/com.termux.nix/files/usr`) |
 | `ANDROID_EXCLUDE_PATH` | Paths to exclude from translation (e.g., `/proc:/sys:/dev`) |
+| `ANDROID_INCLUDE_PATH` | Paths to include (override excludes), e.g., `/dev/shm:/data/data/com.termux` |
 
 The `configure.ac` script handles these via `AC_ARG_VAR`:
 ```autoconf
 AC_ARG_VAR([ANDROID_ELFLOADER], [Path to Android glibc's ld.so dynamic linker])
 AC_ARG_VAR([ANDROID_BASE], [Installation prefix for Android])
 AC_ARG_VAR([ANDROID_EXCLUDE_PATH], [Colon-separated paths excluded from chroot translation])
+AC_ARG_VAR([ANDROID_INCLUDE_PATH], [Colon-separated paths that override excludes (un-exclude)])
 
 if test -n "$ANDROID_BASE"; then
     AC_DEFINE_UNQUOTED([ANDROID_BASE], ["$ANDROID_BASE"], [Installation prefix])
 fi
-# ... similar for other variables
+
+# Generate Boost.PP sequences for compile-time path lists
+EXCLUDE_PATH_SEQ=`echo "$ANDROID_EXCLUDE_PATH" | sed 's/\([[^:]]*\)/("\1")/g; s/://g'`
+INCLUDE_PATH_SEQ=`echo "$ANDROID_INCLUDE_PATH" | sed 's/\([[^:]]*\)/("\1")/g; s/://g'`
+AC_DEFINE_UNQUOTED([EXCLUDE_PATH_SEQ], [$EXCLUDE_PATH_SEQ], [Exclude paths as Boost.PP sequence])
+AC_DEFINE_UNQUOTED([INCLUDE_PATH_SEQ], [$INCLUDE_PATH_SEQ], [Include paths as Boost.PP sequence])
 ```
 
 ### Building

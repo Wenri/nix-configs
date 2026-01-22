@@ -1,6 +1,6 @@
 # Android glibc for nix-on-droid
 
-> **Last Updated:** January 18, 2026
+> **Last Updated:** January 23, 2026
 > **glibc Version:** 2.40 (from nixpkgs-unstable)
 > **Target Platform:** aarch64-linux (Android/Termux)
 
@@ -379,7 +379,48 @@ The build involves two main components:
 3. Run gen-android-ids.sh, process-fakesyscalls.sh at build time
 4. Replace /dev/* with /proc/self/fd/*
 5. Add Android-specific configure options
-6. Post-install fixes for broken symlinks
+6. Post-install fixes for broken symlinks and cross-output cycles
+
+**Multi-output Build:**
+
+Android glibc uses the standard nixpkgs multi-output build (inherited from upstream):
+
+| Output | Contents |
+|--------|----------|
+| `out` | Libraries (libc.so.6, ld-linux-aarch64.so.1, etc.) |
+| `bin` | Binaries (ldd, locale, iconv, etc.) |
+| `dev` | Headers and development files |
+| `static` | Static libraries |
+| `getent` | getent command |
+| `debug` | Debug symbols (via `separateDebugInfo = true`) |
+
+**Fixes for multi-output compatibility:**
+
+1. **Glob issue with SUPPORTED file:** Upstream postInstall uses `../glibc-2*/localedata/SUPPORTED` which fails when multiple glibc sources exist. Fixed using `builtins.replaceStrings`:
+   ```nix
+   postInstall = builtins.replaceStrings
+     ["../glibc-2*/localedata/SUPPORTED"]
+     ["../$sourceRoot/localedata/SUPPORTED"]
+     (oldAttrs.postInstall or "")
+   ```
+
+2. **Cycle between out and bin outputs:** The `$out/libexec/getconf/*` files are symlinks to `$bin/bin/getconf`, creating a cycle (out→bin→out via libraries). Standard glibc uses regular files (copies), not symlinks. Fixed by replacing symlinks with copies:
+   ```nix
+   postInstall = ... + ''
+     # Fix cycle: $out/libexec/getconf/* symlinks point to $bin/bin/getconf
+     if [ -d "$out/libexec/getconf" ]; then
+       for link in $out/libexec/getconf/*; do
+         if [ -L "$link" ]; then
+           target=$(readlink -f "$link" 2>/dev/null || true)
+           if [ -n "$target" ] && [ -f "$target" ]; then
+             rm "$link"
+             cp "$target" "$link"
+           fi
+         fi
+       done
+     fi
+   '';
+   ```
 
 **2. patchnar** (from `submodules/patchnar`):
 1. Build with autotools (autoreconfHook)
@@ -391,6 +432,14 @@ The build involves two main components:
 2. For each package, dump → patchnar → restore
 3. Hash mappings ensure consistent references
 
+### Debug Symbols
+
+The build enables `separateDebugInfo = true` which:
+- Strips debug symbols from release libraries
+- Creates a separate `debug` output with debug info
+- Improves release build performance
+- Allows debugging when needed via the debug output
+
 ### Building Components
 
 ```bash
@@ -400,6 +449,9 @@ nix build .#androidGlibc
 # Verify glibc build
 ls -la result/lib/
 # Should contain: ld-linux-aarch64.so.1, libc.so.6, libpthread.so.0, etc.
+
+# Access debug symbols (if needed)
+nix build .#androidGlibc.debug
 
 # Build patchnar
 nix build .#patchnar
