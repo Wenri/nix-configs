@@ -30,9 +30,9 @@
   # Android system paths excluded from chroot translation
   excludePath = "/3rdmodem:/acct:/apex:/android:/bugreports:/cache:/config:/d:/data:/data_mirror:/debug_ramdisk:/dev:/linkerconfig:/log:/metadata:/mnt:/odm:/odm_dlkm:/oem:/proc:/product:/sdcard:/storage:/sys:/system:/system_ext:/vendor:/vendor_dlkm";
   # Paths that override excludes (un-exclude these paths)
-  # /dev/shm and /dev/pts need translation for proper operation
+  # /dev/shm needs translation for writable shared memory
   # /data/data/com.termux is the nix-on-droid installation directory
-  includePath = "/dev/shm:/dev/pts:/data/data/com.termux";
+  includePath = "/dev/shm:/data/data/com.termux";
   # Compute absolute paths with Android prefix
   androidGlibcAbs = "${installationDir}${androidGlibc}/lib";
   androidLdso = "${androidGlibcAbs}/ld-linux-aarch64.so.1";
