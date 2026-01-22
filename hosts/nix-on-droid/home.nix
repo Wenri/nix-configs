@@ -37,6 +37,7 @@ in {
     SSL_CERT_FILE = "${androidPaths.installationDir}${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
     SSL_CERT_DIR = "${androidPaths.installationDir}${pkgs.cacert}/etc/ssl/certs";
     GODEBUG = "netdns=cgo";
+    CLAUDE_CODE_TMPDIR = "${androidPaths.installationDir}/tmp";
   };
 
   # Declarative SSH authorized_keys and termux-boot
