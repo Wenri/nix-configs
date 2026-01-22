@@ -61,10 +61,10 @@ in {
 
   config = {
     # Android glibc build settings (always enabled)
-    # Single-output glibc includes all binaries (iconv, locale needed by oh-my-zsh)
+    # Multi-output glibc: out (libraries) + bin (iconv, locale needed by oh-my-zsh)
     # zsh added here so it's available in the patched environment.path for user shell
     # gcc-lib is patched through grafting (no longer needs manual android version)
-    environment.packages = [ glibc fakechroot pkgs.zsh ];
+    environment.packages = [ glibc glibc.bin fakechroot pkgs.zsh ];
     build.androidGlibc = glibc;
     build.androidFakechroot = fakechroot;
     # Environment-level patching (like NixOS replaceDependencies)
