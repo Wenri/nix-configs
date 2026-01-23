@@ -40,7 +40,7 @@ in {
     CLAUDE_CODE_TMPDIR = "${androidPaths.installationDir}/tmp";
     # Override home-manager's LOCALE_ARCHIVE_2_27 to use Android prefix
     # (matches LOCALE_ARCHIVE set by nix-on-droid in session-init.nix)
-    LOCALE_ARCHIVE_2_27 = "${androidPaths.installationDir}${pkgs.glibcLocales}/lib/locale/locale-archive";
+    LOCALE_ARCHIVE_2_27 = lib.mkForce "${androidPaths.installationDir}${pkgs.glibcLocales}/lib/locale/locale-archive";
   };
 
   # Declarative SSH authorized_keys and termux-boot

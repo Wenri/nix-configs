@@ -143,4 +143,12 @@ let
   # Get the patched version of the root derivation
   finalOutput = rewriteMemo.${toContextlessString drv};
 
-in finalOutput
+  # Helper to look up patched version of a package from the memo
+  # Returns the patched version if in memo, otherwise returns the original
+  getPkg = pkg: rewriteMemo.${toContextlessString pkg} or pkg;
+
+in {
+  out = finalOutput;
+  memo = rewriteMemo;
+  inherit getPkg toContextlessString;
+}
