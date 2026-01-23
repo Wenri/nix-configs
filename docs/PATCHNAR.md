@@ -73,63 +73,114 @@ This order is critical because hash mapping would prevent glibc matching if done
 
 ---
 
-## Parallel Processing Architecture
+## Streaming Architecture with C++23 Coroutines
 
-patchnar uses a three-phase batch processing architecture for efficient parallel patching:
+patchnar uses a streaming architecture with C++23 coroutines (`std::generator`) for memory-efficient processing:
 
-### Three-Phase Pipeline
+### Streaming Pipeline
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│ Phase 1: PARSE                                                   │
-│ - Read entire NAR stream into in-memory tree (NarNode)          │
-│ - Tree structure: NarRegular, NarSymlink, NarDirectory          │
-│ - Single-threaded (NAR is a sequential format)                  │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
+│ Coroutine Generator (Parser)                                     │
+│ - Uses std::generator<NarEvent> to yield events as parsed       │
+│ - No tree allocation - events are transient                     │
+│ - Event types: DirectoryStart/End, EntryStart/End, File, Symlink│
+└──────────────────────────────┬──────────────────────────────────┘
+                               │
+                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│ Phase 2: PATCH (parallel)                                        │
-│ - Collect all regular files into PatchTask vector               │
-│ - Execute all patches in parallel via std::execution::par       │
-│ - Each PatchTask is self-contained with file ref, path, patcher │
-│ - Thread count controlled by TBB_NUM_THREADS environment var    │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
+│ Windowed Batch Processor                                         │
+│ - Structural events (dir/entry start/end) written immediately   │
+│ - Files/symlinks batched until EntryEnd                         │
+│ - Batch patched in parallel via std::execution::par             │
+│ - Batch written and cleared before closing each entry           │
+└──────────────────────────────┬──────────────────────────────────┘
+                               │
+                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│ Phase 3: WRITE                                                   │
-│ - Serialize patched tree back to NAR format                     │
-│ - Single-threaded (NAR requires sequential output)              │
-│ - Directory entries written in lexicographic order              │
+│ NAR Writer - Incremental Output                                  │
+│ - Writes patched content immediately after each batch           │
+│ - No full NAR tree in memory                                    │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### PatchTask Design
+### Memory Comparison
 
-Each file to be patched is represented by a self-contained `PatchTask`:
+```
+Old (tree-based):  [███████████████████████████████████████] Full NAR in memory
+New (streaming):   [████]    [████]    [████]    [████]     Windowed batches
+                   batch1    batch2    batch3    batch4
+```
+
+**Memory:** O(batch_size × max_file) instead of O(total_NAR_size)
+
+### NarEvent Design
+
+Events are yielded by the parser as it reads the NAR stream:
 
 ```cpp
-struct PatchTask {
-    NarRegular& file;              // Reference to file in tree
-    const std::string path;        // File path within NAR
-    const ContentPatcher& patcher; // Reference to content patcher function
-    void operator()() {
-        file.content = patcher(file.content, file.executable, path);
-    }
+struct NarEvent {
+    enum class Type {
+        DirectoryStart, DirectoryEnd,
+        EntryStart, EntryEnd,
+        RegularFile, Symlink
+    };
+    Type type;
+    std::string name;     // Entry name (for EntryStart)
+    std::string path;     // Full path
+    std::vector<unsigned char> content;  // File content
+    std::string target;   // Symlink target
+    bool executable = false;
 };
 ```
 
-Tasks are executed in parallel using:
+### Processing Logic
 
 ```cpp
-std::for_each(std::execution::par, tasks.begin(), tasks.end(),
-    std::mem_fn(&PatchTask::operator()));
+void NarProcessor::process() {
+    writeString(NAR_MAGIC);
+    for (NarEvent event : parse()) {  // C++23 generator
+        switch (event.type) {
+            case DirectoryStart:
+            case DirectoryEnd:
+            case EntryStart:
+                writeEvent(event);  // Write immediately
+                break;
+            case RegularFile:
+            case Symlink:
+                batch_.push_back(std::move(event));  // Batch files
+                break;
+            case EntryEnd:
+                flushBatch();  // Patch in parallel, write, clear
+                writeEvent(event);
+                break;
+        }
+    }
+    flushBatch();  // Final flush
+}
+```
+
+### Parallel Batch Patching
+
+Files in each batch are patched in parallel:
+
+```cpp
+void NarProcessor::flushBatch() {
+    std::for_each(std::execution::par, batch_.begin(), batch_.end(),
+        [this](NarEvent& event) {
+            if (event.type == RegularFile && contentPatcher_)
+                event.content = contentPatcher_(event.content, ...);
+            else if (event.type == Symlink && symlinkPatcher_)
+                event.target = symlinkPatcher_(event.target);
+        });
+    for (const auto& event : batch_) writeEvent(event);
+    batch_.clear();
+}
 ```
 
 ### Thread Control
 
-Thread count is controlled by the **TBB_NUM_THREADS** environment variable (Intel TBB runtime):
+Thread count is controlled by the **TBB_NUM_THREADS** environment variable:
 
 ```bash
 # Use 4 threads
@@ -139,14 +190,15 @@ TBB_NUM_THREADS=4 patchnar --prefix /data/... < input.nar > output.nar
 patchnar --prefix /data/... < input.nar > output.nar
 ```
 
-### Why Batch Processing?
+### Why Streaming with Batching?
 
-| Approach | Pros | Cons |
-|----------|------|------|
-| **Streaming** | Low memory | No parallelism (NAR is sequential) |
-| **Batch (current)** | Full parallelism | Memory for entire tree |
+| Approach | Memory | Parallelism |
+|----------|--------|-------------|
+| **Pure streaming** | O(1 file) | None (sequential) |
+| **Full tree** | O(NAR size) | Full |
+| **Streaming + batching (current)** | O(batch × file) | Per-batch parallel |
 
-Since source-highlight tokenization is the expensive part, parallel patching provides significant speedup for packages with many source files.
+The streaming approach with windowed batching provides both low memory usage and parallel patching within each batch.
 
 ---
 
@@ -751,13 +803,13 @@ nix-store --dump /nix/store/xxx-package | patchnar \
 
 ```
 submodules/patchnar/
-├── configure.ac          # Autoconf configuration (source-highlight detection)
+├── configure.ac          # Autoconf configuration (C++23, source-highlight)
 ├── src/
 │   ├── patchnar.cc       # Main patchnar source (NAR processing, string patching)
-│   ├── nar.cc/nar.h      # NAR stream handling
+│   ├── nar.cc/nar.h      # NAR streaming with C++23 std::generator
 │   ├── patchelf.cc       # ELF patching (from patchelf)
 │   └── Makefile.am       # Build configuration
-└── m4/                   # Autoconf macros
+└── m4/                   # Autoconf macros (ax_cxx_compile_stdcxx.m4 serial 25)
 
 common/pkgs/
 └── patchnar.nix          # Nix package definition
