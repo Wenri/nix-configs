@@ -1,6 +1,6 @@
 # patchnar: NAR Stream Patcher
 
-> **Last Updated:** January 22, 2026
+> **Last Updated:** January 23, 2026
 > **Version:** 0.22.0
 > **Based on:** patchelf
 
@@ -8,11 +8,12 @@
 
 1. [Overview](#overview)
 2. [How It Works](#how-it-works)
-3. [Command-Line Options](#command-line-options)
-4. [String-Aware Patching](#string-aware-patching)
-5. [Integration with NixOS-style Grafting](#integration-with-nixos-style-grafting)
-6. [Building](#building)
-7. [Examples](#examples)
+3. [Parallel Processing Architecture](#parallel-processing-architecture)
+4. [Command-Line Options](#command-line-options)
+5. [String-Aware Patching](#string-aware-patching)
+6. [Integration with NixOS-style Grafting](#integration-with-nixos-style-grafting)
+7. [Building](#building)
+8. [Examples](#examples)
 
 ---
 
@@ -69,6 +70,83 @@ For each content type, patches are applied in this order:
 3. **Prefix addition** - Add Android prefix to `/nix/store/` paths
 
 This order is critical because hash mapping would prevent glibc matching if done first.
+
+---
+
+## Parallel Processing Architecture
+
+patchnar uses a three-phase batch processing architecture for efficient parallel patching:
+
+### Three-Phase Pipeline
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ Phase 1: PARSE                                                   │
+│ - Read entire NAR stream into in-memory tree (NarNode)          │
+│ - Tree structure: NarRegular, NarSymlink, NarDirectory          │
+│ - Single-threaded (NAR is a sequential format)                  │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ Phase 2: PATCH (parallel)                                        │
+│ - Collect all regular files into PatchTask vector               │
+│ - Execute all patches in parallel via std::execution::par       │
+│ - Each PatchTask is self-contained with file ref, path, patcher │
+│ - Thread count controlled by TBB_NUM_THREADS environment var    │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ Phase 3: WRITE                                                   │
+│ - Serialize patched tree back to NAR format                     │
+│ - Single-threaded (NAR requires sequential output)              │
+│ - Directory entries written in lexicographic order              │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### PatchTask Design
+
+Each file to be patched is represented by a self-contained `PatchTask`:
+
+```cpp
+struct PatchTask {
+    NarRegular& file;              // Reference to file in tree
+    const std::string path;        // File path within NAR
+    const ContentPatcher& patcher; // Reference to content patcher function
+    void operator()() {
+        file.content = patcher(file.content, file.executable, path);
+    }
+};
+```
+
+Tasks are executed in parallel using:
+
+```cpp
+std::for_each(std::execution::par, tasks.begin(), tasks.end(),
+    std::mem_fn(&PatchTask::operator()));
+```
+
+### Thread Control
+
+Thread count is controlled by the **TBB_NUM_THREADS** environment variable (Intel TBB runtime):
+
+```bash
+# Use 4 threads
+TBB_NUM_THREADS=4 patchnar --prefix /data/... < input.nar > output.nar
+
+# Use all available cores (default)
+patchnar --prefix /data/... < input.nar > output.nar
+```
+
+### Why Batch Processing?
+
+| Approach | Pros | Cons |
+|----------|------|------|
+| **Streaming** | Low memory | No parallelism (NAR is sequential) |
+| **Batch (current)** | Full parallelism | Memory for entire tree |
+
+Since source-highlight tokenization is the expensive part, parallel patching provides significant speedup for packages with many source files.
 
 ---
 
