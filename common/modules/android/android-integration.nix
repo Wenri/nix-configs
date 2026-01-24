@@ -32,9 +32,8 @@
 
   # Import the NixOS-style grafting implementation (local to this module)
   replaceAndroidDepsLib = import ./replace-android-dependencies.nix {
-    inherit lib;
-    inherit (pkgs) runCommand writeText nix sourceHighlight;
-    inherit patchnar;
+    inherit lib patchnar;
+    inherit (pkgs) runCommand writeText nix;
   };
 
   # replaceAndroidDependencies - NixOS-style grafting for Android
@@ -44,8 +43,8 @@
   #
   # Arguments:
   #   drv: the derivation to patch
-  #   addPrefixToPaths (optional): list of additional paths to prefix in script strings
-  #                                (e.g., ["/nix/var/"] for nix.sh)
+  #   addPrefixToPaths (optional): additional paths to prefix in script strings
+  #                                (patchnar defaults include /nix/var/)
   replaceAndroidDependencies = drv: { addPrefixToPaths ? [] }:
     replaceAndroidDepsLib {
       inherit drv addPrefixToPaths;

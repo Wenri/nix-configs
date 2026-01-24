@@ -8,7 +8,7 @@
 # 4. Apply prefix to pt_interp and RPATH for Android glibc
 # 5. Patch additional paths (like /nix/var/) in script string literals
 
-{ lib, runCommand, writeText, nix, patchnar, sourceHighlight }:
+{ lib, runCommand, writeText, nix, patchnar }:
 
 {
   drv,
@@ -16,7 +16,8 @@
   androidGlibc,
   standardGlibc,
   cutoffPackages ? [],
-  # Additional paths to add prefix to in script strings (e.g., ["/nix/var/"])
+  # Additional paths to add prefix to in script strings
+  # patchnar defaults include /nix/var/, so only add extras here
   addPrefixToPaths ? [],
 }:
 
@@ -110,9 +111,6 @@ let
         # Build --add-prefix-to options
         addPrefixToArgs = concatStringsSep " " (map (p: "--add-prefix-to \"${p}\"") addPrefixToPaths);
 
-        # Source-highlight data directory for shell tokenization
-        sourceHighlightDataDir = "${sourceHighlight}/share/source-highlight";
-
       # IMPORTANT: Use same name portion (without hash) for hash mapping to work!
       # This ensures: /nix/store/OLD-name -> /nix/store/NEW-name (same length)
       # gcc-lib is handled by hash mapping (same package, different hash)
@@ -127,7 +125,6 @@ let
           --old-glibc "${standardGlibc}" \
           --mappings ${mappingsFile} \
           --self-mapping "$originalPath $out" \
-          --source-highlight-data-dir "${sourceHighlightDataDir}" \
           ${addPrefixToArgs} \
         | nix-store --restore $out
       '';
