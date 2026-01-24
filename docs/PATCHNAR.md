@@ -1,6 +1,6 @@
 # patchnar: NAR Stream Patcher
 
-> **Last Updated:** January 23, 2026
+> **Last Updated:** January 24, 2026
 > **Version:** 0.22.0
 > **Based on:** patchelf
 
@@ -8,7 +8,7 @@
 
 1. [Overview](#overview)
 2. [How It Works](#how-it-works)
-3. [Parallel Processing Architecture](#parallel-processing-architecture)
+3. [Processing Architecture](#processing-architecture)
 4. [Command-Line Options](#command-line-options)
 5. [String-Aware Patching](#string-aware-patching)
 6. [Integration with NixOS-style Grafting](#integration-with-nixos-style-grafting)
@@ -73,7 +73,7 @@ This order is critical because hash mapping would prevent glibc matching if done
 
 ---
 
-## Streaming Architecture with C++23 Coroutines
+## Processing Architecture
 
 patchnar uses a streaming architecture with C++23 coroutines (`std::generator`) for memory-efficient processing:
 
@@ -82,54 +82,48 @@ patchnar uses a streaming architecture with C++23 coroutines (`std::generator`) 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │ Coroutine Generator (Parser)                                     │
-│ - Uses std::generator<NarEvent> to yield events as parsed       │
-│ - No tree allocation - events are transient                     │
-│ - Event types: DirectoryStart/End, EntryStart/End, File, Symlink│
+│ - Uses std::generator<NarNode> to yield nodes as parsed         │
+│ - No tree allocation - nodes are processed one at a time        │
+│ - Node types: DirectoryStart/End, EntryStart/End, File, Symlink │
 └──────────────────────────────┬──────────────────────────────────┘
                                │
                                ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│ Windowed Batch Processor                                         │
-│ - Structural events (dir/entry start/end) written immediately   │
-│ - Files/symlinks batched until EntryEnd                         │
-│ - Batch patched in parallel via std::execution::par             │
-│ - Batch written and cleared before closing each entry           │
+│ Serial Processing Loop                                           │
+│ - Each node patched and written immediately                     │
+│ - No batching or buffering beyond current node                  │
+│ - Simple, correct, predictable behavior                         │
 └──────────────────────────────┬──────────────────────────────────┘
                                │
                                ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │ NAR Writer - Incremental Output                                  │
-│ - Writes patched content immediately after each batch           │
+│ - Writes patched content immediately after each node            │
 │ - No full NAR tree in memory                                    │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### Memory Comparison
+### Memory Usage
 
-```
-Old (tree-based):  [███████████████████████████████████████] Full NAR in memory
-New (streaming):   [████]    [████]    [████]    [████]     Windowed batches
-                   batch1    batch2    batch3    batch4
-```
+**Memory:** O(max_file) - only one file in memory at a time.
 
-**Memory:** O(batch_size × max_file) instead of O(total_NAR_size)
+### NarNode Design
 
-### NarEvent Design
-
-Events are yielded by the parser as it reads the NAR stream:
+Nodes are yielded by the parser as it reads the NAR stream:
 
 ```cpp
-struct NarEvent {
+struct NarNode {
     enum class Type {
+        Invalid = -1,
         DirectoryStart, DirectoryEnd,
         EntryStart, EntryEnd,
         RegularFile, Symlink
     };
-    Type type;
-    std::string name;     // Entry name (for EntryStart)
-    std::string path;     // Full path
-    std::vector<unsigned char> content;  // File content
-    std::string target;   // Symlink target
+    Type type = Type::Invalid;
+    std::string name;                    // Entry name (for EntryStart)
+    std::string path;                    // Full path
+    std::vector<std::byte> content;      // File content (for RegularFile)
+    std::string target;                  // Symlink target (for Symlink)
     bool executable = false;
 };
 ```
@@ -139,66 +133,23 @@ struct NarEvent {
 ```cpp
 void NarProcessor::process() {
     writeString(NAR_MAGIC);
-    for (NarEvent event : parse()) {  // C++23 generator
-        switch (event.type) {
-            case DirectoryStart:
-            case DirectoryEnd:
-            case EntryStart:
-                writeEvent(event);  // Write immediately
-                break;
-            case RegularFile:
-            case Symlink:
-                batch_.push_back(std::move(event));  // Batch files
-                break;
-            case EntryEnd:
-                flushBatch();  // Patch in parallel, write, clear
-                writeEvent(event);
-                break;
+
+    // Simple serial processing loop
+    for (auto&& node : parseGen_) {
+        // Patch content
+        if (node.type == NarNode::Type::RegularFile && contentPatcher_) {
+            node.content = contentPatcher_(node.content, node.executable, node.path);
+        } else if (node.type == NarNode::Type::Symlink && symlinkPatcher_) {
+            node.target = symlinkPatcher_(node.target);
         }
+
+        // Write node
+        writeNode(node);
     }
-    flushBatch();  // Final flush
+
+    out_.flush();
 }
 ```
-
-### Parallel Batch Patching
-
-Files in each batch are patched in parallel:
-
-```cpp
-void NarProcessor::flushBatch() {
-    std::for_each(std::execution::par, batch_.begin(), batch_.end(),
-        [this](NarEvent& event) {
-            if (event.type == RegularFile && contentPatcher_)
-                event.content = contentPatcher_(event.content, ...);
-            else if (event.type == Symlink && symlinkPatcher_)
-                event.target = symlinkPatcher_(event.target);
-        });
-    for (const auto& event : batch_) writeEvent(event);
-    batch_.clear();
-}
-```
-
-### Thread Control
-
-Thread count is controlled by the **TBB_NUM_THREADS** environment variable:
-
-```bash
-# Use 4 threads
-TBB_NUM_THREADS=4 patchnar --prefix /data/... < input.nar > output.nar
-
-# Use all available cores (default)
-patchnar --prefix /data/... < input.nar > output.nar
-```
-
-### Why Streaming with Batching?
-
-| Approach | Memory | Parallelism |
-|----------|--------|-------------|
-| **Pure streaming** | O(1 file) | None (sequential) |
-| **Full tree** | O(NAR size) | Full |
-| **Streaming + batching (current)** | O(batch × file) | Per-batch parallel |
-
-The streaming approach with windowed batching provides both low memory usage and parallel patching within each batch.
 
 ---
 
@@ -258,7 +209,9 @@ Some source files contain hardcoded paths like `/nix/var/nix/profiles/default` t
 
 patchnar v0.22.0 uses [GNU Source-highlight](https://www.gnu.org/software/src-highlite/) to tokenize source files and identify string literal regions. Paths are only patched when they appear inside string literals.
 
-**Key feature:** patchnar uses **automatic language detection** via source-highlight's LangMap. The language is detected from the filename extension or name (e.g., `.sh` → shell, `.py` → Python, `Makefile` → makefile). This means patchnar can correctly handle string literals in **any language** that source-highlight supports (100+ languages including shell, Python, Perl, Ruby, C, C++, Java, JavaScript, etc.).
+**Current status:** String-aware patching is currently limited to **shell scripts only** (`sh.lang`, `zsh.lang`) for performance optimization. Other languages are detected via filename extension but only receive shebang patching, not string literal patching.
+
+**Architecture:** patchnar uses simple static functions for language detection and string tokenization. The language is detected from the filename extension (e.g., `.sh` → shell, `.py` → Python) via a fast O(1) hash lookup in `EXTENSION_TO_LANG`.
 
 ### How It Works
 
