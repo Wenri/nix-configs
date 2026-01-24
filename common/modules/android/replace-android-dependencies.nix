@@ -5,14 +5,13 @@
 # 1. Use IFD (exportReferencesGraph) to discover full dependency closure
 # 2. Recursively walk dependencies and create patched versions
 # 3. Use hash mapping to update inter-package references
-# 4. Apply prefix to pt_interp and RPATH for Android glibc
+# 4. Apply prefix to pt_interp and RPATH for Android glibc (prefix is compile-time in patchnar)
 # 5. Patch additional paths (like /nix/var/) in script string literals
 
 { lib, runCommand, writeText, nix, patchnar }:
 
 {
   drv,
-  prefix,
   androidGlibc,
   standardGlibc,
   cutoffPackages ? [],
@@ -120,7 +119,6 @@ let
         inherit originalPath;
       } ''
         nix-store --dump "$originalPath" | patchnar \
-          --prefix "${prefix}" \
           --glibc "${androidGlibc}" \
           --old-glibc "${standardGlibc}" \
           --mappings ${mappingsFile} \

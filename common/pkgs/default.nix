@@ -20,7 +20,8 @@ let
   else null;
 
   # patchnar - NAR stream patcher (includes patchelf)
-  patchnar = pkgs.callPackage ./patchnar.nix { inherit patchnarSrc; };
+  # installationDir is set at compile time for Android patching
+  patchnar = pkgs.callPackage ./patchnar.nix { inherit patchnarSrc installationDir; };
 
   # rish - Shizuku shell for privileged Android commands
   rish = pkgs.callPackage ./rish.nix { inherit installationDir; };

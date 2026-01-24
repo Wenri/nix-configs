@@ -1,6 +1,6 @@
 # patchnar - NAR stream patcher for Android compatibility
 # Patches ELF binaries, symlinks, and scripts within NAR streams
-{ stdenv, gcc14Stdenv, lib, autoreconfHook, autoconf-archive, pkg-config, boost, sourceHighlight, patchnarSrc }:
+{ stdenv, gcc14Stdenv, lib, autoreconfHook, autoconf-archive, pkg-config, boost, sourceHighlight, patchnarSrc, installationDir }:
 # Use GCC 14 stdenv for C++23 support (std::generator)
 gcc14Stdenv.mkDerivation {
   pname = "patchnar";
@@ -11,9 +11,10 @@ gcc14Stdenv.mkDerivation {
   nativeBuildInputs = [ autoreconfHook autoconf-archive pkg-config ];
   buildInputs = [ boost sourceHighlight ];
 
-  # Set source-highlight data directory at compile time
+  # Set compile-time constants
   configureFlags = [
     "--with-source-highlight-data-dir=${sourceHighlight}/share/source-highlight"
+    "--with-install-prefix=${installationDir}"
   ];
 
   # patchnar includes all patchelf functionality as a library

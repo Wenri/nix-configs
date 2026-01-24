@@ -40,6 +40,7 @@
   # Uses IFD to discover closure, recursively patches all packages
   # with hash mapping for inter-package references
   # gcc-lib is patched through normal grafting (hash mapping handles it)
+  # prefix is now a compile-time constant in patchnar
   #
   # Arguments:
   #   drv: the derivation to patch
@@ -48,7 +49,6 @@
   replaceAndroidDependencies = drv: { addPrefixToPaths ? [] }:
     replaceAndroidDepsLib {
       inherit drv addPrefixToPaths;
-      prefix = installationDir;
       androidGlibc = glibc;
       inherit standardGlibc;
       cutoffPackages = [
