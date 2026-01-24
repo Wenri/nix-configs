@@ -11,6 +11,11 @@ gcc14Stdenv.mkDerivation {
   nativeBuildInputs = [ autoreconfHook autoconf-archive pkg-config ];
   buildInputs = [ boost sourceHighlight ];
 
+  # Set source-highlight data directory at compile time
+  configureFlags = [
+    "--with-source-highlight-data-dir=${sourceHighlight}/share/source-highlight"
+  ];
+
   # patchnar includes all patchelf functionality as a library
   postInstall = ''
     # Verify patchnar is installed
