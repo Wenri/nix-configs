@@ -58,7 +58,7 @@ in {
   ];
 
   # Android-specific git configuration
-  programs.git.extraConfig = {
+  programs.git.settings = {
     # Allow git operations in Android shared storage
     safe.directory = "/storage/emulated/*";
   };
