@@ -68,8 +68,9 @@ in {
     # Android glibc build settings (always enabled)
     # Multi-output glibc: out (libraries) + bin (iconv, locale needed by oh-my-zsh)
     # zsh added here so it's available in the patched environment.path for user shell
+    # patchnar for NAR stream patching (used by replaceAndroidDependencies)
     # gcc-lib is patched through grafting (no longer needs manual android version)
-    environment.packages = [ glibc glibc.bin fakechroot pkgs.zsh ];
+    environment.packages = [ glibc glibc.bin fakechroot patchnar pkgs.zsh ];
     build.androidGlibc = glibc;
     build.androidFakechroot = fakechroot;
     # Environment-level patching (like NixOS replaceDependencies)
