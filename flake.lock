@@ -389,11 +389,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1769357243,
-        "narHash": "sha256-IqBZOyG8g2Z0rrt3i8LnR0UFBkPVCMfXGVbf+W6gwJI=",
+        "lastModified": 1769359618,
+        "narHash": "sha256-lDIVN0xW18YlechvZSgcj+36UtB7ltpL9zz1PF436kY=",
         "ref": "refs/heads/main",
-        "rev": "dd7a92f631eba7b26dd48bc361708aa154f06cb7",
-        "revCount": 1046,
+        "rev": "3ef1e733a3d01ad8cbf15900728ac55f21b4f00e",
+        "revCount": 1047,
         "type": "git",
         "url": "file:./submodules/patchnar"
       },
