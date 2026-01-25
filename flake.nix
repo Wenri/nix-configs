@@ -32,6 +32,20 @@
     };
 
     nixos-facter-modules.url = "github:numtide/nixos-facter-modules";
+
+    # Local git submodules as flake inputs (stable hash = git commit)
+    glibc-src = {
+      url = "git+file:./submodules/glibc";
+      flake = false;
+    };
+    fakechroot-src = {
+      url = "git+file:./submodules/fakechroot";
+      flake = false;
+    };
+    patchnar = {
+      url = "git+file:./submodules/patchnar";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = {
@@ -168,15 +182,15 @@
       hostsForSystem = lib.filterAttrs (_: cfg: cfg.system == system) nixosHosts;
       customPkgs = import ./common/pkgs {
         pkgs = mkPkgs system;
-        glibcSrc = ./submodules/glibc;
-        fakechrootSrc = ./submodules/fakechroot;
-        patchnarSrc = ./submodules/patchnar;
+        glibcSrc = inputs.glibc-src;
+        fakechrootSrc = inputs.fakechroot-src;
       };
     in
       (lib.mapAttrs (hostname: _:
         self.nixosConfigurations.${hostname}.config.system.build.toplevel
       ) hostsForSystem)
       // customPkgs
+      // { patchnar = inputs.patchnar.packages.${system}.patchnar; }
     );
 
     formatter = forAllSystems (system: (mkPkgs system).alejandra);

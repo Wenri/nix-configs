@@ -1,6 +1,6 @@
 # Custom packages, that can be defined similarly to ones from nixpkgs
 # You can build them using 'nix build .#example'
-{ pkgs, glibcSrc ? null, fakechrootSrc ? null, patchnarSrc ? null }:
+{ pkgs, glibcSrc ? null, fakechrootSrc ? null }:
 let
   androidPaths = import ../modules/android/paths.nix;
   inherit (androidPaths) installationDir;
@@ -19,15 +19,12 @@ let
     }
   else null;
 
-  # patchnar - NAR stream patcher (includes patchelf)
-  # installationDir is set at compile time for Android patching
-  patchnar = pkgs.callPackage ./patchnar.nix { inherit patchnarSrc installationDir; };
-
   # rish - Shizuku shell for privileged Android commands
   rish = pkgs.callPackage ./rish.nix { inherit installationDir; };
 in {
   # example = pkgs.callPackage ./example { };
-  inherit patchnar rish;
+  # patchnar now comes from flake input, not built here
+  inherit rish;
 }
 // (if androidGlibc != null then { inherit androidGlibc; } else {})
 // (if androidFakechroot != null then { inherit androidFakechroot; } else {})

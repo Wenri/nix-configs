@@ -20,6 +20,22 @@
         "type": "github"
       }
     },
+    "fakechroot-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1769283321,
+        "narHash": "sha256-k/ROG6pArBJkPa09B4Fw6C4IpAkaBb3tEgIXh9CC8SM=",
+        "ref": "refs/heads/main",
+        "rev": "c0bd58b978a4cf62506c44d0d826766bb3092a85",
+        "revCount": 1153,
+        "type": "git",
+        "url": "file:./submodules/fakechroot"
+      },
+      "original": {
+        "type": "git",
+        "url": "file:./submodules/fakechroot"
+      }
+    },
     "flake-compat": {
       "flake": false,
       "locked": {
@@ -55,6 +71,22 @@
         "owner": "hercules-ci",
         "repo": "flake-parts",
         "type": "github"
+      }
+    },
+    "glibc-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1768787152,
+        "narHash": "sha256-yX5DW5KdC9uhnT/vhp2yQ9MTtLTEUPyltMjpN9y7emg=",
+        "ref": "refs/heads/main",
+        "rev": "ee6e989ed1eedc2523ddd2d8ca61047eaa56568a",
+        "revCount": 41247,
+        "type": "git",
+        "url": "file:./submodules/glibc"
+      },
+      "original": {
+        "type": "git",
+        "url": "file:./submodules/glibc"
       }
     },
     "home-manager": {
@@ -350,9 +382,31 @@
         "type": "github"
       }
     },
+    "patchnar": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1769357243,
+        "narHash": "sha256-IqBZOyG8g2Z0rrt3i8LnR0UFBkPVCMfXGVbf+W6gwJI=",
+        "ref": "refs/heads/main",
+        "rev": "dd7a92f631eba7b26dd48bc361708aa154f06cb7",
+        "revCount": 1046,
+        "type": "git",
+        "url": "file:./submodules/patchnar"
+      },
+      "original": {
+        "type": "git",
+        "url": "file:./submodules/patchnar"
+      }
+    },
     "root": {
       "inputs": {
         "disko": "disko",
+        "fakechroot-src": "fakechroot-src",
+        "glibc-src": "glibc-src",
         "home-manager": "home-manager",
         "nix-on-droid": "nix-on-droid",
         "nix-vscode-extensions": "nix-vscode-extensions",
@@ -361,7 +415,8 @@
         "nixpkgs": "nixpkgs_2",
         "nixpkgs-master": "nixpkgs-master",
         "nixpkgs-unstable": "nixpkgs-unstable",
-        "nur": "nur"
+        "nur": "nur",
+        "patchnar": "patchnar"
       }
     },
     "scss-reset": {

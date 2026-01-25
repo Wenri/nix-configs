@@ -7,25 +7,25 @@
   config,
   lib,
   pkgs,
+  inputs,
   ...
 }: let
   cfg = config.android;
-
-  # Source paths relative to this module
-  glibcSrc = ../../../submodules/glibc;
-  fakechrootSrc = ../../../submodules/fakechroot;
-  patchnarSrc = ../../../submodules/patchnar;
 
   # Installation directory from nix-on-droid build config
   inherit (config.build) installationDir;
 
   # Get Android packages from common/pkgs
+  # Source paths come from flake inputs (stable git commit hashes)
   androidPkgs = import ../../pkgs {
-    inherit pkgs glibcSrc fakechrootSrc patchnarSrc;
+    inherit pkgs;
+    glibcSrc = inputs.glibc-src;
+    fakechrootSrc = inputs.fakechroot-src;
   };
   glibc = androidPkgs.androidGlibc;
   fakechroot = androidPkgs.androidFakechroot;
-  patchnar = androidPkgs.patchnar;
+  # patchnar from flake input
+  patchnar = inputs.patchnar.packages.${pkgs.system}.patchnar;
 
   # Import the NixOS-style grafting implementation (local to this module)
   replaceAndroidDepsLib = import ./replace-android-dependencies.nix {
