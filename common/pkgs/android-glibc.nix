@@ -3,7 +3,7 @@
 # Based on: https://github.com/termux-pacman/glibc-packages/tree/main/gpkg/glibc
 #
 # IMPORTANT: Both nixpkgs and Termux patches are pre-applied in the glibc submodule.
-# Patch order: glibc-2.40 -> nixpkgs patches -> Termux Android patches
+# Patch order: glibc-2.42 -> nixpkgs patches -> Termux Android patches
 # See submodules/glibc git log for patch details.
 #
 # Usage:
@@ -33,9 +33,9 @@
 in {
   glibc = if isAndroid then
     glibcWithFinalStdenv.overrideAttrs (oldAttrs: {
-      # Use same-length name for patchnar compatibility (13 chars like "glibc-2.40-66")
+      # Use same-length name for patchnar compatibility (13 chars like "glibc-2.42-82")
       # "a1" = android version 1
-      version = "2.40-a1";
+      version = "2.42-a1";
 
       # Use patched glibc source from submodule
       # Both nixpkgs and Termux patches are pre-applied as git commits
