@@ -1,6 +1,6 @@
 # patchnar: NAR Stream Patcher
 
-> **Last Updated:** January 24, 2026
+> **Last Updated:** January 25, 2026
 > **Version:** 0.22.0
 > **Based on:** patchelf
 
@@ -153,6 +153,29 @@ void NarProcessor::process() {
 
 ---
 
+## Compile-Time Configuration
+
+patchnar has two compile-time constants set via `configure` options:
+
+| Configure Option | Description |
+|------------------|-------------|
+| `--with-install-prefix=PATH` | Installation prefix for Android (e.g., `/data/data/com.termux.nix/files/usr`) |
+| `--with-old-glibc=PATH` | Standard glibc path to replace (e.g., `/nix/store/xxx-glibc-2.40`) |
+| `--with-source-highlight-data-dir=DIR` | Path to source-highlight `.lang` files |
+
+**Why compile-time?** patchnar depends on `stdenv.cc.libc` (the standard glibc). If glibc changes, patchnar must be recompiled anyway. Baking the old-glibc path at compile time eliminates a runtime parameter and ensures consistency.
+
+The Nix package definition passes these automatically:
+```nix
+configureFlags = [
+  "--with-install-prefix=${installationDir}"
+  "--with-old-glibc=${gcc14Stdenv.cc.libc}"
+  "--with-source-highlight-data-dir=${sourceHighlight}/share/source-highlight"
+];
+```
+
+---
+
 ## Command-Line Options
 
 ```
@@ -161,29 +184,24 @@ Usage: patchnar [OPTIONS]
 Patch NAR stream for Android compatibility.
 Reads NAR from stdin, writes patched NAR to stdout.
 
+Compile-time constants:
+  install-prefix: /data/data/com.termux.nix/files/usr
+  old-glibc:      /nix/store/xxx-glibc-2.40-66
+
 Options:
-  --prefix PATH        Installation prefix (e.g., /data/.../usr)
-  --glibc PATH         Android glibc store path
-  --old-glibc PATH     Original glibc store path to replace
+  --glibc PATH         Android glibc store path (replacement for old-glibc)
   --mappings FILE      Hash mappings file for inter-package refs
                        Format: OLD_PATH NEW_PATH (one per line)
   --self-mapping MAP   Self-reference mapping (format: "OLD_PATH NEW_PATH")
   --add-prefix-to PATH Path pattern to add prefix to in script strings
                        (e.g., /nix/var/). Can be specified multiple times.
-  --source-highlight-data-dir DIR
-                       Path to source-highlight data files (.lang files)
   --debug              Enable debug output
-  --help               Show this help
+  --help               Show this help (includes compile-time constants)
 ```
-
-### Required Options
-
-- `--prefix`: The Android installation prefix (e.g., `/data/data/com.termux.nix/files/usr`)
 
 ### ELF Patching Options
 
-- `--glibc`: Path to Android glibc (the replacement)
-- `--old-glibc`: Path to standard glibc (to be replaced)
+- `--glibc`: Path to Android glibc (replaces the compile-time old-glibc path)
 
 ### Hash Mapping Options
 
@@ -193,7 +211,6 @@ Options:
 ### String-Aware Patching Options (v0.22.0+)
 
 - `--add-prefix-to PATH`: Additional path patterns to prefix in script strings
-- `--source-highlight-data-dir DIR`: Path to source-highlight `.lang` files
 
 ---
 
@@ -626,6 +643,10 @@ patchnar is used by `replaceAndroidDependencies` for recursive dependency patchi
 │  2. Fixed-point memo recursively patches each package            │
 │  3. Hash mappings track old->new store path relationships        │
 │  4. patchnar processes each NAR stream                           │
+│                                                                 │
+│  Note: prefix and old-glibc are compile-time constants in       │
+│  patchnar, so replaceAndroidDependencies only passes --glibc    │
+│  and --mappings at runtime.                                     │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -633,12 +654,11 @@ patchnar is used by `replaceAndroidDependencies` for recursive dependency patchi
 
 ```nix
 # In android-integration.nix
+# Note: standardGlibc not needed - baked into patchnar at compile time
 replaceAndroidDependencies = drv: { addPrefixToPaths ? [] }:
   replaceAndroidDepsLib {
     inherit drv addPrefixToPaths;
-    prefix = installationDir;
     androidGlibc = glibc;
-    inherit standardGlibc;
     cutoffPackages = [ glibc ];
   };
 
@@ -667,7 +687,7 @@ Each line contains the original store path and the patched store path, space-sep
 # Build patchnar
 nix build '.#patchnar'
 
-# Test the binary
+# Test the binary (shows compile-time constants)
 ./result/bin/patchnar --help
 ```
 
@@ -682,15 +702,22 @@ nix build '.#patchnar'
 
 ### Build Configuration
 
-patchnar uses autoconf. The `configure.ac` detects source-highlight:
+patchnar uses autoconf with required compile-time configuration:
 
-```m4
-PKG_CHECK_MODULES([SOURCE_HIGHLIGHT], [source-highlight >= 3.0],
-    [AC_DEFINE([HAVE_SOURCE_HIGHLIGHT], [1], ...)],
-    [AC_MSG_WARN([source-highlight not found - string patching disabled])])
+```bash
+./configure \
+  --with-install-prefix=/data/data/com.termux.nix/files/usr \
+  --with-old-glibc=/nix/store/xxx-glibc-2.40 \
+  --with-source-highlight-data-dir=/path/to/source-highlight/share/source-highlight
 ```
 
-If source-highlight is not available, patchnar still works but without string-aware patching.
+| Configure Option | Required | Description |
+|------------------|----------|-------------|
+| `--with-install-prefix` | Yes | Android installation prefix |
+| `--with-old-glibc` | Yes | Standard glibc path to replace |
+| `--with-source-highlight-data-dir` | Auto-detected | Path to `.lang` files |
+
+The Nix build handles these automatically by passing `gcc14Stdenv.cc.libc` as the old-glibc path.
 
 ---
 
@@ -700,10 +727,9 @@ If source-highlight is not available, patchnar still works but without string-aw
 
 ```bash
 # Patch a single package for Android
+# Note: prefix and old-glibc are compile-time constants
 nix-store --dump /nix/store/xxx-package | patchnar \
-  --prefix /data/data/com.termux.nix/files/usr \
   --glibc /nix/store/yyy-glibc-android-2.40 \
-  --old-glibc /nix/store/zzz-glibc-2.40 \
 | nix-store --restore /path/to/output
 ```
 
@@ -718,9 +744,7 @@ EOF
 
 # Patch with hash mappings
 nix-store --dump /nix/store/xxx-package | patchnar \
-  --prefix /data/data/com.termux.nix/files/usr \
   --glibc /nix/store/yyy-glibc-android-2.40 \
-  --old-glibc /nix/store/zzz-glibc-2.40 \
   --mappings mappings.txt \
   --self-mapping "/nix/store/xxx-package /nix/store/patched-package" \
 | nix-store --restore /path/to/output
@@ -731,11 +755,8 @@ nix-store --dump /nix/store/xxx-package | patchnar \
 ```bash
 # Patch /nix/var/ paths in script strings
 nix-store --dump /nix/store/xxx-nix-2.18 | patchnar \
-  --prefix /data/data/com.termux.nix/files/usr \
   --glibc /nix/store/yyy-glibc-android-2.40 \
-  --old-glibc /nix/store/zzz-glibc-2.40 \
   --add-prefix-to /nix/var/ \
-  --source-highlight-data-dir /nix/store/src-highlite/share/source-highlight \
 | nix-store --restore /path/to/output
 ```
 
@@ -744,10 +765,13 @@ nix-store --dump /nix/store/xxx-nix-2.18 | patchnar \
 ```bash
 # Enable debug output to see what's being patched
 nix-store --dump /nix/store/xxx-package | patchnar \
-  --prefix /data/data/com.termux.nix/files/usr \
+  --glibc /nix/store/yyy-glibc-android-2.40 \
   --debug \
   2>patchnar.log \
 | nix-store --restore /path/to/output
+
+# Check compile-time constants
+patchnar --help 2>&1 | grep -E "(install-prefix|old-glibc):"
 ```
 
 ---
