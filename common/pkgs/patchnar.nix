@@ -12,9 +12,13 @@ gcc14Stdenv.mkDerivation {
   buildInputs = [ boost sourceHighlight ];
 
   # Set compile-time constants
+  # Note: old-glibc is the standard glibc that packages in nixpkgs are built against.
+  # patchnar itself depends on this glibc (via gcc14Stdenv), so if glibc changes,
+  # patchnar rebuilds anyway - making compile-time embedding safe.
   configureFlags = [
     "--with-source-highlight-data-dir=${sourceHighlight}/share/source-highlight"
     "--with-install-prefix=${installationDir}"
+    "--with-old-glibc=${gcc14Stdenv.cc.libc}"
   ];
 
   # patchnar includes all patchelf functionality as a library

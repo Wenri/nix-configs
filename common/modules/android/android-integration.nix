@@ -27,9 +27,6 @@
   fakechroot = androidPkgs.androidFakechroot;
   patchnar = androidPkgs.patchnar;
 
-  # Standard glibc from the base pkgs (gcc-lib is patched through normal grafting)
-  standardGlibc = pkgs.stdenv.cc.libc;
-
   # Import the NixOS-style grafting implementation (local to this module)
   replaceAndroidDepsLib = import ./replace-android-dependencies.nix {
     inherit lib patchnar;
@@ -40,7 +37,7 @@
   # Uses IFD to discover closure, recursively patches all packages
   # with hash mapping for inter-package references
   # gcc-lib is patched through normal grafting (hash mapping handles it)
-  # prefix is now a compile-time constant in patchnar
+  # Both prefix and old-glibc are compile-time constants in patchnar
   #
   # Arguments:
   #   drv: the derivation to patch
@@ -50,7 +47,6 @@
     replaceAndroidDepsLib {
       inherit drv addPrefixToPaths;
       androidGlibc = glibc;
-      inherit standardGlibc;
       cutoffPackages = [
         # Only glibc is cutoff (special Android build)
         # gcc-lib is patched through normal grafting

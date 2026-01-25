@@ -13,7 +13,6 @@
 {
   drv,
   androidGlibc,
-  standardGlibc,
   cutoffPackages ? [],
   # Additional paths to add prefix to in script strings
   # patchnar defaults include /nix/var/, so only add extras here
@@ -120,7 +119,6 @@ let
       } ''
         nix-store --dump "$originalPath" | patchnar \
           --glibc "${androidGlibc}" \
-          --old-glibc "${standardGlibc}" \
           --mappings ${mappingsFile} \
           --self-mapping "$originalPath $out" \
           ${addPrefixToArgs} \
