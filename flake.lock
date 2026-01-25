@@ -76,11 +76,11 @@
     "glibc-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1769381465,
-        "narHash": "sha256-sjuP33EkXuOA2hlirN9RzjdK1GoTVugut9rFVTrUCKU=",
+        "lastModified": 1769383753,
+        "narHash": "sha256-4MACCA1aWd0/IMxPIdnvnDt86UzjVWMncR9rI+WcNS0=",
         "ref": "refs/heads/main",
-        "rev": "a689f5cb0f33b059e8a541f122ddddc36abffaee",
-        "revCount": 42691,
+        "rev": "8b213fed754666fdd223e9d984236612459fe864",
+        "revCount": 42636,
         "type": "git",
         "url": "file:./submodules/glibc"
       },
