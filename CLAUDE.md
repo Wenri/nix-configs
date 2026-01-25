@@ -289,9 +289,16 @@ inputs = {
   home-manager.inputs.nixpkgs.follows = "nixpkgs";
   nur.url = "github:nix-community/NUR";
   nix-vscode-extensions.url = "github:nix-community/nix-vscode-extensions";
+
+  # Local git submodules as flake inputs (stable hash = git commit)
+  glibc-src = { url = "git+file:./submodules/glibc"; flake = false; };
+  fakechroot-src = { url = "git+file:./submodules/fakechroot"; flake = false; };
+  patchnar = { url = "git+file:./submodules/patchnar"; inputs.nixpkgs.follows = "nixpkgs"; };
 }
 ```
 The `follows` ensures home-manager uses the same nixpkgs revision as the system, avoiding version conflicts. NUR provides Firefox extensions and Coq packages, while nix-vscode-extensions provides VS Code marketplace extensions.
+
+**Submodule sources as flake inputs:** glibc-src, fakechroot-src, and patchnar are defined as flake inputs using `git+file:` URLs. This ensures their hashes are tied to git commits (not directory contents), preventing unnecessary rebuilds when nothing changed.
 
 ### Special Args Pattern
 Configurations pass `inputs` and `outputs` to modules via `specialArgs`:
@@ -497,7 +504,8 @@ The `build.replaceAndroidDependencies` function implements NixOS-style recursive
 **Key files:**
 - `common/modules/android/replace-android-dependencies.nix` - IFD-based grafting
 - `common/modules/android/android-integration.nix` - Wires up replaceAndroidDependencies
-- `submodules/patchnar/src/patchnar.cc` - NAR stream patcher
+- `inputs.patchnar` - patchnar flake input (NAR stream patcher)
+- `inputs.glibc-src` - Android glibc source (flake input, `flake = false`)
 
 ### nix-ld Integration
 

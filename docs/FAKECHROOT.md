@@ -1,7 +1,8 @@
 # libfakechroot for nix-on-droid
 
-> **Last Updated:** January 23, 2026
+> **Last Updated:** January 25, 2026
 > **Source:** `submodules/fakechroot/` (forked from dex4er/fakechroot)
+> **Flake Input:** `inputs.fakechroot-src` (git commit hash for stable builds)
 > **Target Platform:** aarch64-linux (Android/Termux)
 
 ## Table of Contents

@@ -2,6 +2,7 @@
 
 > **Last Updated:** January 25, 2026
 > **Version:** 0.22.0
+> **Flake Input:** `inputs.patchnar` (full flake with packages output)
 > **Based on:** patchelf
 
 ## Table of Contents

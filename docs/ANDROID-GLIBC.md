@@ -344,24 +344,29 @@ common/modules/android/
 
 ### Flake Integration
 
-The flake builds Android packages and wires up the grafting:
+The flake uses git submodules as flake inputs for stable hashes (tied to git commit, not directory contents):
 
 ```nix
-# In flake.nix - Android packages
-androidPkgs = import ./common/pkgs {
-  inherit pkgs;
-  glibcSrc = ./submodules/glibc;
-  fakechrootSrc = ./submodules/fakechroot;
-  patchnarSrc = ./submodules/patchnar;
+# In flake.nix - submodule sources as flake inputs
+inputs = {
+  glibc-src = { url = "git+file:./submodules/glibc"; flake = false; };
+  fakechroot-src = { url = "git+file:./submodules/fakechroot"; flake = false; };
+  patchnar = { url = "git+file:./submodules/patchnar"; inputs.nixpkgs.follows = "nixpkgs"; };
 };
 
-# In android-integration.nix - grafting setup
+# In android-integration.nix - uses inputs from flake
+androidPkgs = import ../../pkgs {
+  inherit pkgs;
+  glibcSrc = inputs.glibc-src;
+  fakechrootSrc = inputs.fakechroot-src;
+};
+patchnar = inputs.patchnar.packages.${pkgs.system}.patchnar;
+
+# Grafting setup (standardGlibc baked into patchnar at compile time)
 replaceAndroidDependencies = drv:
   replaceAndroidDepsLib {
     inherit drv;
-    prefix = installationDir;
     androidGlibc = glibc;
-    standardGlibc = pkgs.stdenv.cc.libc;
     cutoffPackages = [ glibc ];  # Only glibc is cutoff
   };
 
