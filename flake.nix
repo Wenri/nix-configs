@@ -74,7 +74,7 @@
       nixos-gnome   = { system = "x86_64-linux";  username = "wenri"; type = "desktop"; };
       nixos-plasma6 = { system = "x86_64-linux";  username = "wenri"; type = "desktop"; };
       irif          = { system = "x86_64-linux";  username = "wenri"; type = "desktop"; };
-      matrix        = { system = "x86_64-linux";  username = "wenri"; type = "server"; };
+      matnix        = { system = "x86_64-linux";  username = "wenri"; type = "server"; };
       freenix       = { system = "aarch64-linux"; username = "wenri"; type = "server"; };
       # Android host
       nix-on-droid  = { system = "aarch64-linux"; username = "wenri"; type = "android"; };

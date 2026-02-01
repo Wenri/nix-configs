@@ -7,7 +7,7 @@
 This repository contains **6 NixOS hosts + 1 nix-on-droid** managed by a single unified flake:
 - **wslnix** - NixOS-WSL for Windows development
 - **nixos-gnome, nixos-plasma6, irif** - Desktop environments (GNOME, Plasma6)
-- **matrix, freenix** - Production servers (Matrix Synapse, ARM server)
+- **matnix, freenix** - Production servers (Matrix Synapse, ARM server)
 - **nix-on-droid** - Android/Termux development environment
 
 Features modern architecture with integrated home-manager, auto-generated configurations, and nixos-anywhere deployment.
@@ -32,7 +32,7 @@ hosts = {
   nixos-gnome  = { system = "x86_64-linux";   username = "xsnow"; type = "desktop"; };
   nixos-plasma6= { system = "x86_64-linux";   username = "xsnow"; type = "desktop"; };
   irif         = { system = "x86_64-linux";   username = "xsnow"; type = "desktop"; };
-  matrix       = { system = "x86_64-linux";   username = "wenri"; type = "server"; };
+  matnix       = { system = "x86_64-linux";   username = "wenri"; type = "server"; };
   freenix      = { system = "aarch64-linux";  username = "wenri"; type = "server"; };
 }
 ```
@@ -51,11 +51,11 @@ hosts = {
 - Full GUI applications and development environments
 - Input method: fcitx5 with Rime
 
-**Server (matrix, freenix)**
+**Server (matnix, freenix)**
 - nixos-anywhere for remote deployment
 - nixos-facter for modern hardware detection
 - Disko for declarative disk partitioning
-- Matrix Synapse server (matrix)
+- Matrix Synapse server (matnix)
 - Multi-architecture support (x86_64 and aarch64)
 - Tailscale VPN with network optimization
 
@@ -127,7 +127,7 @@ common/
 # Define all hosts in one place
 hosts = {
   freenix = { system = "aarch64-linux"; };
-  matrix = { system = "x86_64-linux"; };
+  matnix = { system = "x86_64-linux"; };
   newhost = { system = "x86_64-linux"; };  # ← Add new host here
 };
 
@@ -145,11 +145,11 @@ homeConfigurations = lib.mapAttrs' (hostname: cfg: ...) hosts;
 ### Integrated Home-Manager
 ```bash
 # Before: Two separate commands
-sudo nixos-rebuild switch --flake .#matrix
-home-manager switch --flake .#wenri@matrix
+sudo nixos-rebuild switch --flake .#matnix
+home-manager switch --flake .#wenri@matnix
 
 # After: Single command updates both
-sudo nixos-rebuild switch --flake .#matrix
+sudo nixos-rebuild switch --flake .#matnix
 ```
 
 Home-manager is now a NixOS module with:
@@ -223,7 +223,7 @@ sudo nixos-rebuild switch --flake .#nixos-plasma6
 sudo nixos-rebuild switch --flake .#irif
 
 # For servers
-sudo nixos-rebuild switch --flake .#matrix
+sudo nixos-rebuild switch --flake .#matnix
 sudo nixos-rebuild switch --flake .#freenix
 
 # For Android (nix-on-droid)
@@ -268,7 +268,7 @@ git commit -m "Personal customizations"
 # Apply configuration (updates both NixOS and home-manager)
 sudo nixos-rebuild switch --flake .#wslnix        # For WSL
 sudo nixos-rebuild switch --flake .#nixos-gnome   # For GNOME desktop
-sudo nixos-rebuild switch --flake .#matrix        # For Matrix server
+sudo nixos-rebuild switch --flake .#matnix        # For Matrix server
 
 # Test without switching (dry run)
 sudo nixos-rebuild test --flake .#hostname
@@ -285,7 +285,7 @@ nixos-install --flake .#hostname
 # Standalone home-manager (backward compatibility)
 home-manager switch --flake .#nixos@wslnix
 home-manager switch --flake .#xsnow@nixos-gnome
-home-manager switch --flake .#wenri@matrix
+home-manager switch --flake .#wenri@matnix
 
 # If home-manager not installed
 nix shell nixpkgs#home-manager
@@ -302,8 +302,8 @@ nix fmt
 # Pattern: nixos-anywhere --flake .#<hostname> --generate-hardware-config nixos-facter ./nixos/facter-<hostname>.json <target>
 
 # Deploy to remote host
-nixos-anywhere --flake .#matrix \
-  --generate-hardware-config nixos-facter ./nixos/facter-matrix.json \
+nixos-anywhere --flake .#matnix \
+  --generate-hardware-config nixos-facter ./nixos/facter-matnix.json \
   root@target-host
 ```
 
@@ -338,7 +338,7 @@ nix-configs/
 │   │   ├── configuration.nix
 │   │   ├── hardware-configuration.nix
 │   │   └── home.nix
-│   ├── matrix/
+│   ├── matnix/
 │   │   ├── configuration.nix
 │   │   ├── facter.json      # nixos-facter hardware detection
 │   │   ├── synapse.nix      # Matrix Synapse config
@@ -374,7 +374,7 @@ nix-configs/
 # In flake.nix
 hosts = {
   freenix = { system = "aarch64-linux"; };
-  matrix = { system = "x86_64-linux"; };
+  matnix = { system = "x86_64-linux"; };
   newhost = { system = "x86_64-linux"; };  # ← Add this line
 };
 ```

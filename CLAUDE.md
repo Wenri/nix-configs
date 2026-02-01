@@ -70,7 +70,7 @@ hosts = {
   nixos-gnome  = { system = "x86_64-linux";   username = "wenri"; type = "desktop"; };
   nixos-plasma6= { system = "x86_64-linux";   username = "wenri"; type = "desktop"; };
   irif         = { system = "x86_64-linux";   username = "wenri"; type = "desktop"; };
-  matrix       = { system = "x86_64-linux";   username = "wenri"; type = "server"; };
+  matnix       = { system = "x86_64-linux";   username = "wenri"; type = "server"; };
   freenix      = { system = "aarch64-linux";  username = "wenri"; type = "server"; };
 }
 
@@ -98,10 +98,10 @@ Each host has its own directory with minimal configuration:
 - `hardware-configuration.nix` - Hardware-specific configuration
 - `home.nix` - Imports `core.default` + `desktop.default` + `development.full` (texlive + coq)
 
-**matrix/, freenix/** (Servers)
+**matnix/, freenix/** (Servers)
 - `configuration.nix` - Server config, imports `common/modules/nixos/server-base.nix`, `users.nix`, `tailscale.nix`
 - `facter.json` - nixos-facter hardware detection
-- `synapse.nix` (matrix only) - Matrix Synapse server configuration
+- `synapse.nix` (matnix only) - Matrix Synapse server configuration
 - `home.nix` - Imports common home-manager modules only
 
 **nix-on-droid/** (Android)
@@ -133,7 +133,7 @@ nix flake check
 
 ```bash
 # Apply system configuration for servers
-nixos-rebuild switch --sudo --flake '.#matrix'
+nixos-rebuild switch --sudo --flake '.#matnix'
 nixos-rebuild switch --sudo --flake '.#freenix'
 
 # Apply for desktops
@@ -182,11 +182,11 @@ A single `nixos-rebuild switch` command updates both system and user environment
 
 ```bash
 # Single command updates both NixOS and home-manager
-nixos-rebuild switch --sudo --flake '.#matrix'
+nixos-rebuild switch --sudo --flake '.#matnix'
 nixos-rebuild switch --sudo --flake '.#wslnix'
 
 # Standalone home-manager still available for backward compatibility
-home-manager switch --flake '.#wenri@matrix'
+home-manager switch --flake '.#wenri@matnix'
 home-manager switch --flake '.#wenri@freenix'
 home-manager switch --flake '.#wenri@wslnix'
 home-manager switch --flake '.#wenri@nixos-gnome'
@@ -266,12 +266,12 @@ The unified flake follows a modernized architecture:
 - Full GUI applications and development environments
 - Input method: fcitx5 with Rime (using modified fcitx5-rime-lua from common overlays)
 
-**Server (matrix, freenix):**
+**Server (matnix, freenix):**
 - Uses **nixos-facter** for hardware detection instead of traditional `hardware-configuration.nix`
 - Employs **disko** for declarative disk partitioning
 - Configured for remote deployment via **nixos-anywhere**
 - Tailscale VPN with network optimization
-- System features: Docker, fail2ban, openssh, Matrix Synapse (matrix only)
+- System features: Docker, fail2ban, openssh, Matrix Synapse (matnix only)
 - Multi-architecture support: x86_64-linux and aarch64-linux
 - Swap: Both file-based swap (2GB) and zram (30% of RAM with zstd compression)
 - System tools: ethtool, usbutils (lsusb), curl, git, vim, wget, jq
@@ -348,7 +348,7 @@ androidOverlays = import ./common/overlays { inherit inputs installationDir; };
 
 ### Important Configuration Details
 
-#### Server host configurations (matrix, freenix)
+#### Server host configurations (matnix, freenix)
 - Disables global flake registry and channels (opinionated pure flake setup)
 - Maps flake inputs to nix registry and NIX_PATH for compatibility
 - Uses facter.reportPath from `facter.json` for hardware configuration
@@ -382,7 +382,7 @@ androidOverlays = import ./common/overlays { inherit inputs installationDir; };
 # In flake.nix
 hosts = {
   freenix = { system = "aarch64-linux"; username = "wenri"; type = "server"; };
-  matrix = { system = "x86_64-linux"; username = "wenri"; type = "server"; };
+  matnix = { system = "x86_64-linux"; username = "wenri"; type = "server"; };
   newhost = { system = "x86_64-linux"; username = "wenri"; type = "server"; };  # ← Add this
 };
 ```
@@ -419,9 +419,9 @@ For fresh installations of server hosts:
 # With nixos-facter hardware detection
 # Pattern: nixos-anywhere --flake '.#<hostname>' --generate-hardware-config nixos-facter ./hosts/<hostname>/facter.json <target>
 
-# For matrix (x86_64-linux)
-nixos-anywhere --flake '.#matrix' \
-  --generate-hardware-config nixos-facter ./hosts/matrix/facter.json \
+# For matnix (x86_64-linux)
+nixos-anywhere --flake '.#matnix' \
+  --generate-hardware-config nixos-facter ./hosts/matnix/facter.json \
   root@target-host
 
 # For freenix (aarch64-linux)

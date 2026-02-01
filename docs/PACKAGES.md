@@ -389,7 +389,7 @@ Imports: packages.nix + coq.nix + texlive.
 | **irif** | ✓ | ✓ | | ✓ |
 | **wslnix** | ✓ | | ✓ | |
 | **nix-on-droid** | ✓ | | ✓ | |
-| **matrix** | ✓ | | ✓ | |
+| **matnix** | ✓ | | ✓ | |
 | **freenix** | ✓ | | | |
 
 ### Why the Split?
