@@ -130,7 +130,7 @@
         "sysfs_bus_id": "0000:00:00.0",
         "detail": {
           "function": 0,
-          "command": 259,
+          "command": 7,
           "header_type": 0,
           "secondary_bus": 0,
           "irq": 0,
@@ -1271,7 +1271,7 @@
           {
             "type": "mem",
             "base": 0,
-            "range": 12481675264,
+            "range": 12481671168,
             "enabled": true,
             "access": "read_write",
             "prefetch": "unknown"
