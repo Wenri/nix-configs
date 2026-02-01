@@ -8,6 +8,7 @@
   locale = import ./locale.nix;
   secrets = import ./secrets.nix;
   tailscale = import ./tailscale.nix;
+  netclient = import ./netclient.nix;
   disk-config = import ./disk-config.nix;
   desktop-base = import ./desktop-base.nix;
   wsl-base = import ./wsl-base.nix;

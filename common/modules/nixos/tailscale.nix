@@ -24,6 +24,9 @@
       extraUpFlags = lib.mkBefore ["--ssh"];
     };
 
+    # Trust all traffic over the Tailscale interface
+    networking.firewall.trustedInterfaces = ["tailscale0"];
+
     # Enable network optimization if MAC addresses are detected
     services.networkd-dispatcher = lib.mkIf (optimizedMacAddresses != []) {
       enable = true;
