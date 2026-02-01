@@ -46,6 +46,8 @@
     aria2
     mtr # better traceroute
     socat # socket utility
+    iptables
+    nftables
   ];
 
   # System tools
