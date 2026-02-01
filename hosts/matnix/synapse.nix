@@ -68,7 +68,7 @@ in {
   };
 
   services.matrix-synapse = {
-    enable = true;
+    enable = false;
     settings.server_name = config.networking.domain;
     settings.public_baseurl = baseUrl;
     settings.listeners = [
