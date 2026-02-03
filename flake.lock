@@ -25,6 +25,7 @@
       "locked": {
         "lastModified": 1769283321,
         "narHash": "sha256-k/ROG6pArBJkPa09B4Fw6C4IpAkaBb3tEgIXh9CC8SM=",
+        "ref": "refs/heads/main",
         "rev": "c0bd58b978a4cf62506c44d0d826766bb3092a85",
         "revCount": 1153,
         "type": "git",
@@ -77,6 +78,7 @@
       "locked": {
         "lastModified": 1769383753,
         "narHash": "sha256-4MACCA1aWd0/IMxPIdnvnDt86UzjVWMncR9rI+WcNS0=",
+        "ref": "refs/heads/main",
         "rev": "8b213fed754666fdd223e9d984236612459fe864",
         "revCount": 42636,
         "type": "git",
@@ -161,11 +163,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1769914816,
-        "narHash": "sha256-GXK/ub/LfBFEEBO2M+HhqWu3VW042pWw145Y+jYEMT0=",
+        "lastModified": 1770086828,
+        "narHash": "sha256-mufcsiTsh04F5pocBQcdKWjIah0YwFGtM57UXXmiBm4=",
         "owner": "nix-community",
         "repo": "nix-vscode-extensions",
-        "rev": "8eebcb40d2658badb78b4162868ffcc1006b59f3",
+        "rev": "4badc6c89256856f3537d05e14dce64674f39382",
         "type": "github"
       },
       "original": {
@@ -261,11 +263,11 @@
     },
     "nixpkgs-master": {
       "locked": {
-        "lastModified": 1769981589,
-        "narHash": "sha256-N3SZTHkjZGOVdib0Qbs1jyjDCnjWplRGO61QZPO7D+Q=",
+        "lastModified": 1770123410,
+        "narHash": "sha256-q8hsGMpD+YT4frOhRhI5D8IrAKVG3trhJxnEat8t9l4=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "57cad32fa3dfd777864bcaebe385db0cd1b002ed",
+        "rev": "1acadcae8d23a43265bad551a28638656248f63e",
         "type": "github"
       },
       "original": {
@@ -277,11 +279,11 @@
     },
     "nixpkgs-unstable": {
       "locked": {
-        "lastModified": 1769789167,
-        "narHash": "sha256-kKB3bqYJU5nzYeIROI82Ef9VtTbu4uA3YydSk/Bioa8=",
+        "lastModified": 1770019141,
+        "narHash": "sha256-VKS4ZLNx4PNrABoB0L8KUpc1fE7CLpQXQs985tGfaCU=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "62c8382960464ceb98ea593cb8321a2cf8f9e3e5",
+        "rev": "cb369ef2efd432b3cdf8622b0ffc0a97a02f3137",
         "type": "github"
       },
       "original": {
@@ -293,11 +295,11 @@
     },
     "nixpkgs_2": {
       "locked": {
-        "lastModified": 1769789167,
-        "narHash": "sha256-kKB3bqYJU5nzYeIROI82Ef9VtTbu4uA3YydSk/Bioa8=",
+        "lastModified": 1770019141,
+        "narHash": "sha256-VKS4ZLNx4PNrABoB0L8KUpc1fE7CLpQXQs985tGfaCU=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "62c8382960464ceb98ea593cb8321a2cf8f9e3e5",
+        "rev": "cb369ef2efd432b3cdf8622b0ffc0a97a02f3137",
         "type": "github"
       },
       "original": {
@@ -309,11 +311,11 @@
     },
     "nixpkgs_3": {
       "locked": {
-        "lastModified": 1769789167,
-        "narHash": "sha256-kKB3bqYJU5nzYeIROI82Ef9VtTbu4uA3YydSk/Bioa8=",
+        "lastModified": 1770019141,
+        "narHash": "sha256-VKS4ZLNx4PNrABoB0L8KUpc1fE7CLpQXQs985tGfaCU=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "62c8382960464ceb98ea593cb8321a2cf8f9e3e5",
+        "rev": "cb369ef2efd432b3cdf8622b0ffc0a97a02f3137",
         "type": "github"
       },
       "original": {
@@ -367,11 +369,11 @@
         "nixpkgs": "nixpkgs_3"
       },
       "locked": {
-        "lastModified": 1769981769,
-        "narHash": "sha256-TuhZCNxZgbLUHQSWDTSAFjoJ3q8ZobnTiYTXuwTuABI=",
+        "lastModified": 1770120029,
+        "narHash": "sha256-3UkghT5vQVBslKiZ+wIpgPze8eyMha8mT/T7IIRuRdc=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "1515626eb12bb0a84e3964f190efef6a63632e4b",
+        "rev": "70877f9a9aa4f7034ca74a0c42b8c3268f943636",
         "type": "github"
       },
       "original": {
@@ -389,6 +391,7 @@
       "locked": {
         "lastModified": 1769359618,
         "narHash": "sha256-lDIVN0xW18YlechvZSgcj+36UtB7ltpL9zz1PF436kY=",
+        "ref": "refs/heads/main",
         "rev": "3ef1e733a3d01ad8cbf15900728ac55f21b4f00e",
         "revCount": 1047,
         "type": "git",
