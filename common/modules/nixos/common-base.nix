@@ -13,6 +13,9 @@ in {
     ./common-services.nix
   ];
 
+  # Use Xanmod kernel for all NixOS hosts
+  boot.kernelPackages = lib.mkDefault pkgs.linuxPackages_xanmod_latest;
+
   # System packages shared across NixOS hosts
   # Uses shared package lists from common/packages.nix
   environment.systemPackages = lib.mkBefore (map lib.lowPrio (
