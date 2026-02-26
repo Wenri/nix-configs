@@ -41,12 +41,12 @@
 
     # IPv6 default route via discovered router
     # Router doesn't send Router Advertisements, so we configure static route
-    # Router: fe80::204b:cdff:fe8f:319 (discovered via neighbor table)
+    # Router: 2a0f:ca80:1337::1 (lladdr 84:c1:c1:81:c1:30, same device as IPv4 gateway 93.123.118.1)
     routes = [
       {
         Destination = "::/0";
-        Gateway = "fe80::204b:cdff:fe8f:319";
-        GatewayOnLink = true; # Required for link-local gateway
+        Gateway = "2a0f:ca80:1337::1";
+        GatewayOnLink = true; # Required since gateway is on-link but not in routing table
       }
     ];
   };

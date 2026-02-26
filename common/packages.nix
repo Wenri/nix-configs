@@ -48,6 +48,7 @@
     socat # socket utility
     iptables
     nftables
+    tcpdump
   ];
 
   # System tools
@@ -128,7 +129,7 @@
   # NixOS-specific packages (require real system, not proot)
   nixosOnly = with pkgs; [
     vim
-    guix # too complex to patch for Android glibc
+    # guix # too complex to patch for Android glibc
     ethtool
     usbutils
     ndisc6
