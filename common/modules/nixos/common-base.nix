@@ -40,7 +40,12 @@ in {
   # System packages shared across NixOS hosts
   # Uses shared package lists from common/packages.nix
   environment.systemPackages = lib.mkBefore (map lib.lowPrio (
-    packages.networkTools
+    packages.coreUtils
+    ++ packages.compression
+    ++ packages.networkTools
+    ++ packages.systemTools
+    ++ packages.editors
+    ++ packages.modernCli
     ++ packages.devTools
     ++ packages.nixosOnly
   ));

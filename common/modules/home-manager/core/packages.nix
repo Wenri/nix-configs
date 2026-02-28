@@ -1,6 +1,6 @@
 {pkgs, ...}: {
-  # Packages here are in addition to common/packages.nix
-  # Avoid duplicates - htop, file, jq, ripgrep, fzf, gnumake are in common/packages.nix
+  # Packages here are in addition to common/packages.nix (imported by common-base.nix)
+  # Avoid duplicates - htop, file, jq, ripgrep, fzf, gnumake are already there
   home.packages = with pkgs; [
     # System utilities (tmux enabled via programs.tmux, fzf via programs.fzf)
     parted

@@ -25,7 +25,7 @@ Shared infrastructure providing identical userspace across all 6 hosts:
   - NUR (Nix User Repository) integration for community packages
   - nix-vscode-extensions for VS Code marketplace extensions
   - `modules/nixos/` - Exportable NixOS modules:
-    - `common-base.nix` - Shared overlays + nix settings used everywhere
+    - `common-base.nix` - Shared overlays, nix settings, and all packages from common/packages.nix
     - `server-base.nix` - Base server configuration with overlays
   - `users.nix` - Desktop user configuration
   - `locale.nix` - Locale and timezone settings
@@ -37,7 +37,7 @@ Shared infrastructure providing identical userspace across all 6 hosts:
 
 **Core home-manager modules** (auto-imported via `common/home-manager/default.nix`):
 - `core/default.nix` - Core profile combining CLI essentials + git/zsh/ssh/gh/program defaults
-- `core/packages.nix` - Essential CLI tools (tmux, htop, nodejs, claude-code, cursor-cli, gemini-cli, iperf3, jq, file, parted)
+- `core/packages.nix` - Additional CLI tools beyond common/packages.nix (nodejs, claude-code, cursor-cli, gemini-cli, iperf3, parted)
 - `core/programs.nix` - Base program enables (home-manager, tmux, vim)
 - `core/git.nix` - Complete git configuration with user details, 1Password SSH signing
 - `core/zsh.nix` - Complete zsh configuration (oh-my-zsh, completion, syntax highlighting, history)
