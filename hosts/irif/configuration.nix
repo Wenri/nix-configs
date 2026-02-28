@@ -30,12 +30,6 @@
   boot.kernelParams = [
     "quiet"
     "splash"
-    "mce=dont_log_ce"
-    "nowatchdog"
-    "tsc=nowatchdog"
-    "nmi_watchdog=0"
-    "nosoftlockup"
-    "preempt=full"
     "retbleed=stuff"
   ];
 

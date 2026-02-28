@@ -46,7 +46,6 @@
   boot.kernelParams = [
     "quiet"
     "splash"
-    "mce=off"
   ];
   
   # for local disks that are not shared over the network, we don't need this to be random

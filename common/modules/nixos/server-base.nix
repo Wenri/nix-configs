@@ -12,6 +12,11 @@
     ./disk-config.nix
   ];
 
+  boot.kernelParams = [
+    "fsck.mode=force"
+    "fsck.repair=yes"
+  ];
+
   boot.loader.grub = {
     # no need to set devices, disko will add all devices that have a EF02 partition to the list already
     # devices = [ ];

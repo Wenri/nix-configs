@@ -16,6 +16,29 @@ in {
   # Use Xanmod kernel for all NixOS hosts
   boot.kernelPackages = lib.mkDefault pkgs.linuxPackages_xanmod_latest;
 
+  # Performance kernel parameters shared across all NixOS hosts
+  boot.kernelParams = [
+    "iommu=pt"
+    "transparent_hugepage=always"
+    "mce=dont_log_ce"
+    "nowatchdog"
+    "tsc=nowatchdog"
+    "nmi_watchdog=0"
+    "nosoftlockup"
+    "preempt=full"
+  ];
+
+  # Root filesystem mount options for ext4 performance
+  fileSystems."/".options = [
+    "discard"
+    "lazytime"
+    "noauto_da_alloc"
+    "nobarrier"
+    "journal_async_commit"
+    "data=writeback"
+    "commit=30"
+  ];
+
   # System packages shared across NixOS hosts
   # Uses shared package lists from common/packages.nix
   environment.systemPackages = lib.mkBefore (map lib.lowPrio (

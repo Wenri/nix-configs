@@ -45,7 +45,13 @@
               format = "ext4";
               mountpoint = "/";
               mountOptions = [
-                "defaults"
+                "discard"
+                "lazytime"
+                "noauto_da_alloc"
+                "nobarrier"
+                "journal_async_commit"
+                "data=writeback"
+                "commit=30"
               ];
             };
           };
