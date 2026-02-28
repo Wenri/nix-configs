@@ -32,6 +32,19 @@
   # Replace the cli.js path with the real Android filesystem path so node can find it.
   # Also set CLAUDE_CODE_TMPDIR to the real Android tmp directory.
   # Use symlinkJoin to avoid rebuilding (npm build also fails due to same syscall issue).
+  # Bump netclient to v1.5.0 (nixpkgs has 1.1.0)
+  netclient = prev.netclient.overrideAttrs {
+    version = "1.5.0";
+    src = prev.fetchFromGitHub {
+      owner = "gravitl";
+      repo = "netclient";
+      rev = "v1.5.0";
+      hash = "sha256-BhaWOfiGnkPn/G5uhVNX3RAz4XFllAl5b8RzfjafsU4=";
+    };
+    vendorHash = "sha256-xMzl3K4d6bUzWnUZq6ULcynqIe/ZTpiRptvHAhCnB6Q=";
+    proxyVendor = true;
+  };
+
   claude-code = if installationDir != null then
     final.symlinkJoin {
       name = "claude-code-${prev.claude-code.version}";
