@@ -13,6 +13,9 @@
       ./synapse.nix
     ];
 
+  # Use Xanmod kernel for better performance
+  boot.kernelPackages = pkgs.linuxPackages_xanmod_latest;
+
   # Configure systemd-networkd for ens3 interface
   # Tailscale optimization will be auto-detected if MAC address matching is configured
   # Match by MAC address for stability (interface names can change)
