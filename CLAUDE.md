@@ -25,7 +25,7 @@ Shared infrastructure providing identical userspace across all 6 hosts:
   - NUR (Nix User Repository) integration for community packages
   - nix-vscode-extensions for VS Code marketplace extensions
   - `modules/nixos/` - Exportable NixOS modules:
-    - `common-base.nix` - Shared overlays, nix settings, and all packages from common/packages.nix
+    - `common-base.nix` - Shared overlays, nix settings (including `netrc-file` for GitLab auth), kernel params, and all packages from common/packages.nix
     - `server-base.nix` - Base server configuration with overlays
   - `users.nix` - Desktop user configuration
   - `locale.nix` - Locale and timezone settings
@@ -39,7 +39,7 @@ Shared infrastructure providing identical userspace across all 6 hosts:
 - `core/default.nix` - Core profile combining CLI essentials + git/zsh/ssh/gh/program defaults
 - `core/packages.nix` - Additional CLI tools beyond common/packages.nix (nodejs, claude-code, cursor-cli, gemini-cli, iperf3, parted)
 - `core/programs.nix` - Base program enables (home-manager, tmux, vim)
-- `core/git.nix` - Complete git configuration with user details, 1Password SSH signing
+- `core/git.nix` - Git configuration with `glab-netrc-sync` script and git wrapper (pre-fetch hook for GitLab auth)
 - `core/zsh.nix` - Complete zsh configuration (oh-my-zsh, completion, syntax highlighting, history)
 - `core/ssh.nix` - SSH configuration with 1Password agent, GitHub port 443 workaround
 - `core/gh.nix` - GitHub CLI configuration
@@ -277,6 +277,7 @@ The unified flake follows a modernized architecture:
 - System tools: ethtool, usbutils (lsusb), curl, git, vim, wget, jq
 - Passwordless sudo enabled for wheel group
 - systemd-oomd enabled for OOM protection
+- **matnix only**: Xanmod kernel (`linuxPackages_xanmod_latest`) for better performance
 
 ### Flake Input Pattern
 All configurations follow the pattern:
@@ -336,6 +337,32 @@ packages = forAllSystems (system: import ./common/pkgs {pkgs = mkPkgs system;});
 ```nix
 androidOverlays = import ./common/overlays { inherit inputs installationDir; };
 ```
+
+### GitLab Authentication for Nix
+
+Nix flake evaluation fetches dependencies **before** any hooks run, so authentication must be pre-configured. This is solved with a git wrapper that acts as a "pre-fetch hook":
+
+**Components:**
+1. **`glab-netrc-sync`** (`common/modules/home-manager/core/git.nix`): Extracts OAuth2 token from `glab auth` and writes to `~/.netrc`
+2. **`gitWithGlabSync`**: Git wrapper that detects GitLab fetch operations and syncs credentials first
+3. **`nix.settings.netrc-file`** (`common/modules/nixos/common-base.nix`): Points Nix to `~/.netrc` for HTTP auth
+
+**How it works:**
+```bash
+# When git fetch/clone/pull/ls-remote/submodule detects gitlab.com:
+1. glab-netrc-sync extracts token from glab CLI
+2. Writes: "machine gitlab.com login oauth2 password <token>" to ~/.netrc
+3. Nix reads netrc-file for HTTP authentication
+4. Real git command executes with authentication available
+```
+
+**Why this is needed:**
+- `glab auth setup-git` configures git credential helper, but Nix uses libcurl directly (not git)
+- Nix's `pre-build-hook` runs **after** evaluation, too late for fetch operations
+- No `pre-evaluation-hook` exists in Nix
+- The git wrapper provides the missing "pre-fetch hook" functionality
+
+**Manual sync:** Run `glab-netrc-sync` to manually refresh the token.
 
 ### Home Manager Integration
 **Fully integrated into NixOS as a module:**
