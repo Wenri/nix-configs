@@ -12,6 +12,9 @@
 
   networking.hostName = hostname;
 
+  # Use latest mainline kernel (Xanmod is broken on aarch64)
+  boot.kernelPackages = pkgs.linuxPackages_latest;
+
   # CIFS: mount Freebox NAS NVMe share over SMB3
   fileSystems."/mnt/nvmedata" = {
     device = "//192.168.1.254/nvmedata";
