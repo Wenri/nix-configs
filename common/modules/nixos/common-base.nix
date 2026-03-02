@@ -8,6 +8,7 @@
 }: let
   flakeInputs = lib.filterAttrs (_: lib.isType "flake") inputs;
   packages = import ../../packages.nix {inherit pkgs;};
+  isX86_64 = pkgs.stdenv.hostPlatform.isx86_64;
 in {
   imports = [
     ./common-services.nix
@@ -15,13 +16,15 @@ in {
 
   # Performance kernel parameters shared across all NixOS hosts
   boot.kernelParams = [
-    "iommu=pt"
+    "iommu.passthrough=1"
     "transparent_hugepage=always"
-    "mce=dont_log_ce"
     "nowatchdog"
-    "tsc=nowatchdog"
     "nmi_watchdog=0"
     "nosoftlockup"
+  ] ++ lib.optionals isX86_64 [
+    "iommu=pt"
+    "mce=dont_log_ce"
+    "tsc=nowatchdog"
     "preempt=full"
   ];
 

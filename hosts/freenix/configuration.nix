@@ -13,7 +13,7 @@
 
   networking.hostName = hostname;
 
-  # Use latest mainline kernel (Xanmod is broken on aarch64)
+  # Use latest mainline kernel
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
   # Increase CIFS max buffer size (default 16KB, max 130048)
@@ -31,6 +31,7 @@
       "hard"
       "cache=loose"
       "nostrictsync"
+      "nodfs"
       "noatime"
       "_netdev"
       "nofail"
@@ -59,6 +60,7 @@
       MACAddress = "9e:c4:c5:11:3a:96"; # enp0s5
     };
     enable = true;
+    linkConfig.MTUBytes = "65535";
     networkConfig = {
       DHCP = "yes"; # Enable IPv4 DHCP
       IPv6AcceptRA = true; # IPv6 Router Advertisement configuration
