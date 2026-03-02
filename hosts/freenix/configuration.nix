@@ -23,6 +23,13 @@
     options = [
       "guest"
       "vers=3.1.1"
+      "cifsacl"
+      "hard"
+      "cache=loose"
+      "nostrictsync"
+      "rsize=1048576"
+      "wsize=1048576"
+      "noatime"
       "_netdev"
       "nofail"
       "x-systemd.mount-timeout=30"
