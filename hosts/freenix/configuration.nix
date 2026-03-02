@@ -16,6 +16,10 @@
   # Use latest mainline kernel (Xanmod is broken on aarch64)
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
+  # Increase CIFS max buffer size (default 16KB, max 130048)
+  # With SMB3 multi-credit, rsize/wsize = credits * CIFSMaxBufSize
+  boot.extraModprobeConfig = "options cifs CIFSMaxBufSize=130048";
+
   # CIFS: mount Freebox NAS NVMe share over SMB3
   fileSystems."/mnt/nvmedata" = {
     device = "//192.168.1.254/nvmedata";
@@ -27,8 +31,6 @@
       "hard"
       "cache=loose"
       "nostrictsync"
-      "rsize=1048576"
-      "wsize=1048576"
       "noatime"
       "_netdev"
       "nofail"
@@ -79,6 +81,16 @@
     "data=writeback"
     "journal_async_commit"
   ];
+
+  # Mitigate kswapd/jbd2 GFP_NOFAIL warning (2GB RAM, single DMA zone):
+  # - Increase zram to 100% of RAM for more swap headroom
+  # - Evict dentry/inode caches earlier to avoid kswapd triggering jbd2 allocations
+  # - Keep more free memory to avoid extreme pressure paths
+  zramSwap.memoryPercent = 100;
+  boot.kernel.sysctl = {
+    "vm.vfs_cache_pressure" = 200;
+    "vm.min_free_kbytes" = 65536;
+  };
 
   # https://nixos.wiki/wiki/FAQ/When_do_I_update_stateVersion
   system.stateVersion = "25.05";
