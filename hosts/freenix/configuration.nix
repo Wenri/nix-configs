@@ -23,7 +23,7 @@
     options = [
       "guest"
       "vers=3.1.1"
-      "cifsacl"
+      "posix"
       "hard"
       "cache=loose"
       "nostrictsync"
