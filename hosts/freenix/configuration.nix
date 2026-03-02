@@ -18,7 +18,7 @@
     fsType = "cifs";
     options = [
       "guest"
-      "vers=3.0"
+      "vers=3.1.1"
       "_netdev"
       "nofail"
       "x-systemd.mount-timeout=30"
