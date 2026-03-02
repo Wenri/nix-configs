@@ -66,6 +66,12 @@
     };
   };
 
+  # ext4 performance: writeback mode skips data journaling, async commit reduces sync overhead
+  fileSystems."/".options = lib.mkAfter [
+    "data=writeback"
+    "journal_async_commit"
+  ];
+
   # https://nixos.wiki/wiki/FAQ/When_do_I_update_stateVersion
   system.stateVersion = "25.05";
 }
