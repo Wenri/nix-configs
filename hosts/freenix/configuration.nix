@@ -1,5 +1,6 @@
 {
   lib,
+  pkgs,
   hostname,
   outputs,
   ...
@@ -10,6 +11,29 @@
     ];
 
   networking.hostName = hostname;
+
+  # CIFS: mount Freebox NAS NVMe share over SMB3
+  fileSystems."/mnt/nvmedata" = {
+    device = "//192.168.1.254/nvmedata";
+    fsType = "cifs";
+    options = [
+      "guest"
+      "vers=3.0"
+      "_netdev"
+      "nofail"
+      "x-systemd.mount-timeout=30"
+    ];
+  };
+
+  environment.systemPackages = [pkgs.cifs-utils];
+
+  # 8GB swap file over CIFS (pre-created on NAS)
+  swapDevices = [
+    {
+      device = "/mnt/nvmedata/VMs/freenix/swapfile";
+      priority = 1;
+    }
+  ];
 
   # Configure systemd-networkd for both network interfaces
   # Tailscale optimization will be auto-detected based on MAC addresses below
