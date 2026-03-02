@@ -36,6 +36,7 @@
     {
       device = "/mnt/nvmedata/VMs/freenix/swapfile";
       priority = 1;
+      discardPolicy = "both";
     }
   ];
 
