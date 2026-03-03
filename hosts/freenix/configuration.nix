@@ -65,7 +65,7 @@
   # Match by MAC address for stability
 
   # ovhcloud0 (2c:16:db:a1:3b:e5) - primary, OVHcloud uplink
-  systemd.network.networks."10-ovhcloud0" = {
+  systemd.network.networks."40-ovhcloud0" = {
     matchConfig.MACAddress = "2c:16:db:a1:3b:e5";
     enable = true;
     networkConfig = {
