@@ -1,0 +1,2 @@
+[submodule ".claude"]
+	url = https://gitlab.com/gt404/claude-code-settings.git
