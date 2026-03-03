@@ -45,31 +45,37 @@
     }
   ];
 
+  # Rename interfaces by MAC address for clarity
+  systemd.network.links."10-ovhcloud0" = {
+    matchConfig.MACAddress = "2c:16:db:a1:3b:e5";
+    linkConfig.Name = "ovhcloud0";
+  };
+  systemd.network.links."10-freebox0" = {
+    matchConfig.MACAddress = "9e:c4:c5:11:3a:96";
+    linkConfig.Name = "freebox0";
+  };
+
   # Configure systemd-networkd for both network interfaces
-  # Tailscale optimization will be auto-detected based on MAC addresses below
-  # Match by MAC address for stability (interface names can change)
-  # IPv4: DHCP
-  # IPv6: Automatic configuration via Router Advertisements
-  systemd.network.networks."40-enp0s5" = {
-    matchConfig = {
-      MACAddress = "9e:c4:c5:11:3a:96"; # enp0s5
-    };
+  # Match by MAC address for stability
+
+  # ovhcloud0 (2c:16:db:a1:3b:e5) - primary, OVHcloud uplink
+  systemd.network.networks."10-ovhcloud0" = {
+    matchConfig.MACAddress = "2c:16:db:a1:3b:e5";
     enable = true;
-    linkConfig.MTUBytes = "65535";
     networkConfig = {
-      DHCP = "yes"; # Enable IPv4 DHCP
-      IPv6AcceptRA = true; # IPv6 Router Advertisement configuration
+      DHCP = "yes";
+      IPv6AcceptRA = true;
     };
   };
 
-  systemd.network.networks."40-enp0s8u1" = {
-    matchConfig = {
-      MACAddress = "2c:16:db:a1:3b:e5"; # enp0s8u1
-    };
+  # freebox0 (9e:c4:c5:11:3a:96) - Freebox LAN
+  systemd.network.networks."40-freebox0" = {
+    matchConfig.MACAddress = "9e:c4:c5:11:3a:96";
     enable = true;
+    linkConfig.MTUBytes = "65535";
     networkConfig = {
-      DHCP = "yes"; # Enable IPv4 DHCP
-      IPv6AcceptRA = true; # IPv6 Router Advertisement configuration
+      DHCP = "yes";
+      IPv6AcceptRA = true;
     };
   };
 
