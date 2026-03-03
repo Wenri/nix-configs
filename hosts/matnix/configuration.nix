@@ -58,6 +58,7 @@
   fileSystems."/".options = lib.mkAfter [
     "data=writeback"
     "journal_async_commit"
+    "commit=30"
   ];
 
   # https://nixos.wiki/wiki/FAQ/When_do_I_update_stateVersion

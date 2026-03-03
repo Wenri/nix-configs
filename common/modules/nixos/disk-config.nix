@@ -49,7 +49,6 @@
                 "lazytime"
                 "noauto_da_alloc"
                 "nobarrier"
-                "commit=30"
               ];
             };
           };

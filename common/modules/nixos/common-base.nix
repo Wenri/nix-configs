@@ -29,12 +29,12 @@ in {
   ];
 
   # Root filesystem mount options for ext4 performance
-  fileSystems."/".options = [
+  fileSystems."/".options = lib.unique [
     "discard"
     "lazytime"
     "noauto_da_alloc"
     "nobarrier"
-    "commit=30"
+    "noatime"
   ];
 
   # System packages shared across NixOS hosts

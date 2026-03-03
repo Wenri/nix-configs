@@ -78,19 +78,28 @@
     };
   };
 
-  # ext4 performance: writeback mode skips data journaling, async commit reduces sync overhead
-  fileSystems."/".options = lib.mkAfter [
-    "data=writeback"
-    "journal_async_commit"
-  ];
+  # One-time: remove ext4 journal before root is mounted
+  # Remove this block after successful reboot with journal removed
+  boot.initrd.extraUtilsCommands = ''
+    copy_bin_and_libs ${pkgs.e2fsprogs}/bin/tune2fs
+  '';
+  boot.initrd.postDeviceCommands = lib.mkAfter ''
+    if tune2fs -l /dev/mapper/pool-root 2>/dev/null | grep -q "has_journal"; then
+      echo "Removing ext4 journal from /dev/mapper/pool-root..."
+      tune2fs -O ^has_journal /dev/mapper/pool-root
+      fsck.ext4 -fy /dev/mapper/pool-root
+      echo "Journal removed successfully."
+    fi
+  '';
 
-  # Mitigate kswapd/jbd2 GFP_NOFAIL warning (2GB RAM, single DMA zone):
-  # - Increase zram to 100% of RAM for more swap headroom
-  # - Evict dentry/inode caches earlier to avoid kswapd triggering jbd2 allocations
-  # - Keep more free memory to avoid extreme pressure paths
+  # Mitigate kswapd GFP_NOFAIL warning (2GB RAM):
+  # - zram 100%: more swap headroom reduces memory pressure
+  # - watermark_boost_factor=0: prevent kswapd watermark boosting that causes
+  #   thrashing on low-memory systems
+  # - min_free_kbytes=65536: keep 64MB free to avoid extreme pressure paths
   zramSwap.memoryPercent = 100;
   boot.kernel.sysctl = {
-    "vm.vfs_cache_pressure" = 200;
+    "vm.watermark_boost_factor" = 0;
     "vm.min_free_kbytes" = 65536;
   };
 
