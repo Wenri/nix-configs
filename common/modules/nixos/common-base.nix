@@ -54,12 +54,12 @@ in {
   nixpkgs = {
     overlays = [
       outputs.overlays.additions
+      inputs.claude-code-nix.overlays.default
       outputs.overlays.modifications
       outputs.overlays.unstable-packages
       outputs.overlays.master-packages
       inputs.nur.overlays.default
       inputs.nix-vscode-extensions.overlays.default
-      inputs.claude-code-nix.overlays.default
     ];
     config.allowUnfree = lib.mkDefault true;
   };
