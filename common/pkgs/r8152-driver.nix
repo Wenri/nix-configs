@@ -17,7 +17,9 @@ stdenv.mkDerivation {
   buildFlags = [ "modules" ];
 
   installPhase = ''
-    install -D r8152.ko $out/lib/modules/${kernel.modDirVersion}/kernel/drivers/net/usb/r8152.ko
+    make -C ${kernel.dev}/lib/modules/${kernel.modDirVersion}/build \
+      M=$(pwd) INSTALL_MOD_PATH=$out INSTALL_MOD_DIR=updates \
+      modules_install
   '';
 
   meta = with lib; {
