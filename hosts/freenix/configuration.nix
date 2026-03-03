@@ -78,19 +78,6 @@
     };
   };
 
-  # One-time: remove ext4 journal before root is mounted
-  # Remove this block after successful reboot with journal removed
-  boot.initrd.extraUtilsCommands = ''
-    copy_bin_and_libs ${pkgs.e2fsprogs}/bin/tune2fs
-  '';
-  boot.initrd.postDeviceCommands = lib.mkAfter ''
-    if tune2fs -l /dev/mapper/pool-root 2>/dev/null | grep -q "has_journal"; then
-      echo "Removing ext4 journal from /dev/mapper/pool-root..."
-      tune2fs -O ^has_journal /dev/mapper/pool-root
-      fsck.ext4 -fy /dev/mapper/pool-root
-      echo "Journal removed successfully."
-    fi
-  '';
 
   # Mitigate kswapd GFP_NOFAIL warning (2GB RAM):
   # - zram 100%: more swap headroom reduces memory pressure
