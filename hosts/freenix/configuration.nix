@@ -73,6 +73,7 @@
       IPv6AcceptRA = true;
     };
     dhcpV4Config.RouteMetric = 100;
+    ipv6AcceptRAConfig.RouteMetric = 100;
   };
 
   # freebox0 (9e:c4:c5:11:3a:96) - Freebox LAN
@@ -85,6 +86,7 @@
       IPv6AcceptRA = true;
     };
     dhcpV4Config.RouteMetric = 200;
+    ipv6AcceptRAConfig.RouteMetric = 200;
   };
 
 
