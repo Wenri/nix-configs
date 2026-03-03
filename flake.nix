@@ -33,6 +33,11 @@
 
     nixos-facter-modules.url = "github:numtide/nixos-facter-modules";
 
+    nix-snapd = {
+      url = "github:nix-community/nix-snapd";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # Local git submodules as flake inputs (stable hash = git commit)
     glibc-src = {
       url = "git+file:./submodules/glibc";

@@ -1,4 +1,5 @@
 {
+  inputs,
   pkgs,
   config,
   lib,
@@ -10,8 +11,11 @@
       outputs.nixosModules.server-base
       outputs.nixosModules.users
       outputs.nixosModules.netclient
+      inputs.nix-snapd.nixosModules.default
       ./synapse.nix
     ];
+
+  services.snap.enable = true;
 
   # Use Xanmod kernel for better performance
   boot.kernelPackages = pkgs.linuxPackages_xanmod_latest;
