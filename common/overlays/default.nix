@@ -15,6 +15,6 @@ let
   channels = import ./channels.nix { inherit inputs; };
 in {
   additions = import ./additions.nix;
-  modifications = import ./modifications.nix { inherit lib installationDir; };
+  modifications = import ./modifications.nix { inherit inputs lib installationDir; };
   inherit (channels) unstable-packages master-packages;
 }

@@ -41,7 +41,6 @@
     memoryPercent = lib.mkDefault 30;
   };
 
-  virtualisation.docker.enable = true;
   # Enable systemd-oomd for OOM handling
   systemd.oomd.enable = true;
 }

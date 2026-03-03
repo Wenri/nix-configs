@@ -38,6 +38,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    claude-code-nix = {
+      url = "github:sadjow/claude-code-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # Local git submodules as flake inputs (stable hash = git commit)
     glibc-src = {
       url = "git+file:./submodules/glibc";

@@ -4,6 +4,7 @@
   lib,
   pkgs,
   config,
+  username,
   ...
 }: let
   flakeInputs = lib.filterAttrs (_: lib.isType "flake") inputs;
@@ -62,13 +63,29 @@ in {
     config.allowUnfree = lib.mkDefault true;
   };
 
+  security.polkit.enable = true;
+
+  # Allow user services to run without an active login session
+  users.users.${username}.linger = true;
+
+  # Enable user tmpfiles for cleanup of temporary directories
+  systemd.user.services.systemd-tmpfiles-setup.wantedBy = ["default.target"];
+  systemd.user.timers.systemd-tmpfiles-clean.wantedBy = ["timers.target"];
+
+  # Docker with rootless mode for all hosts
+  virtualisation.docker.enable = true;
+  virtualisation.docker.rootless = {
+    enable = true;
+    setSocketVariable = true;
+  };
+
   nix = {
     settings = {
       experimental-features = "nix-command flakes";
       flake-registry = "";
       nix-path = config.nix.nixPath;
       # Use netrc for GitLab authentication (synced from glab via glab-netrc-sync)
-      netrc-file = "/home/wenri/.netrc";
+      netrc-file = "/home/${username}/.netrc";
     };
     channel.enable = false;
     registry = lib.mapAttrs (_: flake: {inherit flake;}) flakeInputs;

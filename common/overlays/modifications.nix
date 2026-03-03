@@ -2,7 +2,7 @@
 # Parameters:
 #   lib             - nixpkgs lib
 #   installationDir - Android installation directory for path translation (optional)
-{ lib, installationDir ? null }: final: prev: {
+{ inputs, lib, installationDir ? null }: final: prev: {
   # NOTE: glibc and fakechroot for Android are built separately in common/pkgs/.
   # Android-patched glibc is available via androidGlibc package.
   # See common/pkgs/android-glibc.nix and common/pkgs/android-fakechroot.nix.
@@ -28,10 +28,6 @@
   # SSL certs and GODEBUG=netdns=cgo are set globally in home.sessionVariables.
   # Binaries with no RPATH skip RPATH patching to avoid patchelf corruption.
 
-  # Android: Node.js makes direct syscalls that bypass fakechroot's LD_PRELOAD path translation.
-  # Replace the cli.js path with the real Android filesystem path so node can find it.
-  # Also set CLAUDE_CODE_TMPDIR to the real Android tmp directory.
-  # Use symlinkJoin to avoid rebuilding (npm build also fails due to same syscall issue).
   # Bump netclient to v1.5.0 (nixpkgs has 1.1.0)
   netclient = prev.netclient.overrideAttrs {
     version = "1.5.0";
@@ -45,19 +41,24 @@
     proxyVendor = true;
   };
 
-  claude-code = if installationDir != null then
+  # Claude Code from claude-code-nix (Node.js runtime, hourly updates)
+  # Android: additional path translation for fakechroot compatibility
+  claude-code = let
+    base = final.callPackage "${inputs.claude-code-nix}/package.nix" {
+      runtime = "node";
+      nodeBinName = "claude";
+    };
+  in if installationDir != null then
     final.symlinkJoin {
-      name = "claude-code-${prev.claude-code.version}";
-      paths = [ prev.claude-code ];
+      name = "claude-code-${base.version}";
+      paths = [ base ];
       postBuild = ''
-        rm $out/bin/claude $out/bin/.claude-wrapped
-        substitute ${prev.claude-code}/bin/.claude-wrapped $out/bin/.claude-wrapped \
-          --replace "${prev.claude-code}/lib" "${installationDir}${prev.claude-code}/lib"
-        substitute ${prev.claude-code}/bin/claude $out/bin/claude \
-          --replace "${prev.claude-code}/bin" "$out/bin" \
+        rm $out/bin/claude
+        substitute ${base}/bin/claude $out/bin/claude \
+          --replace "${base}/lib" "${installationDir}${base}/lib" \
           --replace "exec " "export CLAUDE_CODE_TMPDIR='${installationDir}/tmp'"$'\n'"exec "
-        chmod +x $out/bin/claude $out/bin/.claude-wrapped
+        chmod +x $out/bin/claude
       '';
     }
-  else prev.claude-code;
+  else base;
 }
