@@ -2,7 +2,7 @@
 # Parameters:
 #   lib             - nixpkgs lib
 #   installationDir - Android installation directory for path translation (optional)
-{ inputs, lib, installationDir ? null }: final: prev: {
+{ lib, installationDir ? null }: final: prev: {
   # NOTE: glibc and fakechroot for Android are built separately in common/pkgs/.
   # Android-patched glibc is available via androidGlibc package.
   # See common/pkgs/android-glibc.nix and common/pkgs/android-fakechroot.nix.
@@ -44,8 +44,8 @@
   # Claude Code from claude-code-nix (Node.js runtime, hourly updates)
   # Android: additional path translation for fakechroot compatibility
   claude-code = let
-    base = final.callPackage "${inputs.claude-code-nix}/package.nix" {
-      runtime = "node";
+    base = prev.claude-code-node.override {
+      nodejs_22 = final.nodejs_latest;
       nodeBinName = "claude";
     };
   in if installationDir != null then

@@ -59,6 +59,7 @@ in {
       outputs.overlays.master-packages
       inputs.nur.overlays.default
       inputs.nix-vscode-extensions.overlays.default
+      inputs.claude-code-nix.overlays.default
     ];
     config.allowUnfree = lib.mkDefault true;
   };
