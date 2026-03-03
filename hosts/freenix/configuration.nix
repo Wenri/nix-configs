@@ -1,4 +1,5 @@
 {
+  config,
   lib,
   pkgs,
   hostname,
@@ -15,6 +16,11 @@
 
   # Use latest mainline kernel
   boot.kernelPackages = pkgs.linuxPackages_latest;
+
+  # Realtek RTL8156A USB 2.5GbE driver (replaces in-tree r8152 v1.12.13)
+  boot.extraModulePackages = [
+    (config.boot.kernelPackages.callPackage ../../common/pkgs/r8152-driver.nix {})
+  ];
 
   # CIFS: mount Freebox NAS NVMe share over SMB3
   fileSystems."/mnt/nvmedata" = {
