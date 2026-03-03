@@ -16,10 +16,6 @@
   # Use latest mainline kernel
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
-  # Increase CIFS max buffer size (default 16KB, max 130048)
-  # With SMB3 multi-credit, rsize/wsize = credits * CIFSMaxBufSize
-  boot.extraModprobeConfig = "options cifs CIFSMaxBufSize=130048";
-
   # CIFS: mount Freebox NAS NVMe share over SMB3
   fileSystems."/mnt/nvmedata" = {
     device = "//192.168.1.254/nvmedata";
@@ -31,7 +27,6 @@
       "hard"
       "cache=loose"
       "nostrictsync"
-      "nodfs"
       "noatime"
       "_netdev"
       "nofail"
