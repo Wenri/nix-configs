@@ -58,6 +58,11 @@
     ];
   };
 
+  # 2GB swap file on local disk
+  swapDevices = [
+    { device = "/swapfile"; size = 2 * 1024; }
+  ];
+
   # ext4 performance: writeback mode skips data journaling, async commit reduces sync overhead
   fileSystems."/".options = lib.mkAfter [
     "data=writeback"

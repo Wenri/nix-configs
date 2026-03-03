@@ -35,10 +35,6 @@
   
   services.resolved.enable = true;
 
-  swapDevices = lib.mkDefault [
-    { device = "/swapfile"; size = 2 * 1024; }
-  ];
-
   zramSwap = {
     enable = lib.mkDefault true;
     algorithm = lib.mkDefault "zstd";
