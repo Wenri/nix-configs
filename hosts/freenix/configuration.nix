@@ -3,6 +3,7 @@
   lib,
   pkgs,
   hostname,
+  username,
   outputs,
   ...
 }: {
@@ -41,6 +42,15 @@
   };
 
   environment.systemPackages = [pkgs.cifs-utils];
+
+  # Freebox NAS file ownership (CIFS files appear as uid/gid 4242)
+  users.groups.freebox.gid = 4242;
+  users.users.freebox = {
+    uid = 4242;
+    group = "freebox";
+    isSystemUser = true;
+  };
+  users.users.${username}.extraGroups = ["freebox"];
 
   # 8GB swap file over CIFS (pre-created on NAS)
   swapDevices = [
